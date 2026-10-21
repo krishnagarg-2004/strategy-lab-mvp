@@ -1,0 +1,1 @@
+Place licensed historical OHLCV CSV files here for local experiments. Required columns: timestamp,open,high,low,close,volume. Do not commit provider credentials or market data you are not permitted to redistribute.
