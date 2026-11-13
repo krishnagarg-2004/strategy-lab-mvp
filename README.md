@@ -4,11 +4,21 @@ A local-first prototype for deterministic historical backtesting with virtual ca
 
 ## Features
 - FastAPI backend and React + TypeScript frontend.
-- EMA crossover strategy with optional RSI filter, stop-loss and take-profit.
-- Virtual cash and integer-share position sizing.
-- Trade ledger, win rate, net P&L, profit factor, max drawdown, equity curve and trade duration.
-- Strategy spec is validated and echoed back; AI suggestions are not part of this MVP and cannot change execution rules.
-- CSV upload is supported by the API for OHLCV data.
+- **Bi-directional trading**: Long Only, Short Only, and Both (Long & Short) execution modes.
+- **Trailing Stop-Loss**: Dynamically trails peak favorable price by a configurable percentage.
+- **Intraday VWAP indicator & filter**: Daily session reset at 09:15 IST (Long > VWAP, Short < VWAP).
+- **Supertrend indicator & filter**: ATR-based trend identification (configurable period & multiplier).
+- **Advanced Risk Metrics**: Annualized Sharpe Ratio, Sortino Ratio (downside deviation), and Max Consecutive Losses streak.
+- **Fast Parameter Optimization & Grid Search**: Sweeps Fast EMA × Slow EMA matrix with in-memory data caching, identifying optimal parameter clusters by Sharpe Ratio or Net P&L.
+- **Interactive Heatmap Matrix**: 2D clickable grid color-coding parameter performance; one-click load into single-run view.
+- **Multi-Stock Portfolio Watchlist**: Simultaneous batch backtesting across multiple Indian equities and indices with consolidated portfolio P&L.
+- **Live Indian market data fetching** (Yahoo Finance) for NIFTY 50, BANK NIFTY, and large-cap NSE/BSE stocks.
+- **Interactive Candlestick Chart** with visual TradingView-style BUY, SHORT, and EXIT signal markers.
+- **Database persistence** (PostgreSQL / SQLite auto-fallback) to save, compare, and reload historical backtests.
+- Virtual cash and integer-share position sizing with complete margin and P&L accounting reconciliation.
+- Trade ledger with SIDE indicator, win rate, net P&L, profit factor, max drawdown, and equity curve.
+- Strategy spec is validated and echoed back; AI suggestions cannot change execution rules.
+- CSV upload is supported for custom OHLCV data.
 
 ## Requirements
 - Docker Desktop with Docker Compose, or Python 3.11+ and Node.js 20+.
@@ -17,7 +27,7 @@ A local-first prototype for deterministic historical backtesting with virtual ca
 ```bash
 docker compose up --build
 ```
-Open http://localhost:5173. API docs: http://localhost:8000/docs. PostgreSQL runs on localhost:5432. The current MVP does not persist backtests to PostgreSQL yet; the service is included in the development stack for the next iteration.
+Open http://localhost:5173. API docs: http://localhost:8000/docs. PostgreSQL runs on localhost:5432 (or localhost:5433 depending on port config). Runs are automatically saved and persisted to the database.
 
 ## Run without Docker
 Backend:
