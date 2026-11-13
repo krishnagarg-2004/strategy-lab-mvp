@@ -135,6 +135,30 @@ class GridSearchRequest(BaseModel):
     market_interval: Optional[str] = "15m"
 
 
+class MonteCarloRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    trades_pnl: List[float] = Field(..., min_length=2)
+    initial_capital: float = Field(default=100000, gt=0)
+    simulations: int = Field(default=1000, ge=100, le=5000)
+
+
+class WalkForwardRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    strategy: StrategySpec = Field(default_factory=StrategySpec)
+    initial_capital: float = Field(default=100000, gt=0)
+    quantity: int = Field(default=1, ge=1)
+    fee_per_order: float = Field(default=20, ge=0)
+    slippage_bps: float = Field(default=2, ge=0)
+    train_pct: float = Field(default=0.7, gt=0.2, lt=0.9)
+    csv_data: Optional[str] = None
+    market_symbol: Optional[str] = None
+    market_period: Optional[str] = "3mo"
+    market_interval: Optional[str] = "15m"
+
+
+
 class PortfolioBacktestRequest(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 
@@ -146,4 +170,6 @@ class PortfolioBacktestRequest(BaseModel):
     slippage_bps: float = Field(default=2, ge=0)
     market_period: Optional[str] = "1mo"
     market_interval: Optional[str] = "15m"
+
+
 

@@ -611,3 +611,47 @@ def test_market_data_cache():
     csv2, df2 = fetch_indian_market_data(sym, period="5d", interval="15m")
     assert len(df1) == len(df2)
 
+
+def test_monte_carlo_simulation():
+    """Verify Monte Carlo simulation returns percentiles and fan chart."""
+    mc_req = {
+        "trades_pnl": [150.0, -80.0, 220.0, -110.0, 95.0, -60.0, 310.0, -140.0],
+        "initial_capital": 100000,
+        "simulations": 500,
+    }
+    response = client.post("/api/monte-carlo", json=mc_req)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["simulations_count"] == 500
+    assert "median_final_equity" in data
+    assert "p95_max_drawdown_pct" in data
+    assert "prob_unprofitable_pct" in data
+    assert "fan_chart" in data
+    assert len(data["fan_chart"]) == 9  # 8 trades + initial
+
+
+def test_walk_forward_analysis():
+    """Verify train/test chronological split returns IS and OOS performance."""
+    wf_req = {
+        "strategy": {
+            "name": "Walk Forward Test",
+            "fast_ema": 9,
+            "slow_ema": 21,
+            "trading_start": "09:15",
+            "trading_end": "15:15",
+        },
+        "initial_capital": 100000,
+        "quantity": 1,
+        "train_pct": 0.7,
+    }
+    response = client.post("/api/walk-forward", json=wf_req)
+    assert response.status_code == 200
+    data = response.json()
+    assert "in_sample" in data
+    assert "out_of_sample" in data
+    assert "robustness_ratio" in data
+    assert "is_overfitted" in data
+    assert data["train_candles"] > 0
+    assert data["test_candles"] > 0
+
+

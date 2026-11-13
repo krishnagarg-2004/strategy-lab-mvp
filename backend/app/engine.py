@@ -10,7 +10,14 @@ import math
 import numpy as np
 import pandas as pd
 
-from .schemas import BacktestRequest, GridSearchRequest, PortfolioBacktestRequest, StrategySpec
+from .schemas import (
+    BacktestRequest,
+    GridSearchRequest,
+    MonteCarloRequest,
+    PortfolioBacktestRequest,
+    StrategySpec,
+    WalkForwardRequest,
+)
 
 IST = ZoneInfo("Asia/Kolkata")
 REQUIRED = ["timestamp", "open", "high", "low", "close", "volume"]
@@ -929,3 +936,174 @@ def run_portfolio_backtest(request: PortfolioBacktestRequest) -> dict:
         ),
         "symbol_breakdown": symbol_results,
     }
+
+
+def run_monte_carlo(request: MonteCarloRequest) -> dict:
+    """Run bootstrap resampling of historical trades to assess tail risk and risk of ruin."""
+    pnls = np.array(request.trades_pnl, dtype=float)
+    n_trades = len(pnls)
+    sims = request.simulations
+    capital = request.initial_capital
+    rng = np.random.default_rng(42)
+
+    # Resample trade returns with replacement across simulations
+    sample_indices = rng.integers(0, n_trades, size=(sims, n_trades))
+    sampled_pnls = pnls[sample_indices]
+
+    # Cumulative equity paths
+    equity_paths = capital + np.cumsum(sampled_pnls, axis=1)
+    # Prepend starting capital to calculate peaks and drawdowns
+    paths_with_start = np.hstack([np.full((sims, 1), capital), equity_paths])
+
+    # Max drawdowns per simulation path
+    peaks = np.maximum.accumulate(paths_with_start, axis=1)
+    drawdowns = (paths_with_start - peaks) / peaks
+    max_drawdowns_pct = np.abs(np.min(drawdowns, axis=1)) * 100
+
+    # Final equities
+    final_equities = paths_with_start[:, -1]
+    returns_pct = (final_equities - capital) / capital * 100
+
+    # Probabilities of loss & drawdown thresholds
+    prob_unprofitable = float(np.mean(final_equities < capital) * 100)
+    prob_dd_gt_10 = float(np.mean(max_drawdowns_pct >= 10.0) * 100)
+    prob_dd_gt_20 = float(np.mean(max_drawdowns_pct >= 20.0) * 100)
+    prob_dd_gt_30 = float(np.mean(max_drawdowns_pct >= 30.0) * 100)
+
+    # Representative fan paths for chart (5th percentile, 25th, 50th median, 75th, 95th)
+    steps = n_trades
+    percentiles = [5, 25, 50, 75, 95]
+    pct_curves = np.percentile(paths_with_start, percentiles, axis=0)
+
+    fan_chart = []
+    for step in range(steps + 1):
+        fan_chart.append(
+            {
+                "trade_step": step,
+                "p05": round(float(pct_curves[0, step]), 2),
+                "p25": round(float(pct_curves[1, step]), 2),
+                "p50_median": round(float(pct_curves[2, step]), 2),
+                "p75": round(float(pct_curves[3, step]), 2),
+                "p95": round(float(pct_curves[4, step]), 2),
+            }
+        )
+
+    return {
+        "simulations_count": sims,
+        "trades_count": n_trades,
+        "initial_capital": round(capital, 2),
+        "median_final_equity": round(float(np.median(final_equities)), 2),
+        "p05_final_equity": round(float(np.percentile(final_equities, 5)), 2),
+        "p95_final_equity": round(float(np.percentile(final_equities, 95)), 2),
+        "median_max_drawdown_pct": round(float(np.median(max_drawdowns_pct)), 2),
+        "p95_max_drawdown_pct": round(float(np.percentile(max_drawdowns_pct, 95)), 2),
+        "p99_max_drawdown_pct": round(float(np.percentile(max_drawdowns_pct, 99)), 2),
+        "prob_unprofitable_pct": round(prob_unprofitable, 2),
+        "prob_drawdown_over_10_pct": round(prob_dd_gt_10, 2),
+        "prob_drawdown_over_20_pct": round(prob_dd_gt_20, 2),
+        "prob_drawdown_over_30_pct": round(prob_dd_gt_30, 2),
+        "fan_chart": fan_chart,
+    }
+
+
+def run_walk_forward(request: WalkForwardRequest) -> dict:
+    """Split candle data chronologically into In-Sample (Train) and Out-Of-Sample (Test) to evaluate overfitting."""
+    # 1. Fetch or prepare candle dataframe
+    if request.csv_data:
+        df = load_candles(request.csv_data)
+        data_source = "csv"
+    elif request.market_symbol:
+        from .market_data import fetch_indian_market_data
+
+        _, df = fetch_indian_market_data(
+            request.market_symbol,
+            period=request.market_period or "3mo",
+            interval=request.market_interval or "15m",
+        )
+        data_source = f"yfinance:{request.market_symbol}"
+    else:
+        df = load_candles(None)
+        data_source = "synthetic_demo"
+
+    n = len(df)
+    split_idx = int(n * request.train_pct)
+
+    df_train = df.iloc[:split_idx].copy().reset_index(drop=True)
+    df_test = df.iloc[split_idx:].copy().reset_index(drop=True)
+
+    csv_train = df_train.to_csv(index=False)
+    csv_test = df_test.to_csv(index=False)
+
+    # Run in-sample
+    req_train = BacktestRequest(
+        strategy=request.strategy,
+        initial_capital=request.initial_capital,
+        quantity=request.quantity,
+        fee_per_order=request.fee_per_order,
+        slippage_bps=request.slippage_bps,
+        symbol=(request.market_symbol or "DEMO") + " [In-Sample]",
+        csv_data=csv_train,
+    )
+    res_train = run_backtest(req_train)
+
+    # Run out-of-sample
+    req_test = BacktestRequest(
+        strategy=request.strategy,
+        initial_capital=request.initial_capital,
+        quantity=request.quantity,
+        fee_per_order=request.fee_per_order,
+        slippage_bps=request.slippage_bps,
+        symbol=(request.market_symbol or "DEMO") + " [Out-of-Sample]",
+        csv_data=csv_test,
+    )
+    res_test = run_backtest(req_test)
+
+    # Compute robustness ratio: OOS Return / IS Return
+    train_ret = res_train["return_pct"]
+    test_ret = res_test["return_pct"]
+    robustness_ratio = (
+        round(test_ret / train_ret, 3) if train_ret != 0 else (1.0 if test_ret == 0 else None)
+    )
+
+    is_overfitted = False
+    if train_ret > 0 and (test_ret < 0 or (robustness_ratio is not None and robustness_ratio < 0.3)):
+        is_overfitted = True
+
+    return {
+        "symbol": request.market_symbol or "DEMO",
+        "data_source": data_source,
+        "total_candles": n,
+        "train_candles": len(df_train),
+        "test_candles": len(df_test),
+        "train_date_range": {
+            "start": df_train["timestamp"].iloc[0].isoformat(),
+            "end": df_train["timestamp"].iloc[-1].isoformat(),
+        },
+        "test_date_range": {
+            "start": df_test["timestamp"].iloc[0].isoformat(),
+            "end": df_test["timestamp"].iloc[-1].isoformat(),
+        },
+        "in_sample": {
+            "return_pct": res_train["return_pct"],
+            "net_pnl": res_train["net_pnl"],
+            "win_rate_pct": res_train["win_rate_pct"],
+            "trade_count": res_train["trade_count"],
+            "profit_factor": res_train["profit_factor"],
+            "max_drawdown_pct": res_train["max_drawdown_pct"],
+            "sharpe_ratio": res_train.get("sharpe_ratio"),
+            "sortino_ratio": res_train.get("sortino_ratio"),
+        },
+        "out_of_sample": {
+            "return_pct": res_test["return_pct"],
+            "net_pnl": res_test["net_pnl"],
+            "win_rate_pct": res_test["win_rate_pct"],
+            "trade_count": res_test["trade_count"],
+            "profit_factor": res_test["profit_factor"],
+            "max_drawdown_pct": res_test["max_drawdown_pct"],
+            "sharpe_ratio": res_test.get("sharpe_ratio"),
+            "sortino_ratio": res_test.get("sortino_ratio"),
+        },
+        "robustness_ratio": robustness_ratio,
+        "is_overfitted": is_overfitted,
+    }
+

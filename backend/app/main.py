@@ -8,15 +8,23 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from .db import Base, engine, get_db
-from .engine import run_backtest, run_grid_search, run_portfolio_backtest
+from .engine import (
+    run_backtest,
+    run_grid_search,
+    run_monte_carlo,
+    run_portfolio_backtest,
+    run_walk_forward,
+)
 from .market_data import POPULAR_INDIAN_SYMBOLS, fetch_indian_market_data
 from .models import BacktestExperiment
 from .schemas import (
     BacktestRequest,
     GridSearchRequest,
     MarketDataFetchRequest,
+    MonteCarloRequest,
     PortfolioBacktestRequest,
     SaveExperimentRequest,
+    WalkForwardRequest,
 )
 
 logger = logging.getLogger(__name__)
@@ -150,6 +158,29 @@ def portfolio_backtest(request: PortfolioBacktestRequest):
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Portfolio backtest failed: {exc}") from exc
+
+
+@app.post("/api/monte-carlo")
+def monte_carlo(request: MonteCarloRequest):
+    """Run bootstrap resampling of historical trades to assess tail risk and drawdown distribution."""
+    try:
+        return run_monte_carlo(request)
+    except (ValueError, KeyError) as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Monte Carlo simulation failed: {exc}") from exc
+
+
+@app.post("/api/walk-forward")
+def walk_forward(request: WalkForwardRequest):
+    """Run train/test split to evaluate out-of-sample performance and overfitting."""
+    try:
+        return run_walk_forward(request)
+    except (ValueError, KeyError) as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Walk-forward analysis failed: {exc}") from exc
+
 
 
 # ==========================================

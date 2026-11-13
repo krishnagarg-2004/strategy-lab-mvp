@@ -143,6 +143,63 @@ type PortfolioBacktestData = {
     symbol_breakdown: PortfolioSymbolResult[];
 };
 
+type MonteCarloData = {
+    simulations_count: number;
+    trades_count: number;
+    initial_capital: number;
+    median_final_equity: number;
+    p05_final_equity: number;
+    p95_final_equity: number;
+    median_max_drawdown_pct: number;
+    p95_max_drawdown_pct: number;
+    p99_max_drawdown_pct: number;
+    prob_unprofitable_pct: number;
+    prob_drawdown_over_10_pct: number;
+    prob_drawdown_over_20_pct: number;
+    prob_drawdown_over_30_pct: number;
+    fan_chart: {
+        trade_step: number;
+        p05: number;
+        p25: number;
+        p50_median: number;
+        p75: number;
+        p95: number;
+    }[];
+};
+
+type WalkForwardData = {
+    symbol: string;
+    data_source: string;
+    total_candles: number;
+    train_candles: number;
+    test_candles: number;
+    train_date_range: { start: string; end: string };
+    test_date_range: { start: string; end: string };
+    in_sample: {
+        return_pct: number;
+        net_pnl: number;
+        win_rate_pct: number;
+        trade_count: number;
+        profit_factor: number | null;
+        max_drawdown_pct: number;
+        sharpe_ratio: number | null;
+        sortino_ratio: number | null;
+    };
+    out_of_sample: {
+        return_pct: number;
+        net_pnl: number;
+        win_rate_pct: number;
+        trade_count: number;
+        profit_factor: number | null;
+        max_drawdown_pct: number;
+        sharpe_ratio: number | null;
+        sortino_ratio: number | null;
+    };
+    robustness_ratio: number | null;
+    is_overfitted: boolean;
+};
+
+
 
 const defaults: Strategy = {
     name: 'EMA crossover + Multi-Indicator',
@@ -236,8 +293,19 @@ export default function App() {
     const [experimentName, setExperimentName] = useState('');
     const [saveStatus, setSaveStatus] = useState('');
 
-    // Phase 3: Active Workspace View Tab & State
-    const [workspaceTab, setWorkspaceTab] = useState<'single' | 'grid_search' | 'portfolio'>('single');
+    // Workspace View Tab & State (Phase 3 + Intermediate)
+    const [workspaceTab, setWorkspaceTab] = useState<'single' | 'grid_search' | 'portfolio' | 'monte_carlo' | 'walk_forward'>('single');
+
+    // Monte Carlo State
+    const [mcSimulations, setMcSimulations] = useState(1000);
+    const [mcResults, setMcResults] = useState<MonteCarloData | null>(null);
+    const [mcBusy, setMcBusy] = useState(false);
+
+    // Walk Forward State
+    const [wfTrainPct, setWfTrainPct] = useState(70);
+    const [wfResults, setWfResults] = useState<WalkForwardData | null>(null);
+    const [wfBusy, setWfBusy] = useState(false);
+
 
     // Grid Search State
     const [gridFastEmas, setGridFastEmas] = useState('5, 9, 13, 21');
@@ -488,6 +556,62 @@ export default function App() {
         }
     }
 
+    async function runMonteCarlo() {
+        if (!result || result.trades.length < 2) {
+            setError('Please run a backtest first that produces at least 2 trades before running Monte Carlo.');
+            return;
+        }
+        setMcBusy(true);
+        setError('');
+        try {
+            const tradePnls = result.trades.map((t) => t.net_pnl);
+            const response = await fetch('/api/monte-carlo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    trades_pnl: tradePnls,
+                    initial_capital: capital,
+                    simulations: mcSimulations,
+                }),
+            });
+            const data = await parseJsonResponse(response);
+            setMcResults(data as MonteCarloData);
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'Monte Carlo simulation failed');
+        } finally {
+            setMcBusy(false);
+        }
+    }
+
+    async function runWalkForward() {
+        setWfBusy(true);
+        setError('');
+        try {
+            const response = await fetch('/api/walk-forward', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    strategy,
+                    initial_capital: capital,
+                    quantity: qty,
+                    fee_per_order: fee,
+                    slippage_bps: slippage,
+                    train_pct: wfTrainPct / 100,
+                    csv_data: dataSourceMode === 'upload_csv' ? csvData : (dataSourceMode === 'indian_market' && csvData ? csvData : null),
+                    market_symbol: dataSourceMode === 'indian_market' && !csvData ? marketSymbol : null,
+                    market_period: marketPeriod,
+                    market_interval: marketInterval,
+                }),
+            });
+            const data = await parseJsonResponse(response);
+            setWfResults(data as WalkForwardData);
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'Walk-forward analysis failed');
+        } finally {
+            setWfBusy(false);
+        }
+    }
+
     async function handleSaveExperiment() {
         if (!result) return;
         const nameToSave =
@@ -647,6 +771,20 @@ export default function App() {
                             onClick={() => setWorkspaceTab('portfolio')}
                         >
                             📑 Portfolio Watchlist
+                        </button>
+                        <button
+                            type="button"
+                            className={`tab-btn ${workspaceTab === 'monte_carlo' ? 'active' : ''}`}
+                            onClick={() => setWorkspaceTab('monte_carlo')}
+                        >
+                            🎲 Monte Carlo
+                        </button>
+                        <button
+                            type="button"
+                            className={`tab-btn ${workspaceTab === 'walk_forward' ? 'active' : ''}`}
+                            onClick={() => setWorkspaceTab('walk_forward')}
+                        >
+                            ⏳ Walk-Forward (OOS)
                         </button>
                     </div>
 
@@ -1752,6 +1890,206 @@ export default function App() {
                 </section>
             )}
 
+            {/* Intermediate: Monte Carlo Stress Test View */}
+            {workspaceTab === 'monte_carlo' && (
+                <section className="results" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
+                    <div className="panel result-head">
+                        <div>
+                            <span className="eyebrow">ROBUSTNESS / MONTE CARLO STRESS TEST</span>
+                            <h2>Sequence Risk & Risk of Ruin Analysis</h2>
+                            <p>Bootstrap resamples trade returns across thousands of random sequences to uncover catastrophic tail risk and clustering drawdowns.</p>
+                        </div>
+                        <button className="run" onClick={runMonteCarlo} disabled={mcBusy} style={{ padding: '10px 24px' }}>
+                            {mcBusy ? 'Simulating paths…' : '🎲 Run Monte Carlo'}
+                        </button>
+                    </div>
+
+                    <div className="panel" style={{ marginTop: '16px', display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
+                        <div style={{ flex: '1 1 200px' }}>
+                            <label>
+                                Number of Simulated Paths
+                                <input
+                                    type="number"
+                                    min="100"
+                                    max="5000"
+                                    value={mcSimulations}
+                                    onChange={(e) => setMcSimulations(Number(e.target.value))}
+                                />
+                            </label>
+                        </div>
+                        <div style={{ flex: '2 1 300px' }}>
+                            <p style={{ fontSize: '12px', color: '#8594a8', margin: 0 }}>
+                                Based on trades from the active backtest run:{' '}
+                                <b style={{ color: '#63dfb0' }}>
+                                    {result ? `${result.trades.length} completed trades (${result.symbol})` : 'No backtest run yet. Run a single test first!'}
+                                </b>
+                            </p>
+                        </div>
+                    </div>
+
+                    {mcResults && (
+                        <>
+                            <div className="metrics" style={{ marginTop: '16px' }}>
+                                <Metric
+                                    label="Median Final Equity (P50)"
+                                    value={money(mcResults.median_final_equity)}
+                                    sub={`Range: ${money(mcResults.p05_final_equity)} (P5) — ${money(mcResults.p95_final_equity)} (P95)`}
+                                    positive={mcResults.median_final_equity >= mcResults.initial_capital}
+                                />
+                                <Metric
+                                    label="Tail Max DD (P95 / P99)"
+                                    value={`${mcResults.p95_max_drawdown_pct}% / ${mcResults.p99_max_drawdown_pct}%`}
+                                    sub={`Median DD: ${mcResults.median_max_drawdown_pct}%`}
+                                    positive={mcResults.p95_max_drawdown_pct < 20}
+                                />
+                                <Metric
+                                    label="Prob. of Unprofitable Run"
+                                    value={`${mcResults.prob_unprofitable_pct}%`}
+                                    sub="Chance of ending below starting capital"
+                                    positive={mcResults.prob_unprofitable_pct < 15}
+                                />
+                                <Metric
+                                    label="Risk of Severe DD (>20%)"
+                                    value={`${mcResults.prob_drawdown_over_20_pct}%`}
+                                    sub={`>10% DD: ${mcResults.prob_drawdown_over_10_pct}% | >30% DD: ${mcResults.prob_drawdown_over_30_pct}%`}
+                                    positive={mcResults.prob_drawdown_over_20_pct < 5}
+                                />
+                            </div>
+
+                            <div className="panel chart-panel" style={{ marginTop: '16px' }}>
+                                <div className="chart-title">
+                                    <div>
+                                        <h3>Simulated Monte Carlo Fan Chart</h3>
+                                        <p>Percentile equity bands over trade sequence: P95 (Optimistic), P50 (Median), P05 (Conservative Tail Risk)</p>
+                                    </div>
+                                </div>
+                                <div className="chart" style={{ height: '320px', marginTop: '16px' }}>
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <LineChart data={mcResults.fan_chart}>
+                                            <CartesianGrid stroke="#1e2c3d" strokeDasharray="3 3" />
+                                            <XAxis dataKey="trade_step" stroke="#5a6c82" tick={{ fontSize: 10 }} />
+                                            <YAxis stroke="#5a6c82" domain={['auto', 'auto']} tick={{ fontSize: 10 }} />
+                                            <Tooltip
+                                                contentStyle={{ backgroundColor: '#0d1624', borderColor: '#202c3d', borderRadius: '8px' }}
+                                                formatter={(val: any) => [money(Number(val)), '']}
+                                            />
+                                            <Line type="monotone" dataKey="p95" stroke="#38bdf8" strokeWidth={1.5} dot={false} name="95th Percentile" />
+                                            <Line type="monotone" dataKey="p75" stroke="#63dfb0" strokeWidth={1} dot={false} name="75th Percentile" />
+                                            <Line type="monotone" dataKey="p50_median" stroke="#10b981" strokeWidth={2.5} dot={false} name="50th Median" />
+                                            <Line type="monotone" dataKey="p25" stroke="#fbbf24" strokeWidth={1} dot={false} name="25th Percentile" />
+                                            <Line type="monotone" dataKey="p05" stroke="#ef4444" strokeWidth={1.5} dot={false} name="5th Percentile (Tail)" />
+                                        </LineChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </section>
+            )}
+
+            {/* Intermediate: Walk-Forward Out-Of-Sample (OOS) View */}
+            {workspaceTab === 'walk_forward' && (
+                <section className="results" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
+                    <div className="panel result-head">
+                        <div>
+                            <span className="eyebrow">OVERFITTING DETECTION / WALK-FORWARD</span>
+                            <h2>In-Sample (Train) vs. Out-of-Sample (Test) Validation</h2>
+                            <p>Splits historical candles into a training period and a forward unseen test period to prove whether rules generalize or are overfitted.</p>
+                        </div>
+                        <button className="run" onClick={runWalkForward} disabled={wfBusy} style={{ padding: '10px 24px' }}>
+                            {wfBusy ? 'Testing unseen data…' : '⏳ Run Walk-Forward Split'}
+                        </button>
+                    </div>
+
+                    <div className="panel" style={{ marginTop: '16px', display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                        <div style={{ flex: '1 1 200px' }}>
+                            <label>
+                                In-Sample Training Split ({wfTrainPct}% Train / {100 - wfTrainPct}% Test)
+                                <input
+                                    type="range"
+                                    min="30"
+                                    max="85"
+                                    step="5"
+                                    value={wfTrainPct}
+                                    onChange={(e) => setWfTrainPct(Number(e.target.value))}
+                                />
+                            </label>
+                        </div>
+                        <div style={{ flex: '2 1 300px' }}>
+                            <p style={{ fontSize: '12px', color: '#8594a8', margin: 0 }}>
+                                Evaluating instrument: <b style={{ color: '#63dfb0' }}>{dataSourceMode === 'indian_market' ? marketSymbol : (symbol || 'Demo Data')}</b>
+                                <br />
+                                Parameter configuration: Fast {strategy.fast_ema} / Slow {strategy.slow_ema} ({strategy.trade_direction})
+                            </p>
+                        </div>
+                    </div>
+
+                    {wfResults && (
+                        <>
+                            <div className="metrics" style={{ marginTop: '16px' }}>
+                                <Metric
+                                    label="Overfitting Diagnosis"
+                                    value={wfResults.is_overfitted ? '⚠️ OVERFITTED' : '✓ ROBUST'}
+                                    sub={wfResults.is_overfitted ? 'Degrades severely on unseen data' : 'Positive performance sustained'}
+                                    positive={!wfResults.is_overfitted}
+                                />
+                                <Metric
+                                    label="Walk-Forward Efficiency (WFE)"
+                                    value={wfResults.robustness_ratio !== null ? `${(wfResults.robustness_ratio * 100).toFixed(1)}%` : '—'}
+                                    sub="Out-of-sample return ÷ In-sample return"
+                                    positive={wfResults.robustness_ratio !== null && wfResults.robustness_ratio >= 0.5}
+                                />
+                                <Metric
+                                    label="In-Sample Return (Train)"
+                                    value={`${wfResults.in_sample.return_pct}%`}
+                                    sub={`${money(wfResults.in_sample.net_pnl)} (${wfResults.train_candles} candles)`}
+                                    positive={wfResults.in_sample.net_pnl >= 0}
+                                />
+                                <Metric
+                                    label="Out-of-Sample Return (Test)"
+                                    value={`${wfResults.out_of_sample.return_pct}%`}
+                                    sub={`${money(wfResults.out_of_sample.net_pnl)} (${wfResults.test_candles} candles)`}
+                                    positive={wfResults.out_of_sample.net_pnl >= 0}
+                                />
+                            </div>
+
+                            <div className="two" style={{ marginTop: '16px' }}>
+                                <div className="panel" style={{ padding: '20px' }}>
+                                    <h3 style={{ color: '#93c5fd', margin: '0 0 4px' }}>In-Sample Period (Training)</h3>
+                                    <p style={{ fontSize: '11px', color: '#8594a8', marginBottom: '14px' }}>
+                                        {new Date(wfResults.train_date_range.start).toLocaleDateString()} to {new Date(wfResults.train_date_range.end).toLocaleDateString()}
+                                    </p>
+                                    <div className="detail"><span>Net P&L</span><b>{money(wfResults.in_sample.net_pnl)}</b></div>
+                                    <div className="detail"><span>Return</span><b>{wfResults.in_sample.return_pct}%</b></div>
+                                    <div className="detail"><span>Win Rate</span><b>{wfResults.in_sample.win_rate_pct}%</b></div>
+                                    <div className="detail"><span>Total Trades</span><b>{wfResults.in_sample.trade_count}</b></div>
+                                    <div className="detail"><span>Profit Factor</span><b>{wfResults.in_sample.profit_factor ?? '—'}</b></div>
+                                    <div className="detail"><span>Max Drawdown</span><b>{wfResults.in_sample.max_drawdown_pct}%</b></div>
+                                    <div className="detail"><span>Sharpe Ratio</span><b>{wfResults.in_sample.sharpe_ratio ?? '—'}</b></div>
+                                </div>
+
+                                <div className="panel" style={{ padding: '20px', borderColor: wfResults.is_overfitted ? '#ef4444' : '#22c55e' }}>
+                                    <h3 style={{ color: wfResults.is_overfitted ? '#f87171' : '#63dfb0', margin: '0 0 4px' }}>
+                                        Out-of-Sample Period (Unseen Test)
+                                    </h3>
+                                    <p style={{ fontSize: '11px', color: '#8594a8', marginBottom: '14px' }}>
+                                        {new Date(wfResults.test_date_range.start).toLocaleDateString()} to {new Date(wfResults.test_date_range.end).toLocaleDateString()}
+                                    </p>
+                                    <div className="detail"><span>Net P&L</span><b>{money(wfResults.out_of_sample.net_pnl)}</b></div>
+                                    <div className="detail"><span>Return</span><b>{wfResults.out_of_sample.return_pct}%</b></div>
+                                    <div className="detail"><span>Win Rate</span><b>{wfResults.out_of_sample.win_rate_pct}%</b></div>
+                                    <div className="detail"><span>Total Trades</span><b>{wfResults.out_of_sample.trade_count}</b></div>
+                                    <div className="detail"><span>Profit Factor</span><b>{wfResults.out_of_sample.profit_factor ?? '—'}</b></div>
+                                    <div className="detail"><span>Max Drawdown</span><b>{wfResults.out_of_sample.max_drawdown_pct}%</b></div>
+                                    <div className="detail"><span>Sharpe Ratio</span><b>{wfResults.out_of_sample.sharpe_ratio ?? '—'}</b></div>
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </section>
+            )}
+
+
             {/* Phase 3: Portfolio Watchlist Multi-Stock Runner */}
             {workspaceTab === 'portfolio' && (
                 <section className="results" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
@@ -1879,6 +2217,206 @@ export default function App() {
                     )}
                 </section>
             )}
+
+            {/* Intermediate: Monte Carlo Stress Test View */}
+            {workspaceTab === 'monte_carlo' && (
+                <section className="results" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
+                    <div className="panel result-head">
+                        <div>
+                            <span className="eyebrow">ROBUSTNESS / MONTE CARLO STRESS TEST</span>
+                            <h2>Sequence Risk & Risk of Ruin Analysis</h2>
+                            <p>Bootstrap resamples trade returns across thousands of random sequences to uncover catastrophic tail risk and clustering drawdowns.</p>
+                        </div>
+                        <button className="run" onClick={runMonteCarlo} disabled={mcBusy} style={{ padding: '10px 24px' }}>
+                            {mcBusy ? 'Simulating paths…' : '🎲 Run Monte Carlo'}
+                        </button>
+                    </div>
+
+                    <div className="panel" style={{ marginTop: '16px', display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
+                        <div style={{ flex: '1 1 200px' }}>
+                            <label>
+                                Number of Simulated Paths
+                                <input
+                                    type="number"
+                                    min="100"
+                                    max="5000"
+                                    value={mcSimulations}
+                                    onChange={(e) => setMcSimulations(Number(e.target.value))}
+                                />
+                            </label>
+                        </div>
+                        <div style={{ flex: '2 1 300px' }}>
+                            <p style={{ fontSize: '12px', color: '#8594a8', margin: 0 }}>
+                                Based on trades from the active backtest run:{' '}
+                                <b style={{ color: '#63dfb0' }}>
+                                    {result ? `${result.trades.length} completed trades (${result.symbol})` : 'No backtest run yet. Run a single test first!'}
+                                </b>
+                            </p>
+                        </div>
+                    </div>
+
+                    {mcResults && (
+                        <>
+                            <div className="metrics" style={{ marginTop: '16px' }}>
+                                <Metric
+                                    label="Median Final Equity (P50)"
+                                    value={money(mcResults.median_final_equity)}
+                                    sub={`Range: ${money(mcResults.p05_final_equity)} (P5) — ${money(mcResults.p95_final_equity)} (P95)`}
+                                    positive={mcResults.median_final_equity >= mcResults.initial_capital}
+                                />
+                                <Metric
+                                    label="Tail Max DD (P95 / P99)"
+                                    value={`${mcResults.p95_max_drawdown_pct}% / ${mcResults.p99_max_drawdown_pct}%`}
+                                    sub={`Median DD: ${mcResults.median_max_drawdown_pct}%`}
+                                    positive={mcResults.p95_max_drawdown_pct < 20}
+                                />
+                                <Metric
+                                    label="Prob. of Unprofitable Run"
+                                    value={`${mcResults.prob_unprofitable_pct}%`}
+                                    sub="Chance of ending below starting capital"
+                                    positive={mcResults.prob_unprofitable_pct < 15}
+                                />
+                                <Metric
+                                    label="Risk of Severe DD (>20%)"
+                                    value={`${mcResults.prob_drawdown_over_20_pct}%`}
+                                    sub={`>10% DD: ${mcResults.prob_drawdown_over_10_pct}% | >30% DD: ${mcResults.prob_drawdown_over_30_pct}%`}
+                                    positive={mcResults.prob_drawdown_over_20_pct < 5}
+                                />
+                            </div>
+
+                            <div className="panel chart-panel" style={{ marginTop: '16px' }}>
+                                <div className="chart-title">
+                                    <div>
+                                        <h3>Simulated Monte Carlo Fan Chart</h3>
+                                        <p>Percentile equity bands over trade sequence: P95 (Optimistic), P50 (Median), P05 (Conservative Tail Risk)</p>
+                                    </div>
+                                </div>
+                                <div className="chart" style={{ height: '320px', marginTop: '16px' }}>
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <LineChart data={mcResults.fan_chart}>
+                                            <CartesianGrid stroke="#1e2c3d" strokeDasharray="3 3" />
+                                            <XAxis dataKey="trade_step" stroke="#5a6c82" tick={{ fontSize: 10 }} />
+                                            <YAxis stroke="#5a6c82" domain={['auto', 'auto']} tick={{ fontSize: 10 }} />
+                                            <Tooltip
+                                                contentStyle={{ backgroundColor: '#0d1624', borderColor: '#202c3d', borderRadius: '8px' }}
+                                                formatter={(val: any) => [money(Number(val)), '']}
+                                            />
+                                            <Line type="monotone" dataKey="p95" stroke="#38bdf8" strokeWidth={1.5} dot={false} name="95th Percentile" />
+                                            <Line type="monotone" dataKey="p75" stroke="#63dfb0" strokeWidth={1} dot={false} name="75th Percentile" />
+                                            <Line type="monotone" dataKey="p50_median" stroke="#10b981" strokeWidth={2.5} dot={false} name="50th Median" />
+                                            <Line type="monotone" dataKey="p25" stroke="#fbbf24" strokeWidth={1} dot={false} name="25th Percentile" />
+                                            <Line type="monotone" dataKey="p05" stroke="#ef4444" strokeWidth={1.5} dot={false} name="5th Percentile (Tail)" />
+                                        </LineChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </section>
+            )}
+
+            {/* Intermediate: Walk-Forward Out-Of-Sample (OOS) View */}
+            {workspaceTab === 'walk_forward' && (
+                <section className="results" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
+                    <div className="panel result-head">
+                        <div>
+                            <span className="eyebrow">OVERFITTING DETECTION / WALK-FORWARD</span>
+                            <h2>In-Sample (Train) vs. Out-of-Sample (Test) Validation</h2>
+                            <p>Splits historical candles into a training period and a forward unseen test period to prove whether rules generalize or are overfitted.</p>
+                        </div>
+                        <button className="run" onClick={runWalkForward} disabled={wfBusy} style={{ padding: '10px 24px' }}>
+                            {wfBusy ? 'Testing unseen data…' : '⏳ Run Walk-Forward Split'}
+                        </button>
+                    </div>
+
+                    <div className="panel" style={{ marginTop: '16px', display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                        <div style={{ flex: '1 1 200px' }}>
+                            <label>
+                                In-Sample Training Split ({wfTrainPct}% Train / {100 - wfTrainPct}% Test)
+                                <input
+                                    type="range"
+                                    min="30"
+                                    max="85"
+                                    step="5"
+                                    value={wfTrainPct}
+                                    onChange={(e) => setWfTrainPct(Number(e.target.value))}
+                                />
+                            </label>
+                        </div>
+                        <div style={{ flex: '2 1 300px' }}>
+                            <p style={{ fontSize: '12px', color: '#8594a8', margin: 0 }}>
+                                Evaluating instrument: <b style={{ color: '#63dfb0' }}>{dataSourceMode === 'indian_market' ? marketSymbol : (symbol || 'Demo Data')}</b>
+                                <br />
+                                Parameter configuration: Fast {strategy.fast_ema} / Slow {strategy.slow_ema} ({strategy.trade_direction})
+                            </p>
+                        </div>
+                    </div>
+
+                    {wfResults && (
+                        <>
+                            <div className="metrics" style={{ marginTop: '16px' }}>
+                                <Metric
+                                    label="Overfitting Diagnosis"
+                                    value={wfResults.is_overfitted ? '⚠️ OVERFITTED' : '✓ ROBUST'}
+                                    sub={wfResults.is_overfitted ? 'Degrades severely on unseen data' : 'Positive performance sustained'}
+                                    positive={!wfResults.is_overfitted}
+                                />
+                                <Metric
+                                    label="Walk-Forward Efficiency (WFE)"
+                                    value={wfResults.robustness_ratio !== null ? `${(wfResults.robustness_ratio * 100).toFixed(1)}%` : '—'}
+                                    sub="Out-of-sample return ÷ In-sample return"
+                                    positive={wfResults.robustness_ratio !== null && wfResults.robustness_ratio >= 0.5}
+                                />
+                                <Metric
+                                    label="In-Sample Return (Train)"
+                                    value={`${wfResults.in_sample.return_pct}%`}
+                                    sub={`${money(wfResults.in_sample.net_pnl)} (${wfResults.train_candles} candles)`}
+                                    positive={wfResults.in_sample.net_pnl >= 0}
+                                />
+                                <Metric
+                                    label="Out-of-Sample Return (Test)"
+                                    value={`${wfResults.out_of_sample.return_pct}%`}
+                                    sub={`${money(wfResults.out_of_sample.net_pnl)} (${wfResults.test_candles} candles)`}
+                                    positive={wfResults.out_of_sample.net_pnl >= 0}
+                                />
+                            </div>
+
+                            <div className="two" style={{ marginTop: '16px' }}>
+                                <div className="panel" style={{ padding: '20px' }}>
+                                    <h3 style={{ color: '#93c5fd', margin: '0 0 4px' }}>In-Sample Period (Training)</h3>
+                                    <p style={{ fontSize: '11px', color: '#8594a8', marginBottom: '14px' }}>
+                                        {new Date(wfResults.train_date_range.start).toLocaleDateString()} to {new Date(wfResults.train_date_range.end).toLocaleDateString()}
+                                    </p>
+                                    <div className="detail"><span>Net P&L</span><b>{money(wfResults.in_sample.net_pnl)}</b></div>
+                                    <div className="detail"><span>Return</span><b>{wfResults.in_sample.return_pct}%</b></div>
+                                    <div className="detail"><span>Win Rate</span><b>{wfResults.in_sample.win_rate_pct}%</b></div>
+                                    <div className="detail"><span>Total Trades</span><b>{wfResults.in_sample.trade_count}</b></div>
+                                    <div className="detail"><span>Profit Factor</span><b>{wfResults.in_sample.profit_factor ?? '—'}</b></div>
+                                    <div className="detail"><span>Max Drawdown</span><b>{wfResults.in_sample.max_drawdown_pct}%</b></div>
+                                    <div className="detail"><span>Sharpe Ratio</span><b>{wfResults.in_sample.sharpe_ratio ?? '—'}</b></div>
+                                </div>
+
+                                <div className="panel" style={{ padding: '20px', borderColor: wfResults.is_overfitted ? '#ef4444' : '#22c55e' }}>
+                                    <h3 style={{ color: wfResults.is_overfitted ? '#f87171' : '#63dfb0', margin: '0 0 4px' }}>
+                                        Out-of-Sample Period (Unseen Test)
+                                    </h3>
+                                    <p style={{ fontSize: '11px', color: '#8594a8', marginBottom: '14px' }}>
+                                        {new Date(wfResults.test_date_range.start).toLocaleDateString()} to {new Date(wfResults.test_date_range.end).toLocaleDateString()}
+                                    </p>
+                                    <div className="detail"><span>Net P&L</span><b>{money(wfResults.out_of_sample.net_pnl)}</b></div>
+                                    <div className="detail"><span>Return</span><b>{wfResults.out_of_sample.return_pct}%</b></div>
+                                    <div className="detail"><span>Win Rate</span><b>{wfResults.out_of_sample.win_rate_pct}%</b></div>
+                                    <div className="detail"><span>Total Trades</span><b>{wfResults.out_of_sample.trade_count}</b></div>
+                                    <div className="detail"><span>Profit Factor</span><b>{wfResults.out_of_sample.profit_factor ?? '—'}</b></div>
+                                    <div className="detail"><span>Max Drawdown</span><b>{wfResults.out_of_sample.max_drawdown_pct}%</b></div>
+                                    <div className="detail"><span>Sharpe Ratio</span><b>{wfResults.out_of_sample.sharpe_ratio ?? '—'}</b></div>
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </section>
+            )}
+
 
 
             {/* Saved Experiments Modal / Drawer */}
