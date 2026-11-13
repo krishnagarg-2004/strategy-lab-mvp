@@ -174,4 +174,37 @@ class PortfolioBacktestRequest(BaseModel):
     market_interval: Optional[str] = "15m"
 
 
+class WebhookConfig(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    webhook_url: Optional[str] = None
+    enabled: bool = False
+    platform: str = Field(default="generic", pattern="^(generic|discord|telegram)$")
+
+
+class StartPaperTradingRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    symbol: str = Field(default="^NSEI", min_length=1)
+    strategy: StrategySpec = Field(default_factory=StrategySpec)
+    initial_capital: float = Field(default=100000, gt=0)
+    quantity: int = Field(default=1, ge=1)
+    webhook: Optional[WebhookConfig] = None
+
+
+class PaperTradingTickRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    manual_price: Optional[float] = None
+
+
+class WebhookTestRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    webhook_url: str = Field(..., min_length=10)
+    platform: str = Field(default="generic", pattern="^(generic|discord|telegram)$")
+    message: Optional[str] = None
+
+
+
 

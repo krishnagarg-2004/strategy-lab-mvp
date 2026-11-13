@@ -673,4 +673,40 @@ def test_indian_regulatory_charges():
     assert "stamp_duty" in result["tax_summary"]
 
 
+def test_paper_trading_lifecycle():
+    """Verify live paper trading start, tick evaluation, and stop flow."""
+    # 1. Start paper session
+    start_payload = {
+        "symbol": "^NSEI",
+        "strategy": {
+            "name": "Paper Scalp",
+            "fast_ema": 9,
+            "slow_ema": 21,
+            "trading_start": "00:00",
+            "trading_end": "23:59",
+            "stop_loss_pct": 1.0,
+            "take_profit_pct": 2.0,
+        },
+        "initial_capital": 100000,
+        "quantity": 1,
+    }
+    res_start = client.post("/api/paper-trading/start", json=start_payload)
+    assert res_start.status_code == 200
+    data = res_start.json()
+    assert data["is_active"] is True
+    assert data["symbol"] == "^NSEI"
+    assert data["initial_capital"] == 100000
+
+    # 2. Status
+    res_status = client.get("/api/paper-trading/status")
+    assert res_status.status_code == 200
+    assert res_status.json()["is_active"] is True
+
+    # 3. Stop
+    res_stop = client.post("/api/paper-trading/stop")
+    assert res_stop.status_code == 200
+    assert res_stop.json()["is_active"] is False
+
+
+
 

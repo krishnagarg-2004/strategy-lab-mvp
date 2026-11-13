@@ -211,6 +211,36 @@ type WalkForwardData = {
     is_overfitted: boolean;
 };
 
+type PaperTradingStatus = {
+    is_active: boolean;
+    started_at: string | null;
+    symbol: string;
+    initial_capital: number;
+    cash_balance: number;
+    equity: number;
+    realized_pnl: number;
+    unrealized_pnl: number;
+    total_return_pct: number;
+    open_position: {
+        side: 'LONG' | 'SHORT';
+        entry_time: string;
+        entry_price: number;
+        quantity: number;
+        stop: number;
+        target: number;
+        highest_price?: number;
+        lowest_price?: number;
+        is_trailing?: boolean;
+    } | null;
+    last_candle_time: string | null;
+    last_evaluated_price: number | null;
+    trades_count: number;
+    trades: any[];
+    logs: { time: string; event: string; message: string }[];
+    webhook_enabled: boolean;
+};
+
+
 
 
 const defaults: Strategy = {
@@ -307,8 +337,17 @@ export default function App() {
     const [experimentName, setExperimentName] = useState('');
     const [saveStatus, setSaveStatus] = useState('');
 
-    // Workspace View Tab & State (Phase 3 + Intermediate)
-    const [workspaceTab, setWorkspaceTab] = useState<'single' | 'grid_search' | 'portfolio' | 'monte_carlo' | 'walk_forward'>('single');
+    // Workspace View Tab & State (Phase 3 + Intermediate + Advanced)
+    const [workspaceTab, setWorkspaceTab] = useState<'single' | 'grid_search' | 'portfolio' | 'monte_carlo' | 'walk_forward' | 'paper_trading'>('single');
+
+    // Live Paper Trading State
+    const [paperStatus, setPaperStatus] = useState<PaperTradingStatus | null>(null);
+    const [paperBusy, setPaperBusy] = useState(false);
+    const [webhookUrl, setWebhookUrl] = useState('');
+    const [webhookEnabled, setWebhookEnabled] = useState(false);
+    const [webhookPlatform, setWebhookPlatform] = useState<'generic' | 'discord' | 'telegram'>('discord');
+    const [webhookTestStatus, setWebhookTestStatus] = useState('');
+
 
     // Monte Carlo State
     const [mcSimulations, setMcSimulations] = useState(1000);
@@ -353,7 +392,18 @@ export default function App() {
             .catch(() => {});
 
         loadExperimentsList();
+        loadPaperTradingStatus();
     }, []);
+
+    async function loadPaperTradingStatus() {
+        try {
+            const res = await fetch('/api/paper-trading/status');
+            const data = await res.json();
+            setPaperStatus(data as PaperTradingStatus);
+        } catch {
+            // non-blocking
+        }
+    }
 
     async function loadExperimentsList() {
         try {
@@ -626,6 +676,87 @@ export default function App() {
         }
     }
 
+    async function handleStartPaperTrading() {
+        setPaperBusy(true);
+        setError('');
+        try {
+            const response = await fetch('/api/paper-trading/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    symbol: marketSymbol || symbol,
+                    strategy,
+                    initial_capital: capital,
+                    quantity: qty,
+                    webhook: {
+                        webhook_url: webhookUrl,
+                        enabled: webhookEnabled,
+                        platform: webhookPlatform,
+                    },
+                }),
+            });
+            const data = await parseJsonResponse(response);
+            setPaperStatus(data as PaperTradingStatus);
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'Failed to start paper trading');
+        } finally {
+            setPaperBusy(false);
+        }
+    }
+
+    async function handleStopPaperTrading() {
+        setPaperBusy(true);
+        try {
+            const response = await fetch('/api/paper-trading/stop', { method: 'POST' });
+            const data = await parseJsonResponse(response);
+            setPaperStatus(data as PaperTradingStatus);
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'Failed to stop paper trading');
+        } finally {
+            setPaperBusy(false);
+        }
+    }
+
+    async function handlePaperTradingTick(manualPrice?: number) {
+        setPaperBusy(true);
+        try {
+            const response = await fetch('/api/paper-trading/tick', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ manual_price: manualPrice }),
+            });
+            const data = await parseJsonResponse(response);
+            setPaperStatus(data as PaperTradingStatus);
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'Tick evaluation failed');
+        } finally {
+            setPaperBusy(false);
+        }
+    }
+
+    async function handleTestWebhook() {
+        if (!webhookUrl) {
+            setWebhookTestStatus('Please enter a webhook URL first.');
+            return;
+        }
+        setWebhookTestStatus('Sending test ping…');
+        try {
+            const res = await fetch('/api/paper-trading/webhook-test', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    webhook_url: webhookUrl,
+                    platform: webhookPlatform,
+                    message: `Strategy Lab Webhook Verification: Connected to ${marketSymbol || symbol}`,
+                }),
+            });
+            if (!res.ok) throw new Error('Webhook test ping failed.');
+            setWebhookTestStatus('✓ Webhook ping delivered successfully!');
+        } catch (e) {
+            setWebhookTestStatus(`❌ Error: ${e instanceof Error ? e.message : 'Failed'}`);
+        }
+    }
+
     async function handleSaveExperiment() {
         if (!result) return;
         const nameToSave =
@@ -799,6 +930,14 @@ export default function App() {
                             onClick={() => setWorkspaceTab('walk_forward')}
                         >
                             ⏳ Walk-Forward (OOS)
+                        </button>
+                        <button
+                            type="button"
+                            className={`tab-btn ${workspaceTab === 'paper_trading' ? 'active' : ''}`}
+                            onClick={() => setWorkspaceTab('paper_trading')}
+                            style={{ borderColor: paperStatus?.is_active ? '#63dfb0' : undefined }}
+                        >
+                            {paperStatus?.is_active ? '🔴 LIVE PAPER' : '📡 Live Paper Trading'}
                         </button>
                     </div>
 
@@ -1956,6 +2095,200 @@ export default function App() {
                 </section>
             )}
 
+            {/* Advanced: Live Paper Trading & Real-Time Alert Engine */}
+            {workspaceTab === 'paper_trading' && (
+                <section className="results" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
+                    <div className="panel result-head">
+                        <div>
+                            <span className="eyebrow">ADVANCED / LIVE PAPER TRADING ENGINE</span>
+                            <h2>Live Indian Markets Paper Portfolio & Alert Hub</h2>
+                            <p>Forward simulate signals in real-time, execute simulated orders with live trailing stops, and stream alerts to Discord/Telegram.</p>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            {paperStatus?.is_active ? (
+                                <>
+                                    <button className="run" onClick={() => handlePaperTradingTick()} disabled={paperBusy} style={{ padding: '9px 18px', background: '#1d3557' }}>
+                                        {paperBusy ? 'Evaluating…' : '⚡ Trigger Live Tick'}
+                                    </button>
+                                    <button className="run" onClick={handleStopPaperTrading} disabled={paperBusy} style={{ padding: '9px 18px', background: '#ef4444', color: '#fff' }}>
+                                        🛑 Stop Session
+                                    </button>
+                                </>
+                            ) : (
+                                <button className="run" onClick={handleStartPaperTrading} disabled={paperBusy} style={{ padding: '9px 24px' }}>
+                                    {paperBusy ? 'Starting…' : '▶ Start Live Paper Session'}
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="panel" style={{ marginTop: '16px', display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
+                        <div style={{ flex: '1 1 200px' }}>
+                            <label>
+                                Active Trading Symbol
+                                <input disabled value={marketSymbol || symbol} />
+                            </label>
+                        </div>
+                        <div style={{ flex: '1 1 200px' }}>
+                            <label>
+                                Current Status
+                                <div style={{ padding: '8px', fontWeight: 700, color: paperStatus?.is_active ? '#63dfb0' : '#8594a8' }}>
+                                    {paperStatus?.is_active ? '● LIVE PAPER ACTIVE' : '○ SESSION STOPPED'}
+                                </div>
+                            </label>
+                        </div>
+                        <div style={{ flex: '1 1 200px' }}>
+                            <label>
+                                Last Evaluated Price
+                                <div style={{ padding: '8px', fontWeight: 700, color: '#f8fafc' }}>
+                                    {paperStatus?.last_evaluated_price ? `₹${paperStatus.last_evaluated_price.toFixed(2)}` : 'Awaiting tick'}
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    {paperStatus && (
+                        <>
+                            <div className="metrics" style={{ marginTop: '16px' }}>
+                                <Metric
+                                    label="Paper Equity"
+                                    value={money(paperStatus.equity)}
+                                    sub={`Cash: ${money(paperStatus.cash_balance)}`}
+                                    positive={paperStatus.equity >= paperStatus.initial_capital}
+                                />
+                                <Metric
+                                    label="Realized P&L"
+                                    value={money(paperStatus.realized_pnl)}
+                                    sub={`${paperStatus.trades_count} closed paper trades`}
+                                    positive={paperStatus.realized_pnl >= 0}
+                                />
+                                <Metric
+                                    label="Unrealized P&L"
+                                    value={money(paperStatus.unrealized_pnl)}
+                                    sub={paperStatus.open_position ? `Open ${paperStatus.open_position.side} @ ₹${paperStatus.open_position.entry_price}` : 'No open position'}
+                                    positive={paperStatus.unrealized_pnl >= 0}
+                                />
+                                <Metric
+                                    label="Total Paper Return"
+                                    value={`${paperStatus.total_return_pct}%`}
+                                    sub={`From ${money(paperStatus.initial_capital)}`}
+                                    positive={paperStatus.total_return_pct >= 0}
+                                />
+                            </div>
+
+                            <div className="two" style={{ marginTop: '16px' }}>
+                                {/* Open Position Card */}
+                                <div className="panel" style={{ padding: '20px' }}>
+                                    <h3>Active Position</h3>
+                                    {paperStatus.open_position ? (
+                                        <div style={{ marginTop: '12px' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                                <span className={paperStatus.open_position.side === 'SHORT' ? 'badge-short' : 'badge-long'} style={{ fontSize: '11px', padding: '4px 10px' }}>
+                                                    {paperStatus.open_position.side} {paperStatus.symbol}
+                                                </span>
+                                                <b style={{ color: paperStatus.unrealized_pnl >= 0 ? '#63dfb0' : '#f87171', fontSize: '15px' }}>
+                                                    {money(paperStatus.unrealized_pnl)}
+                                                </b>
+                                            </div>
+                                            <div className="detail"><span>Entry Price</span><b>₹{paperStatus.open_position.entry_price.toFixed(2)}</b></div>
+                                            <div className="detail"><span>Quantity</span><b>{paperStatus.open_position.quantity} shares</b></div>
+                                            <div className="detail"><span>Stop Loss</span><b>₹{paperStatus.open_position.stop.toFixed(2)} {paperStatus.open_position.is_trailing ? '(Trailing)' : ''}</b></div>
+                                            <div className="detail"><span>Take Profit</span><b>₹{paperStatus.open_position.target.toFixed(2)}</b></div>
+                                            <div className="detail"><span>Entry Timestamp</span><b>{new Date(paperStatus.open_position.entry_time).toLocaleTimeString()}</b></div>
+                                        </div>
+                                    ) : (
+                                        <div className="no-trades" style={{ padding: '30px 10px' }}>
+                                            No open position. The engine is monitoring candle closes for crossovers.
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Webhook Configuration Card */}
+                                <div className="panel" style={{ padding: '20px' }}>
+                                    <h3>Real-Time Webhook Alert Hub</h3>
+                                    <p style={{ fontSize: '11px', color: '#8594a8', marginBottom: '12px' }}>
+                                        Stream execution signals instantly to Discord, Telegram, or custom webhooks.
+                                    </p>
+                                    <label className="toggle-row" style={{ marginBottom: '10px' }}>
+                                        <span><b>Enable Live Webhook Alerts</b></span>
+                                        <input
+                                            type="checkbox"
+                                            checked={webhookEnabled}
+                                            onChange={(e) => setWebhookEnabled(e.target.checked)}
+                                        />
+                                    </label>
+                                    <div className="two" style={{ marginBottom: '10px' }}>
+                                        <label>
+                                            Platform
+                                            <select
+                                                value={webhookPlatform}
+                                                onChange={(e) => setWebhookPlatform(e.target.value as any)}
+                                            >
+                                                <option value="discord">Discord Webhook</option>
+                                                <option value="telegram">Telegram Bot</option>
+                                                <option value="generic">Generic JSON Webhook</option>
+                                            </select>
+                                        </label>
+                                        <label>
+                                            Webhook URL
+                                            <input
+                                                value={webhookUrl}
+                                                onChange={(e) => setWebhookUrl(e.target.value)}
+                                                placeholder="https://discord.com/api/webhooks/..."
+                                            />
+                                        </label>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className="secondary"
+                                        style={{ width: '100%', marginTop: '4px' }}
+                                        onClick={handleTestWebhook}
+                                    >
+                                        🔔 Send Test Ping to Webhook
+                                    </button>
+                                    {webhookTestStatus && (
+                                        <p style={{ fontSize: '11px', color: '#63dfb0', margin: '8px 0 0' }}>
+                                            {webhookTestStatus}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Live Engine Event Log */}
+                            <div className="panel" style={{ marginTop: '16px' }}>
+                                <div className="table-head">
+                                    <h3>Live Event & Alert Audit Log</h3>
+                                    <span className="count">{paperStatus.logs.length} EVENTS</span>
+                                </div>
+                                <div className="table-wrap">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>TIME</th>
+                                                <th>EVENT</th>
+                                                <th>MESSAGE</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {paperStatus.logs.slice().reverse().map((log, idx) => (
+                                                <tr key={idx}>
+                                                    <td style={{ color: '#728198' }}>{log.time}</td>
+                                                    <td style={{ fontWeight: 700, color: log.event.includes('ERROR') ? '#f87171' : '#63dfb0' }}>
+                                                        {log.event}
+                                                    </td>
+                                                    <td>{log.message}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </section>
+            )}
+
+
             {/* Intermediate: Monte Carlo Stress Test View */}
             {workspaceTab === 'monte_carlo' && (
                 <section className="results" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
@@ -2052,6 +2385,200 @@ export default function App() {
                     )}
                 </section>
             )}
+
+            {/* Advanced: Live Paper Trading & Real-Time Alert Engine */}
+            {workspaceTab === 'paper_trading' && (
+                <section className="results" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
+                    <div className="panel result-head">
+                        <div>
+                            <span className="eyebrow">ADVANCED / LIVE PAPER TRADING ENGINE</span>
+                            <h2>Live Indian Markets Paper Portfolio & Alert Hub</h2>
+                            <p>Forward simulate signals in real-time, execute simulated orders with live trailing stops, and stream alerts to Discord/Telegram.</p>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            {paperStatus?.is_active ? (
+                                <>
+                                    <button className="run" onClick={() => handlePaperTradingTick()} disabled={paperBusy} style={{ padding: '9px 18px', background: '#1d3557' }}>
+                                        {paperBusy ? 'Evaluating…' : '⚡ Trigger Live Tick'}
+                                    </button>
+                                    <button className="run" onClick={handleStopPaperTrading} disabled={paperBusy} style={{ padding: '9px 18px', background: '#ef4444', color: '#fff' }}>
+                                        🛑 Stop Session
+                                    </button>
+                                </>
+                            ) : (
+                                <button className="run" onClick={handleStartPaperTrading} disabled={paperBusy} style={{ padding: '9px 24px' }}>
+                                    {paperBusy ? 'Starting…' : '▶ Start Live Paper Session'}
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="panel" style={{ marginTop: '16px', display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
+                        <div style={{ flex: '1 1 200px' }}>
+                            <label>
+                                Active Trading Symbol
+                                <input disabled value={marketSymbol || symbol} />
+                            </label>
+                        </div>
+                        <div style={{ flex: '1 1 200px' }}>
+                            <label>
+                                Current Status
+                                <div style={{ padding: '8px', fontWeight: 700, color: paperStatus?.is_active ? '#63dfb0' : '#8594a8' }}>
+                                    {paperStatus?.is_active ? '● LIVE PAPER ACTIVE' : '○ SESSION STOPPED'}
+                                </div>
+                            </label>
+                        </div>
+                        <div style={{ flex: '1 1 200px' }}>
+                            <label>
+                                Last Evaluated Price
+                                <div style={{ padding: '8px', fontWeight: 700, color: '#f8fafc' }}>
+                                    {paperStatus?.last_evaluated_price ? `₹${paperStatus.last_evaluated_price.toFixed(2)}` : 'Awaiting tick'}
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    {paperStatus && (
+                        <>
+                            <div className="metrics" style={{ marginTop: '16px' }}>
+                                <Metric
+                                    label="Paper Equity"
+                                    value={money(paperStatus.equity)}
+                                    sub={`Cash: ${money(paperStatus.cash_balance)}`}
+                                    positive={paperStatus.equity >= paperStatus.initial_capital}
+                                />
+                                <Metric
+                                    label="Realized P&L"
+                                    value={money(paperStatus.realized_pnl)}
+                                    sub={`${paperStatus.trades_count} closed paper trades`}
+                                    positive={paperStatus.realized_pnl >= 0}
+                                />
+                                <Metric
+                                    label="Unrealized P&L"
+                                    value={money(paperStatus.unrealized_pnl)}
+                                    sub={paperStatus.open_position ? `Open ${paperStatus.open_position.side} @ ₹${paperStatus.open_position.entry_price}` : 'No open position'}
+                                    positive={paperStatus.unrealized_pnl >= 0}
+                                />
+                                <Metric
+                                    label="Total Paper Return"
+                                    value={`${paperStatus.total_return_pct}%`}
+                                    sub={`From ${money(paperStatus.initial_capital)}`}
+                                    positive={paperStatus.total_return_pct >= 0}
+                                />
+                            </div>
+
+                            <div className="two" style={{ marginTop: '16px' }}>
+                                {/* Open Position Card */}
+                                <div className="panel" style={{ padding: '20px' }}>
+                                    <h3>Active Position</h3>
+                                    {paperStatus.open_position ? (
+                                        <div style={{ marginTop: '12px' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                                <span className={paperStatus.open_position.side === 'SHORT' ? 'badge-short' : 'badge-long'} style={{ fontSize: '11px', padding: '4px 10px' }}>
+                                                    {paperStatus.open_position.side} {paperStatus.symbol}
+                                                </span>
+                                                <b style={{ color: paperStatus.unrealized_pnl >= 0 ? '#63dfb0' : '#f87171', fontSize: '15px' }}>
+                                                    {money(paperStatus.unrealized_pnl)}
+                                                </b>
+                                            </div>
+                                            <div className="detail"><span>Entry Price</span><b>₹{paperStatus.open_position.entry_price.toFixed(2)}</b></div>
+                                            <div className="detail"><span>Quantity</span><b>{paperStatus.open_position.quantity} shares</b></div>
+                                            <div className="detail"><span>Stop Loss</span><b>₹{paperStatus.open_position.stop.toFixed(2)} {paperStatus.open_position.is_trailing ? '(Trailing)' : ''}</b></div>
+                                            <div className="detail"><span>Take Profit</span><b>₹{paperStatus.open_position.target.toFixed(2)}</b></div>
+                                            <div className="detail"><span>Entry Timestamp</span><b>{new Date(paperStatus.open_position.entry_time).toLocaleTimeString()}</b></div>
+                                        </div>
+                                    ) : (
+                                        <div className="no-trades" style={{ padding: '30px 10px' }}>
+                                            No open position. The engine is monitoring candle closes for crossovers.
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Webhook Configuration Card */}
+                                <div className="panel" style={{ padding: '20px' }}>
+                                    <h3>Real-Time Webhook Alert Hub</h3>
+                                    <p style={{ fontSize: '11px', color: '#8594a8', marginBottom: '12px' }}>
+                                        Stream execution signals instantly to Discord, Telegram, or custom webhooks.
+                                    </p>
+                                    <label className="toggle-row" style={{ marginBottom: '10px' }}>
+                                        <span><b>Enable Live Webhook Alerts</b></span>
+                                        <input
+                                            type="checkbox"
+                                            checked={webhookEnabled}
+                                            onChange={(e) => setWebhookEnabled(e.target.checked)}
+                                        />
+                                    </label>
+                                    <div className="two" style={{ marginBottom: '10px' }}>
+                                        <label>
+                                            Platform
+                                            <select
+                                                value={webhookPlatform}
+                                                onChange={(e) => setWebhookPlatform(e.target.value as any)}
+                                            >
+                                                <option value="discord">Discord Webhook</option>
+                                                <option value="telegram">Telegram Bot</option>
+                                                <option value="generic">Generic JSON Webhook</option>
+                                            </select>
+                                        </label>
+                                        <label>
+                                            Webhook URL
+                                            <input
+                                                value={webhookUrl}
+                                                onChange={(e) => setWebhookUrl(e.target.value)}
+                                                placeholder="https://discord.com/api/webhooks/..."
+                                            />
+                                        </label>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className="secondary"
+                                        style={{ width: '100%', marginTop: '4px' }}
+                                        onClick={handleTestWebhook}
+                                    >
+                                        🔔 Send Test Ping to Webhook
+                                    </button>
+                                    {webhookTestStatus && (
+                                        <p style={{ fontSize: '11px', color: '#63dfb0', margin: '8px 0 0' }}>
+                                            {webhookTestStatus}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Live Engine Event Log */}
+                            <div className="panel" style={{ marginTop: '16px' }}>
+                                <div className="table-head">
+                                    <h3>Live Event & Alert Audit Log</h3>
+                                    <span className="count">{paperStatus.logs.length} EVENTS</span>
+                                </div>
+                                <div className="table-wrap">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>TIME</th>
+                                                <th>EVENT</th>
+                                                <th>MESSAGE</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {paperStatus.logs.slice().reverse().map((log, idx) => (
+                                                <tr key={idx}>
+                                                    <td style={{ color: '#728198' }}>{log.time}</td>
+                                                    <td style={{ fontWeight: 700, color: log.event.includes('ERROR') ? '#f87171' : '#63dfb0' }}>
+                                                        {log.event}
+                                                    </td>
+                                                    <td>{log.message}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </section>
+            )}
+
 
             {/* Intermediate: Walk-Forward Out-Of-Sample (OOS) View */}
             {workspaceTab === 'walk_forward' && (
@@ -2154,6 +2681,200 @@ export default function App() {
                     )}
                 </section>
             )}
+
+            {/* Advanced: Live Paper Trading & Real-Time Alert Engine */}
+            {workspaceTab === 'paper_trading' && (
+                <section className="results" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
+                    <div className="panel result-head">
+                        <div>
+                            <span className="eyebrow">ADVANCED / LIVE PAPER TRADING ENGINE</span>
+                            <h2>Live Indian Markets Paper Portfolio & Alert Hub</h2>
+                            <p>Forward simulate signals in real-time, execute simulated orders with live trailing stops, and stream alerts to Discord/Telegram.</p>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            {paperStatus?.is_active ? (
+                                <>
+                                    <button className="run" onClick={() => handlePaperTradingTick()} disabled={paperBusy} style={{ padding: '9px 18px', background: '#1d3557' }}>
+                                        {paperBusy ? 'Evaluating…' : '⚡ Trigger Live Tick'}
+                                    </button>
+                                    <button className="run" onClick={handleStopPaperTrading} disabled={paperBusy} style={{ padding: '9px 18px', background: '#ef4444', color: '#fff' }}>
+                                        🛑 Stop Session
+                                    </button>
+                                </>
+                            ) : (
+                                <button className="run" onClick={handleStartPaperTrading} disabled={paperBusy} style={{ padding: '9px 24px' }}>
+                                    {paperBusy ? 'Starting…' : '▶ Start Live Paper Session'}
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="panel" style={{ marginTop: '16px', display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
+                        <div style={{ flex: '1 1 200px' }}>
+                            <label>
+                                Active Trading Symbol
+                                <input disabled value={marketSymbol || symbol} />
+                            </label>
+                        </div>
+                        <div style={{ flex: '1 1 200px' }}>
+                            <label>
+                                Current Status
+                                <div style={{ padding: '8px', fontWeight: 700, color: paperStatus?.is_active ? '#63dfb0' : '#8594a8' }}>
+                                    {paperStatus?.is_active ? '● LIVE PAPER ACTIVE' : '○ SESSION STOPPED'}
+                                </div>
+                            </label>
+                        </div>
+                        <div style={{ flex: '1 1 200px' }}>
+                            <label>
+                                Last Evaluated Price
+                                <div style={{ padding: '8px', fontWeight: 700, color: '#f8fafc' }}>
+                                    {paperStatus?.last_evaluated_price ? `₹${paperStatus.last_evaluated_price.toFixed(2)}` : 'Awaiting tick'}
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    {paperStatus && (
+                        <>
+                            <div className="metrics" style={{ marginTop: '16px' }}>
+                                <Metric
+                                    label="Paper Equity"
+                                    value={money(paperStatus.equity)}
+                                    sub={`Cash: ${money(paperStatus.cash_balance)}`}
+                                    positive={paperStatus.equity >= paperStatus.initial_capital}
+                                />
+                                <Metric
+                                    label="Realized P&L"
+                                    value={money(paperStatus.realized_pnl)}
+                                    sub={`${paperStatus.trades_count} closed paper trades`}
+                                    positive={paperStatus.realized_pnl >= 0}
+                                />
+                                <Metric
+                                    label="Unrealized P&L"
+                                    value={money(paperStatus.unrealized_pnl)}
+                                    sub={paperStatus.open_position ? `Open ${paperStatus.open_position.side} @ ₹${paperStatus.open_position.entry_price}` : 'No open position'}
+                                    positive={paperStatus.unrealized_pnl >= 0}
+                                />
+                                <Metric
+                                    label="Total Paper Return"
+                                    value={`${paperStatus.total_return_pct}%`}
+                                    sub={`From ${money(paperStatus.initial_capital)}`}
+                                    positive={paperStatus.total_return_pct >= 0}
+                                />
+                            </div>
+
+                            <div className="two" style={{ marginTop: '16px' }}>
+                                {/* Open Position Card */}
+                                <div className="panel" style={{ padding: '20px' }}>
+                                    <h3>Active Position</h3>
+                                    {paperStatus.open_position ? (
+                                        <div style={{ marginTop: '12px' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                                <span className={paperStatus.open_position.side === 'SHORT' ? 'badge-short' : 'badge-long'} style={{ fontSize: '11px', padding: '4px 10px' }}>
+                                                    {paperStatus.open_position.side} {paperStatus.symbol}
+                                                </span>
+                                                <b style={{ color: paperStatus.unrealized_pnl >= 0 ? '#63dfb0' : '#f87171', fontSize: '15px' }}>
+                                                    {money(paperStatus.unrealized_pnl)}
+                                                </b>
+                                            </div>
+                                            <div className="detail"><span>Entry Price</span><b>₹{paperStatus.open_position.entry_price.toFixed(2)}</b></div>
+                                            <div className="detail"><span>Quantity</span><b>{paperStatus.open_position.quantity} shares</b></div>
+                                            <div className="detail"><span>Stop Loss</span><b>₹{paperStatus.open_position.stop.toFixed(2)} {paperStatus.open_position.is_trailing ? '(Trailing)' : ''}</b></div>
+                                            <div className="detail"><span>Take Profit</span><b>₹{paperStatus.open_position.target.toFixed(2)}</b></div>
+                                            <div className="detail"><span>Entry Timestamp</span><b>{new Date(paperStatus.open_position.entry_time).toLocaleTimeString()}</b></div>
+                                        </div>
+                                    ) : (
+                                        <div className="no-trades" style={{ padding: '30px 10px' }}>
+                                            No open position. The engine is monitoring candle closes for crossovers.
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Webhook Configuration Card */}
+                                <div className="panel" style={{ padding: '20px' }}>
+                                    <h3>Real-Time Webhook Alert Hub</h3>
+                                    <p style={{ fontSize: '11px', color: '#8594a8', marginBottom: '12px' }}>
+                                        Stream execution signals instantly to Discord, Telegram, or custom webhooks.
+                                    </p>
+                                    <label className="toggle-row" style={{ marginBottom: '10px' }}>
+                                        <span><b>Enable Live Webhook Alerts</b></span>
+                                        <input
+                                            type="checkbox"
+                                            checked={webhookEnabled}
+                                            onChange={(e) => setWebhookEnabled(e.target.checked)}
+                                        />
+                                    </label>
+                                    <div className="two" style={{ marginBottom: '10px' }}>
+                                        <label>
+                                            Platform
+                                            <select
+                                                value={webhookPlatform}
+                                                onChange={(e) => setWebhookPlatform(e.target.value as any)}
+                                            >
+                                                <option value="discord">Discord Webhook</option>
+                                                <option value="telegram">Telegram Bot</option>
+                                                <option value="generic">Generic JSON Webhook</option>
+                                            </select>
+                                        </label>
+                                        <label>
+                                            Webhook URL
+                                            <input
+                                                value={webhookUrl}
+                                                onChange={(e) => setWebhookUrl(e.target.value)}
+                                                placeholder="https://discord.com/api/webhooks/..."
+                                            />
+                                        </label>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className="secondary"
+                                        style={{ width: '100%', marginTop: '4px' }}
+                                        onClick={handleTestWebhook}
+                                    >
+                                        🔔 Send Test Ping to Webhook
+                                    </button>
+                                    {webhookTestStatus && (
+                                        <p style={{ fontSize: '11px', color: '#63dfb0', margin: '8px 0 0' }}>
+                                            {webhookTestStatus}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Live Engine Event Log */}
+                            <div className="panel" style={{ marginTop: '16px' }}>
+                                <div className="table-head">
+                                    <h3>Live Event & Alert Audit Log</h3>
+                                    <span className="count">{paperStatus.logs.length} EVENTS</span>
+                                </div>
+                                <div className="table-wrap">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>TIME</th>
+                                                <th>EVENT</th>
+                                                <th>MESSAGE</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {paperStatus.logs.slice().reverse().map((log, idx) => (
+                                                <tr key={idx}>
+                                                    <td style={{ color: '#728198' }}>{log.time}</td>
+                                                    <td style={{ fontWeight: 700, color: log.event.includes('ERROR') ? '#f87171' : '#63dfb0' }}>
+                                                        {log.event}
+                                                    </td>
+                                                    <td>{log.message}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </section>
+            )}
+
 
 
             {/* Phase 3: Portfolio Watchlist Multi-Stock Runner */}
@@ -2284,6 +3005,200 @@ export default function App() {
                 </section>
             )}
 
+            {/* Advanced: Live Paper Trading & Real-Time Alert Engine */}
+            {workspaceTab === 'paper_trading' && (
+                <section className="results" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
+                    <div className="panel result-head">
+                        <div>
+                            <span className="eyebrow">ADVANCED / LIVE PAPER TRADING ENGINE</span>
+                            <h2>Live Indian Markets Paper Portfolio & Alert Hub</h2>
+                            <p>Forward simulate signals in real-time, execute simulated orders with live trailing stops, and stream alerts to Discord/Telegram.</p>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            {paperStatus?.is_active ? (
+                                <>
+                                    <button className="run" onClick={() => handlePaperTradingTick()} disabled={paperBusy} style={{ padding: '9px 18px', background: '#1d3557' }}>
+                                        {paperBusy ? 'Evaluating…' : '⚡ Trigger Live Tick'}
+                                    </button>
+                                    <button className="run" onClick={handleStopPaperTrading} disabled={paperBusy} style={{ padding: '9px 18px', background: '#ef4444', color: '#fff' }}>
+                                        🛑 Stop Session
+                                    </button>
+                                </>
+                            ) : (
+                                <button className="run" onClick={handleStartPaperTrading} disabled={paperBusy} style={{ padding: '9px 24px' }}>
+                                    {paperBusy ? 'Starting…' : '▶ Start Live Paper Session'}
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="panel" style={{ marginTop: '16px', display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
+                        <div style={{ flex: '1 1 200px' }}>
+                            <label>
+                                Active Trading Symbol
+                                <input disabled value={marketSymbol || symbol} />
+                            </label>
+                        </div>
+                        <div style={{ flex: '1 1 200px' }}>
+                            <label>
+                                Current Status
+                                <div style={{ padding: '8px', fontWeight: 700, color: paperStatus?.is_active ? '#63dfb0' : '#8594a8' }}>
+                                    {paperStatus?.is_active ? '● LIVE PAPER ACTIVE' : '○ SESSION STOPPED'}
+                                </div>
+                            </label>
+                        </div>
+                        <div style={{ flex: '1 1 200px' }}>
+                            <label>
+                                Last Evaluated Price
+                                <div style={{ padding: '8px', fontWeight: 700, color: '#f8fafc' }}>
+                                    {paperStatus?.last_evaluated_price ? `₹${paperStatus.last_evaluated_price.toFixed(2)}` : 'Awaiting tick'}
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    {paperStatus && (
+                        <>
+                            <div className="metrics" style={{ marginTop: '16px' }}>
+                                <Metric
+                                    label="Paper Equity"
+                                    value={money(paperStatus.equity)}
+                                    sub={`Cash: ${money(paperStatus.cash_balance)}`}
+                                    positive={paperStatus.equity >= paperStatus.initial_capital}
+                                />
+                                <Metric
+                                    label="Realized P&L"
+                                    value={money(paperStatus.realized_pnl)}
+                                    sub={`${paperStatus.trades_count} closed paper trades`}
+                                    positive={paperStatus.realized_pnl >= 0}
+                                />
+                                <Metric
+                                    label="Unrealized P&L"
+                                    value={money(paperStatus.unrealized_pnl)}
+                                    sub={paperStatus.open_position ? `Open ${paperStatus.open_position.side} @ ₹${paperStatus.open_position.entry_price}` : 'No open position'}
+                                    positive={paperStatus.unrealized_pnl >= 0}
+                                />
+                                <Metric
+                                    label="Total Paper Return"
+                                    value={`${paperStatus.total_return_pct}%`}
+                                    sub={`From ${money(paperStatus.initial_capital)}`}
+                                    positive={paperStatus.total_return_pct >= 0}
+                                />
+                            </div>
+
+                            <div className="two" style={{ marginTop: '16px' }}>
+                                {/* Open Position Card */}
+                                <div className="panel" style={{ padding: '20px' }}>
+                                    <h3>Active Position</h3>
+                                    {paperStatus.open_position ? (
+                                        <div style={{ marginTop: '12px' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                                <span className={paperStatus.open_position.side === 'SHORT' ? 'badge-short' : 'badge-long'} style={{ fontSize: '11px', padding: '4px 10px' }}>
+                                                    {paperStatus.open_position.side} {paperStatus.symbol}
+                                                </span>
+                                                <b style={{ color: paperStatus.unrealized_pnl >= 0 ? '#63dfb0' : '#f87171', fontSize: '15px' }}>
+                                                    {money(paperStatus.unrealized_pnl)}
+                                                </b>
+                                            </div>
+                                            <div className="detail"><span>Entry Price</span><b>₹{paperStatus.open_position.entry_price.toFixed(2)}</b></div>
+                                            <div className="detail"><span>Quantity</span><b>{paperStatus.open_position.quantity} shares</b></div>
+                                            <div className="detail"><span>Stop Loss</span><b>₹{paperStatus.open_position.stop.toFixed(2)} {paperStatus.open_position.is_trailing ? '(Trailing)' : ''}</b></div>
+                                            <div className="detail"><span>Take Profit</span><b>₹{paperStatus.open_position.target.toFixed(2)}</b></div>
+                                            <div className="detail"><span>Entry Timestamp</span><b>{new Date(paperStatus.open_position.entry_time).toLocaleTimeString()}</b></div>
+                                        </div>
+                                    ) : (
+                                        <div className="no-trades" style={{ padding: '30px 10px' }}>
+                                            No open position. The engine is monitoring candle closes for crossovers.
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Webhook Configuration Card */}
+                                <div className="panel" style={{ padding: '20px' }}>
+                                    <h3>Real-Time Webhook Alert Hub</h3>
+                                    <p style={{ fontSize: '11px', color: '#8594a8', marginBottom: '12px' }}>
+                                        Stream execution signals instantly to Discord, Telegram, or custom webhooks.
+                                    </p>
+                                    <label className="toggle-row" style={{ marginBottom: '10px' }}>
+                                        <span><b>Enable Live Webhook Alerts</b></span>
+                                        <input
+                                            type="checkbox"
+                                            checked={webhookEnabled}
+                                            onChange={(e) => setWebhookEnabled(e.target.checked)}
+                                        />
+                                    </label>
+                                    <div className="two" style={{ marginBottom: '10px' }}>
+                                        <label>
+                                            Platform
+                                            <select
+                                                value={webhookPlatform}
+                                                onChange={(e) => setWebhookPlatform(e.target.value as any)}
+                                            >
+                                                <option value="discord">Discord Webhook</option>
+                                                <option value="telegram">Telegram Bot</option>
+                                                <option value="generic">Generic JSON Webhook</option>
+                                            </select>
+                                        </label>
+                                        <label>
+                                            Webhook URL
+                                            <input
+                                                value={webhookUrl}
+                                                onChange={(e) => setWebhookUrl(e.target.value)}
+                                                placeholder="https://discord.com/api/webhooks/..."
+                                            />
+                                        </label>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className="secondary"
+                                        style={{ width: '100%', marginTop: '4px' }}
+                                        onClick={handleTestWebhook}
+                                    >
+                                        🔔 Send Test Ping to Webhook
+                                    </button>
+                                    {webhookTestStatus && (
+                                        <p style={{ fontSize: '11px', color: '#63dfb0', margin: '8px 0 0' }}>
+                                            {webhookTestStatus}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Live Engine Event Log */}
+                            <div className="panel" style={{ marginTop: '16px' }}>
+                                <div className="table-head">
+                                    <h3>Live Event & Alert Audit Log</h3>
+                                    <span className="count">{paperStatus.logs.length} EVENTS</span>
+                                </div>
+                                <div className="table-wrap">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>TIME</th>
+                                                <th>EVENT</th>
+                                                <th>MESSAGE</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {paperStatus.logs.slice().reverse().map((log, idx) => (
+                                                <tr key={idx}>
+                                                    <td style={{ color: '#728198' }}>{log.time}</td>
+                                                    <td style={{ fontWeight: 700, color: log.event.includes('ERROR') ? '#f87171' : '#63dfb0' }}>
+                                                        {log.event}
+                                                    </td>
+                                                    <td>{log.message}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </section>
+            )}
+
+
             {/* Intermediate: Monte Carlo Stress Test View */}
             {workspaceTab === 'monte_carlo' && (
                 <section className="results" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
@@ -2380,6 +3295,200 @@ export default function App() {
                     )}
                 </section>
             )}
+
+            {/* Advanced: Live Paper Trading & Real-Time Alert Engine */}
+            {workspaceTab === 'paper_trading' && (
+                <section className="results" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
+                    <div className="panel result-head">
+                        <div>
+                            <span className="eyebrow">ADVANCED / LIVE PAPER TRADING ENGINE</span>
+                            <h2>Live Indian Markets Paper Portfolio & Alert Hub</h2>
+                            <p>Forward simulate signals in real-time, execute simulated orders with live trailing stops, and stream alerts to Discord/Telegram.</p>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            {paperStatus?.is_active ? (
+                                <>
+                                    <button className="run" onClick={() => handlePaperTradingTick()} disabled={paperBusy} style={{ padding: '9px 18px', background: '#1d3557' }}>
+                                        {paperBusy ? 'Evaluating…' : '⚡ Trigger Live Tick'}
+                                    </button>
+                                    <button className="run" onClick={handleStopPaperTrading} disabled={paperBusy} style={{ padding: '9px 18px', background: '#ef4444', color: '#fff' }}>
+                                        🛑 Stop Session
+                                    </button>
+                                </>
+                            ) : (
+                                <button className="run" onClick={handleStartPaperTrading} disabled={paperBusy} style={{ padding: '9px 24px' }}>
+                                    {paperBusy ? 'Starting…' : '▶ Start Live Paper Session'}
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="panel" style={{ marginTop: '16px', display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
+                        <div style={{ flex: '1 1 200px' }}>
+                            <label>
+                                Active Trading Symbol
+                                <input disabled value={marketSymbol || symbol} />
+                            </label>
+                        </div>
+                        <div style={{ flex: '1 1 200px' }}>
+                            <label>
+                                Current Status
+                                <div style={{ padding: '8px', fontWeight: 700, color: paperStatus?.is_active ? '#63dfb0' : '#8594a8' }}>
+                                    {paperStatus?.is_active ? '● LIVE PAPER ACTIVE' : '○ SESSION STOPPED'}
+                                </div>
+                            </label>
+                        </div>
+                        <div style={{ flex: '1 1 200px' }}>
+                            <label>
+                                Last Evaluated Price
+                                <div style={{ padding: '8px', fontWeight: 700, color: '#f8fafc' }}>
+                                    {paperStatus?.last_evaluated_price ? `₹${paperStatus.last_evaluated_price.toFixed(2)}` : 'Awaiting tick'}
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    {paperStatus && (
+                        <>
+                            <div className="metrics" style={{ marginTop: '16px' }}>
+                                <Metric
+                                    label="Paper Equity"
+                                    value={money(paperStatus.equity)}
+                                    sub={`Cash: ${money(paperStatus.cash_balance)}`}
+                                    positive={paperStatus.equity >= paperStatus.initial_capital}
+                                />
+                                <Metric
+                                    label="Realized P&L"
+                                    value={money(paperStatus.realized_pnl)}
+                                    sub={`${paperStatus.trades_count} closed paper trades`}
+                                    positive={paperStatus.realized_pnl >= 0}
+                                />
+                                <Metric
+                                    label="Unrealized P&L"
+                                    value={money(paperStatus.unrealized_pnl)}
+                                    sub={paperStatus.open_position ? `Open ${paperStatus.open_position.side} @ ₹${paperStatus.open_position.entry_price}` : 'No open position'}
+                                    positive={paperStatus.unrealized_pnl >= 0}
+                                />
+                                <Metric
+                                    label="Total Paper Return"
+                                    value={`${paperStatus.total_return_pct}%`}
+                                    sub={`From ${money(paperStatus.initial_capital)}`}
+                                    positive={paperStatus.total_return_pct >= 0}
+                                />
+                            </div>
+
+                            <div className="two" style={{ marginTop: '16px' }}>
+                                {/* Open Position Card */}
+                                <div className="panel" style={{ padding: '20px' }}>
+                                    <h3>Active Position</h3>
+                                    {paperStatus.open_position ? (
+                                        <div style={{ marginTop: '12px' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                                <span className={paperStatus.open_position.side === 'SHORT' ? 'badge-short' : 'badge-long'} style={{ fontSize: '11px', padding: '4px 10px' }}>
+                                                    {paperStatus.open_position.side} {paperStatus.symbol}
+                                                </span>
+                                                <b style={{ color: paperStatus.unrealized_pnl >= 0 ? '#63dfb0' : '#f87171', fontSize: '15px' }}>
+                                                    {money(paperStatus.unrealized_pnl)}
+                                                </b>
+                                            </div>
+                                            <div className="detail"><span>Entry Price</span><b>₹{paperStatus.open_position.entry_price.toFixed(2)}</b></div>
+                                            <div className="detail"><span>Quantity</span><b>{paperStatus.open_position.quantity} shares</b></div>
+                                            <div className="detail"><span>Stop Loss</span><b>₹{paperStatus.open_position.stop.toFixed(2)} {paperStatus.open_position.is_trailing ? '(Trailing)' : ''}</b></div>
+                                            <div className="detail"><span>Take Profit</span><b>₹{paperStatus.open_position.target.toFixed(2)}</b></div>
+                                            <div className="detail"><span>Entry Timestamp</span><b>{new Date(paperStatus.open_position.entry_time).toLocaleTimeString()}</b></div>
+                                        </div>
+                                    ) : (
+                                        <div className="no-trades" style={{ padding: '30px 10px' }}>
+                                            No open position. The engine is monitoring candle closes for crossovers.
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Webhook Configuration Card */}
+                                <div className="panel" style={{ padding: '20px' }}>
+                                    <h3>Real-Time Webhook Alert Hub</h3>
+                                    <p style={{ fontSize: '11px', color: '#8594a8', marginBottom: '12px' }}>
+                                        Stream execution signals instantly to Discord, Telegram, or custom webhooks.
+                                    </p>
+                                    <label className="toggle-row" style={{ marginBottom: '10px' }}>
+                                        <span><b>Enable Live Webhook Alerts</b></span>
+                                        <input
+                                            type="checkbox"
+                                            checked={webhookEnabled}
+                                            onChange={(e) => setWebhookEnabled(e.target.checked)}
+                                        />
+                                    </label>
+                                    <div className="two" style={{ marginBottom: '10px' }}>
+                                        <label>
+                                            Platform
+                                            <select
+                                                value={webhookPlatform}
+                                                onChange={(e) => setWebhookPlatform(e.target.value as any)}
+                                            >
+                                                <option value="discord">Discord Webhook</option>
+                                                <option value="telegram">Telegram Bot</option>
+                                                <option value="generic">Generic JSON Webhook</option>
+                                            </select>
+                                        </label>
+                                        <label>
+                                            Webhook URL
+                                            <input
+                                                value={webhookUrl}
+                                                onChange={(e) => setWebhookUrl(e.target.value)}
+                                                placeholder="https://discord.com/api/webhooks/..."
+                                            />
+                                        </label>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className="secondary"
+                                        style={{ width: '100%', marginTop: '4px' }}
+                                        onClick={handleTestWebhook}
+                                    >
+                                        🔔 Send Test Ping to Webhook
+                                    </button>
+                                    {webhookTestStatus && (
+                                        <p style={{ fontSize: '11px', color: '#63dfb0', margin: '8px 0 0' }}>
+                                            {webhookTestStatus}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Live Engine Event Log */}
+                            <div className="panel" style={{ marginTop: '16px' }}>
+                                <div className="table-head">
+                                    <h3>Live Event & Alert Audit Log</h3>
+                                    <span className="count">{paperStatus.logs.length} EVENTS</span>
+                                </div>
+                                <div className="table-wrap">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>TIME</th>
+                                                <th>EVENT</th>
+                                                <th>MESSAGE</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {paperStatus.logs.slice().reverse().map((log, idx) => (
+                                                <tr key={idx}>
+                                                    <td style={{ color: '#728198' }}>{log.time}</td>
+                                                    <td style={{ fontWeight: 700, color: log.event.includes('ERROR') ? '#f87171' : '#63dfb0' }}>
+                                                        {log.event}
+                                                    </td>
+                                                    <td>{log.message}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </section>
+            )}
+
 
             {/* Intermediate: Walk-Forward Out-Of-Sample (OOS) View */}
             {workspaceTab === 'walk_forward' && (
@@ -2482,6 +3591,200 @@ export default function App() {
                     )}
                 </section>
             )}
+
+            {/* Advanced: Live Paper Trading & Real-Time Alert Engine */}
+            {workspaceTab === 'paper_trading' && (
+                <section className="results" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
+                    <div className="panel result-head">
+                        <div>
+                            <span className="eyebrow">ADVANCED / LIVE PAPER TRADING ENGINE</span>
+                            <h2>Live Indian Markets Paper Portfolio & Alert Hub</h2>
+                            <p>Forward simulate signals in real-time, execute simulated orders with live trailing stops, and stream alerts to Discord/Telegram.</p>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            {paperStatus?.is_active ? (
+                                <>
+                                    <button className="run" onClick={() => handlePaperTradingTick()} disabled={paperBusy} style={{ padding: '9px 18px', background: '#1d3557' }}>
+                                        {paperBusy ? 'Evaluating…' : '⚡ Trigger Live Tick'}
+                                    </button>
+                                    <button className="run" onClick={handleStopPaperTrading} disabled={paperBusy} style={{ padding: '9px 18px', background: '#ef4444', color: '#fff' }}>
+                                        🛑 Stop Session
+                                    </button>
+                                </>
+                            ) : (
+                                <button className="run" onClick={handleStartPaperTrading} disabled={paperBusy} style={{ padding: '9px 24px' }}>
+                                    {paperBusy ? 'Starting…' : '▶ Start Live Paper Session'}
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="panel" style={{ marginTop: '16px', display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
+                        <div style={{ flex: '1 1 200px' }}>
+                            <label>
+                                Active Trading Symbol
+                                <input disabled value={marketSymbol || symbol} />
+                            </label>
+                        </div>
+                        <div style={{ flex: '1 1 200px' }}>
+                            <label>
+                                Current Status
+                                <div style={{ padding: '8px', fontWeight: 700, color: paperStatus?.is_active ? '#63dfb0' : '#8594a8' }}>
+                                    {paperStatus?.is_active ? '● LIVE PAPER ACTIVE' : '○ SESSION STOPPED'}
+                                </div>
+                            </label>
+                        </div>
+                        <div style={{ flex: '1 1 200px' }}>
+                            <label>
+                                Last Evaluated Price
+                                <div style={{ padding: '8px', fontWeight: 700, color: '#f8fafc' }}>
+                                    {paperStatus?.last_evaluated_price ? `₹${paperStatus.last_evaluated_price.toFixed(2)}` : 'Awaiting tick'}
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    {paperStatus && (
+                        <>
+                            <div className="metrics" style={{ marginTop: '16px' }}>
+                                <Metric
+                                    label="Paper Equity"
+                                    value={money(paperStatus.equity)}
+                                    sub={`Cash: ${money(paperStatus.cash_balance)}`}
+                                    positive={paperStatus.equity >= paperStatus.initial_capital}
+                                />
+                                <Metric
+                                    label="Realized P&L"
+                                    value={money(paperStatus.realized_pnl)}
+                                    sub={`${paperStatus.trades_count} closed paper trades`}
+                                    positive={paperStatus.realized_pnl >= 0}
+                                />
+                                <Metric
+                                    label="Unrealized P&L"
+                                    value={money(paperStatus.unrealized_pnl)}
+                                    sub={paperStatus.open_position ? `Open ${paperStatus.open_position.side} @ ₹${paperStatus.open_position.entry_price}` : 'No open position'}
+                                    positive={paperStatus.unrealized_pnl >= 0}
+                                />
+                                <Metric
+                                    label="Total Paper Return"
+                                    value={`${paperStatus.total_return_pct}%`}
+                                    sub={`From ${money(paperStatus.initial_capital)}`}
+                                    positive={paperStatus.total_return_pct >= 0}
+                                />
+                            </div>
+
+                            <div className="two" style={{ marginTop: '16px' }}>
+                                {/* Open Position Card */}
+                                <div className="panel" style={{ padding: '20px' }}>
+                                    <h3>Active Position</h3>
+                                    {paperStatus.open_position ? (
+                                        <div style={{ marginTop: '12px' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                                <span className={paperStatus.open_position.side === 'SHORT' ? 'badge-short' : 'badge-long'} style={{ fontSize: '11px', padding: '4px 10px' }}>
+                                                    {paperStatus.open_position.side} {paperStatus.symbol}
+                                                </span>
+                                                <b style={{ color: paperStatus.unrealized_pnl >= 0 ? '#63dfb0' : '#f87171', fontSize: '15px' }}>
+                                                    {money(paperStatus.unrealized_pnl)}
+                                                </b>
+                                            </div>
+                                            <div className="detail"><span>Entry Price</span><b>₹{paperStatus.open_position.entry_price.toFixed(2)}</b></div>
+                                            <div className="detail"><span>Quantity</span><b>{paperStatus.open_position.quantity} shares</b></div>
+                                            <div className="detail"><span>Stop Loss</span><b>₹{paperStatus.open_position.stop.toFixed(2)} {paperStatus.open_position.is_trailing ? '(Trailing)' : ''}</b></div>
+                                            <div className="detail"><span>Take Profit</span><b>₹{paperStatus.open_position.target.toFixed(2)}</b></div>
+                                            <div className="detail"><span>Entry Timestamp</span><b>{new Date(paperStatus.open_position.entry_time).toLocaleTimeString()}</b></div>
+                                        </div>
+                                    ) : (
+                                        <div className="no-trades" style={{ padding: '30px 10px' }}>
+                                            No open position. The engine is monitoring candle closes for crossovers.
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Webhook Configuration Card */}
+                                <div className="panel" style={{ padding: '20px' }}>
+                                    <h3>Real-Time Webhook Alert Hub</h3>
+                                    <p style={{ fontSize: '11px', color: '#8594a8', marginBottom: '12px' }}>
+                                        Stream execution signals instantly to Discord, Telegram, or custom webhooks.
+                                    </p>
+                                    <label className="toggle-row" style={{ marginBottom: '10px' }}>
+                                        <span><b>Enable Live Webhook Alerts</b></span>
+                                        <input
+                                            type="checkbox"
+                                            checked={webhookEnabled}
+                                            onChange={(e) => setWebhookEnabled(e.target.checked)}
+                                        />
+                                    </label>
+                                    <div className="two" style={{ marginBottom: '10px' }}>
+                                        <label>
+                                            Platform
+                                            <select
+                                                value={webhookPlatform}
+                                                onChange={(e) => setWebhookPlatform(e.target.value as any)}
+                                            >
+                                                <option value="discord">Discord Webhook</option>
+                                                <option value="telegram">Telegram Bot</option>
+                                                <option value="generic">Generic JSON Webhook</option>
+                                            </select>
+                                        </label>
+                                        <label>
+                                            Webhook URL
+                                            <input
+                                                value={webhookUrl}
+                                                onChange={(e) => setWebhookUrl(e.target.value)}
+                                                placeholder="https://discord.com/api/webhooks/..."
+                                            />
+                                        </label>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className="secondary"
+                                        style={{ width: '100%', marginTop: '4px' }}
+                                        onClick={handleTestWebhook}
+                                    >
+                                        🔔 Send Test Ping to Webhook
+                                    </button>
+                                    {webhookTestStatus && (
+                                        <p style={{ fontSize: '11px', color: '#63dfb0', margin: '8px 0 0' }}>
+                                            {webhookTestStatus}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Live Engine Event Log */}
+                            <div className="panel" style={{ marginTop: '16px' }}>
+                                <div className="table-head">
+                                    <h3>Live Event & Alert Audit Log</h3>
+                                    <span className="count">{paperStatus.logs.length} EVENTS</span>
+                                </div>
+                                <div className="table-wrap">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>TIME</th>
+                                                <th>EVENT</th>
+                                                <th>MESSAGE</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {paperStatus.logs.slice().reverse().map((log, idx) => (
+                                                <tr key={idx}>
+                                                    <td style={{ color: '#728198' }}>{log.time}</td>
+                                                    <td style={{ fontWeight: 700, color: log.event.includes('ERROR') ? '#f87171' : '#63dfb0' }}>
+                                                        {log.event}
+                                                    </td>
+                                                    <td>{log.message}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </section>
+            )}
+
 
 
 

@@ -17,14 +17,18 @@ from .engine import (
 )
 from .market_data import POPULAR_INDIAN_SYMBOLS, fetch_indian_market_data
 from .models import BacktestExperiment
+from .paper_trading import paper_session
 from .schemas import (
     BacktestRequest,
     GridSearchRequest,
     MarketDataFetchRequest,
     MonteCarloRequest,
+    PaperTradingTickRequest,
     PortfolioBacktestRequest,
     SaveExperimentRequest,
+    StartPaperTradingRequest,
     WalkForwardRequest,
+    WebhookTestRequest,
 )
 
 logger = logging.getLogger(__name__)
@@ -181,6 +185,71 @@ def walk_forward(request: WalkForwardRequest):
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Walk-forward analysis failed: {exc}") from exc
 
+
+
+# ==========================================
+# Advanced: Live Paper Trading & Webhook Hub
+# ==========================================
+
+
+@app.get("/api/paper-trading/status")
+def get_paper_trading_status():
+    """Get active live paper trading session state, open position, and recent trades."""
+    return paper_session.get_status()
+
+
+@app.post("/api/paper-trading/start")
+def start_paper_trading(request: StartPaperTradingRequest):
+    """Start live paper trading on an Indian market symbol with active strategy rules."""
+    return paper_session.start(request)
+
+
+@app.post("/api/paper-trading/stop")
+def stop_paper_trading():
+    """Stop live paper trading session and square off any open position."""
+    return paper_session.stop()
+
+
+@app.post("/api/paper-trading/tick")
+def paper_trading_tick(request: Optional[PaperTradingTickRequest] = None):
+    """Evaluate strategy rules against the latest market candle or manual price."""
+    manual_price = request.manual_price if request else None
+    return paper_session.tick(manual_price=manual_price)
+
+
+@app.post("/api/paper-trading/webhook-test")
+def test_webhook(request: WebhookTestRequest):
+    """Send a test notification to a Discord, Telegram, or generic webhook endpoint."""
+    import httpx
+
+    msg = request.message or "Strategy Lab Live Webhook Integration Test — OK!"
+    url = request.webhook_url.strip()
+
+    try:
+        if request.platform == "discord" or "discord.com" in url:
+            payload = {
+                "embeds": [
+                    {
+                        "title": "🟢 Strategy Lab Webhook Test",
+                        "description": msg,
+                        "color": 0x63DFB0,
+                        "footer": {"text": "Strategy Lab · Advanced Alert Engine"},
+                    }
+                ]
+            }
+        elif request.platform == "telegram":
+            payload = {"text": f"*Strategy Lab Webhook Test*\n\n{msg}"}
+        else:
+            payload = {"event": "test_ping", "message": msg}
+
+        with httpx.Client(timeout=5.0) as client:
+            resp = client.post(url, json=payload)
+            if resp.status_code >= 400:
+                raise HTTPException(status_code=400, detail=f"Webhook server returned HTTP {resp.status_code}: {resp.text}")
+
+        return {"status": "ok", "message": "Test ping successfully delivered to webhook."}
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"Webhook test failed: {exc}") from exc
 
 
 # ==========================================
