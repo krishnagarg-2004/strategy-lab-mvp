@@ -10,6 +10,7 @@ export default defineConfig(({ mode }) => {
         plugins: [react()],
         server: {
             host: '0.0.0.0',
+            allowedHosts: true,
             proxy: {
                 '/api': {
                     target: backendTarget,
