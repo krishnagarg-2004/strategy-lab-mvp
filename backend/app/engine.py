@@ -248,6 +248,58 @@ def _calculate_advanced_metrics(
     return sharpe, sortino, max_consec_losses
 
 
+def _calculate_indian_taxes_and_charges(
+    buy_turnover: float,
+    sell_turnover: float,
+    brokerage_per_order: float = 20.0,
+    use_regulatory_charges: bool = True,
+) -> dict[str, float]:
+    """Calculate authentic Indian market statutory charges (STT, GST, Exchange charges, SEBI, Stamp duty)."""
+    if not use_regulatory_charges:
+        brokerage = round(brokerage_per_order * 2, 2)
+        return {
+            "brokerage": brokerage,
+            "stt": 0.0,
+            "exchange_charges": 0.0,
+            "sebi_charges": 0.0,
+            "stamp_duty": 0.0,
+            "gst": 0.0,
+            "total_charges": brokerage,
+        }
+
+    # 1. Brokerage: min(20, 0.03% of turnover) per leg (Zerodha/Groww model) or flat per order
+    buy_brokerage = min(brokerage_per_order, buy_turnover * 0.0003) if brokerage_per_order > 0 else 0.0
+    sell_brokerage = min(brokerage_per_order, sell_turnover * 0.0003) if brokerage_per_order > 0 else 0.0
+    total_brokerage = buy_brokerage + sell_brokerage
+
+    # 2. STT/CTT: 0.025% on intraday equity sell side only
+    stt = sell_turnover * 0.00025
+
+    # 3. Exchange Turnover Charges: 0.00297% on both buy & sell (NSE rate)
+    exchange_charges = (buy_turnover + sell_turnover) * 0.0000297
+
+    # 4. SEBI Charges: ₹10 per crore (0.0001%)
+    sebi_charges = (buy_turnover + sell_turnover) * 0.000001
+
+    # 5. Stamp Duty: 0.003% on buy side only
+    stamp_duty = buy_turnover * 0.00003
+
+    # 6. GST: 18% on (Brokerage + Exchange Charges + SEBI Charges)
+    gst = (total_brokerage + exchange_charges + sebi_charges) * 0.18
+
+    total = total_brokerage + stt + exchange_charges + sebi_charges + stamp_duty + gst
+
+    return {
+        "brokerage": round(total_brokerage, 2),
+        "stt": round(stt, 2),
+        "exchange_charges": round(exchange_charges, 2),
+        "sebi_charges": round(sebi_charges, 2),
+        "stamp_duty": round(stamp_duty, 2),
+        "gst": round(gst, 2),
+        "total_charges": round(total, 2),
+    }
+
+
 def _supertrend(
     df: pd.DataFrame, period: int = 10, multiplier: float = 3.0
 ) -> tuple[pd.Series, pd.Series]:
@@ -424,15 +476,31 @@ def run_backtest(request: BacktestRequest) -> dict:
             exit_fill = exit_reference * (1 - slippage)
             points = exit_fill - entry_fill
             gross_pnl = points * qty
-            cash += exit_fill * qty - exit_fee
+            buy_turnover = entry_fill * qty
+            sell_turnover = exit_fill * qty
         else:  # SHORT
             exit_fill = exit_reference * (1 + slippage)
             points = entry_fill - exit_fill
             gross_pnl = points * qty
-            # Return margin reserve and book P&L
-            cash += (entry_fill * qty) + gross_pnl - exit_fee
+            buy_turnover = exit_fill * qty
+            sell_turnover = entry_fill * qty
 
+        # Compute statutory taxes & fees
+        use_reg = getattr(s, "use_regulatory_charges", True)
+        brokerage_setting = getattr(s, "brokerage_per_order", fee_per_order)
+        tax_dict = _calculate_indian_taxes_and_charges(
+            buy_turnover=buy_turnover,
+            sell_turnover=sell_turnover,
+            brokerage_per_order=brokerage_setting,
+            use_regulatory_charges=use_reg,
+        )
+        total_fees = tax_dict["total_charges"]
         net_pnl = gross_pnl - total_fees
+
+        if side == "LONG":
+            cash += (exit_fill * qty) - total_fees
+        else:  # SHORT
+            cash += (entry_fill * qty) + gross_pnl - total_fees
 
         trades.append(
             {
@@ -446,6 +514,7 @@ def run_backtest(request: BacktestRequest) -> dict:
                 "gross_pnl": round(gross_pnl, 2),
                 "fees": round(total_fees, 2),
                 "net_pnl": round(net_pnl, 2),
+                "tax_breakdown": tax_dict,
                 "duration_minutes": round(
                     (
                         timestamp - position["entry_time"]
@@ -470,10 +539,9 @@ def run_backtest(request: BacktestRequest) -> dict:
             qty = min(quantity_requested, affordable_qty)
 
             if qty > 0:
-                entry_fee = fee_per_order
                 if pending_entry == "LONG":
                     entry_fill = raw_entry * (1 + slippage)
-                    cash -= entry_fill * qty + entry_fee
+                    cash -= entry_fill * qty
                     position = {
                         "side": "LONG",
                         "entry_time": ts,
@@ -483,12 +551,12 @@ def run_backtest(request: BacktestRequest) -> dict:
                         "target": entry_fill * (1 + s.take_profit_pct / 100),
                         "highest_price": entry_fill,
                         "is_trailing": False,
-                        "entry_fee": entry_fee,
+                        "entry_fee": 0.0,
                         "entry_volume": row["volume"],
                     }
                 else:  # SHORT
                     entry_fill = raw_entry * (1 - slippage)
-                    cash -= entry_fill * qty + entry_fee
+                    cash -= entry_fill * qty
                     position = {
                         "side": "SHORT",
                         "entry_time": ts,
@@ -498,7 +566,7 @@ def run_backtest(request: BacktestRequest) -> dict:
                         "target": entry_fill * (1 - s.take_profit_pct / 100),
                         "lowest_price": entry_fill,
                         "is_trailing": False,
-                        "entry_fee": entry_fee,
+                        "entry_fee": 0.0,
                         "entry_volume": row["volume"],
                     }
 
@@ -662,6 +730,15 @@ def run_backtest(request: BacktestRequest) -> dict:
     gross_wins = sum(trade["net_pnl"] for trade in wins)
     gross_losses = abs(sum(trade["net_pnl"] for trade in losses))
 
+    # Calculate overall statutory taxes paid
+    total_taxes_paid = round(sum(trade["fees"] for trade in trades), 2)
+    stt_paid = round(sum(trade.get("tax_breakdown", {}).get("stt", 0.0) for trade in trades), 2)
+    gst_paid = round(sum(trade.get("tax_breakdown", {}).get("gst", 0.0) for trade in trades), 2)
+    brokerage_paid = round(sum(trade.get("tax_breakdown", {}).get("brokerage", 0.0) for trade in trades), 2)
+    exchange_charges_paid = round(sum(trade.get("tax_breakdown", {}).get("exchange_charges", 0.0) for trade in trades), 2)
+    stamp_duty_paid = round(sum(trade.get("tax_breakdown", {}).get("stamp_duty", 0.0) for trade in trades), 2)
+    sebi_charges_paid = round(sum(trade.get("tax_breakdown", {}).get("sebi_charges", 0.0) for trade in trades), 2)
+
     # Include starting capital when calculating drawdown, so losses from
     # the original balance are not hidden by the first recorded candle.
     values = [capital] + [point["equity"] for point in equity_curve]
@@ -727,6 +804,16 @@ def run_backtest(request: BacktestRequest) -> dict:
             else (None if gross_wins else 0)
         ),
         "max_drawdown_pct": round(max_drawdown, 2),
+        "total_taxes_and_charges": total_taxes_paid,
+        "tax_summary": {
+            "brokerage": brokerage_paid,
+            "stt": stt_paid,
+            "gst": gst_paid,
+            "exchange_charges": exchange_charges_paid,
+            "stamp_duty": stamp_duty_paid,
+            "sebi_charges": sebi_charges_paid,
+            "total": total_taxes_paid,
+        },
         "sharpe_ratio": sharpe_ratio,
         "sortino_ratio": sortino_ratio,
         "max_consecutive_losses": max_consecutive_losses,

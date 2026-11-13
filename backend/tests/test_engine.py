@@ -655,3 +655,22 @@ def test_walk_forward_analysis():
     assert data["test_candles"] > 0
 
 
+def test_indian_regulatory_charges():
+    """Verify that statutory charges (STT, GST, Exchange charges, Stamp duty) are deducted."""
+    strategy = StrategySpec(
+        fast_ema=9,
+        slow_ema=21,
+        use_regulatory_charges=True,
+        brokerage_per_order=20.0,
+    )
+    request = BacktestRequest(strategy=strategy)
+    result = run_backtest(request)
+    assert "tax_summary" in result
+    assert "total_taxes_and_charges" in result
+    assert "stt" in result["tax_summary"]
+    assert "gst" in result["tax_summary"]
+    assert "exchange_charges" in result["tax_summary"]
+    assert "stamp_duty" in result["tax_summary"]
+
+
+

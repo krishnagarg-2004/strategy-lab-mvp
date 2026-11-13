@@ -24,6 +24,8 @@ class StrategySpec(BaseModel):
     use_supertrend_filter: bool = False
     supertrend_period: int = Field(default=10, ge=2, le=100)
     supertrend_multiplier: float = Field(default=3.0, gt=0.1, le=20.0, allow_inf_nan=False)
+    use_regulatory_charges: bool = True
+    brokerage_per_order: float = Field(default=20.0, ge=0)
 
     @field_validator("trading_start", "trading_end")
     @classmethod

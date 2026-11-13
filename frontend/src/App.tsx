@@ -30,6 +30,8 @@ type Strategy = {
     use_supertrend_filter: boolean;
     supertrend_period: number;
     supertrend_multiplier: number;
+    use_regulatory_charges: boolean;
+    brokerage_per_order: number;
 };
 
 type Trade = {
@@ -64,6 +66,16 @@ type Result = {
     sharpe_ratio?: number | null;
     sortino_ratio?: number | null;
     max_consecutive_losses?: number;
+    total_taxes_and_charges?: number;
+    tax_summary?: {
+        brokerage: number;
+        stt: number;
+        gst: number;
+        exchange_charges: number;
+        stamp_duty: number;
+        sebi_charges: number;
+        total: number;
+    };
     average_duration_minutes: number;
     trades: Trade[];
     equity_curve: { timestamp: string; equity: number }[];
@@ -219,6 +231,8 @@ const defaults: Strategy = {
     use_supertrend_filter: false,
     supertrend_period: 10,
     supertrend_multiplier: 3.0,
+    use_regulatory_charges: true,
+    brokerage_per_order: 20.0,
 };
 
 const money = (n: number) =>
@@ -1244,6 +1258,35 @@ export default function App() {
                         </label>
                     </div>
 
+                    <div className="section-label">INDIAN TAXES & STATUTORY CHARGES</div>
+
+                    <label className="toggle-row">
+                        <span>
+                            <b>Real Indian Charges (STT & GST)</b>
+                            <small>SEBI, STT (0.025%), GST (18%), Stamp Duty</small>
+                        </span>
+                        <input
+                            type="checkbox"
+                            checked={strategy.use_regulatory_charges}
+                            onChange={(event) =>
+                                update('use_regulatory_charges', event.target.checked)
+                            }
+                        />
+                    </label>
+
+                    <label style={{ marginTop: '8px' }}>
+                        Brokerage per order leg (₹)
+                        <input
+                            type="number"
+                            min="0"
+                            value={strategy.brokerage_per_order}
+                            onChange={(event) =>
+                                update('brokerage_per_order', Number(event.target.value))
+                            }
+                            placeholder="20 (e.g. Zerodha/Groww)"
+                        />
+                    </label>
+
                     <div className="section-label">VIRTUAL ACCOUNT</div>
 
                     <label>
@@ -1435,6 +1478,12 @@ export default function App() {
                             value={result && result.sortino_ratio !== undefined && result.sortino_ratio !== null ? `${result.sortino_ratio} / ${result.max_consecutive_losses ?? 0}` : '—'}
                             sub={result ? `Downside risk / Max Ls: ${result.max_consecutive_losses ?? 0}` : 'Sortino / Max L streak'}
                             positive={!!result && (result.sortino_ratio ?? 0) >= 1.5}
+                        />
+                        <Metric
+                            label="Taxes & Charges"
+                            value={result && result.total_taxes_and_charges !== undefined ? money(result.total_taxes_and_charges) : '—'}
+                            sub={result?.tax_summary ? `STT: ${money(result.tax_summary.stt)} | GST: ${money(result.tax_summary.gst)}` : 'Govt & exchange levies'}
+                            positive={false}
                         />
                     </div>
 
@@ -1688,6 +1737,23 @@ export default function App() {
                                         <span>Final equity</span>
                                         <b>{money(result.final_equity)}</b>
                                     </div>
+                                    {result.tax_summary && (
+                                        <div style={{ marginTop: '12px', padding: '10px', background: '#0a111b', borderRadius: '6px', border: '1px solid #1c2738' }}>
+                                            <b style={{ color: '#94a3b8', fontSize: '11px', display: 'block', marginBottom: '6px' }}>
+                                                Statutory Indian Tax Breakdown
+                                            </b>
+                                            <div className="detail"><span>Brokerage</span><b>{money(result.tax_summary.brokerage)}</b></div>
+                                            <div className="detail"><span>STT / CTT (0.025%)</span><b>{money(result.tax_summary.stt)}</b></div>
+                                            <div className="detail"><span>GST (18%)</span><b>{money(result.tax_summary.gst)}</b></div>
+                                            <div className="detail"><span>Exchange Charges</span><b>{money(result.tax_summary.exchange_charges)}</b></div>
+                                            <div className="detail"><span>Stamp Duty</span><b>{money(result.tax_summary.stamp_duty)}</b></div>
+                                            <div className="detail"><span>SEBI Turnover</span><b>{money(result.tax_summary.sebi_charges)}</b></div>
+                                            <div className="detail" style={{ borderBottom: 0, fontWeight: 700, color: '#f87171' }}>
+                                                <span>Total Taxes Paid</span>
+                                                <b>{money(result.tax_summary.total)}</b>
+                                            </div>
+                                        </div>
+                                    )}
                                     <div className="assumptions">
                                         <b>Execution assumptions</b>
                                         <ul>
