@@ -918,53 +918,53 @@ export default function App() {
                     <div className="logo">SL</div>
                     <div>
                         <div className="brand-name">Strategy Lab</div>
-                        <div className="sub">Indian Markets Research Workspace · Phase 3</div>
+                        <div className="sub">Quantitative Research & Execution Workspace</div>
                     </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <div className="tab-group" style={{ margin: 0 }}>
                         <button
                             type="button"
                             className={`tab-btn ${workspaceTab === 'single' ? 'active' : ''}`}
                             onClick={() => setWorkspaceTab('single')}
                         >
-                            📊 Single Run
+                            Single Run
                         </button>
                         <button
                             type="button"
                             className={`tab-btn ${workspaceTab === 'grid_search' ? 'active' : ''}`}
                             onClick={() => setWorkspaceTab('grid_search')}
                         >
-                            🎯 Grid Search
+                            Grid Search
                         </button>
                         <button
                             type="button"
                             className={`tab-btn ${workspaceTab === 'portfolio' ? 'active' : ''}`}
                             onClick={() => setWorkspaceTab('portfolio')}
                         >
-                            📑 Portfolio Watchlist
+                            Portfolio Watchlist
                         </button>
                         <button
                             type="button"
                             className={`tab-btn ${workspaceTab === 'monte_carlo' ? 'active' : ''}`}
                             onClick={() => setWorkspaceTab('monte_carlo')}
                         >
-                            🎲 Monte Carlo
+                            Monte Carlo
                         </button>
                         <button
                             type="button"
                             className={`tab-btn ${workspaceTab === 'walk_forward' ? 'active' : ''}`}
                             onClick={() => setWorkspaceTab('walk_forward')}
                         >
-                            ⏳ Walk-Forward (OOS)
+                            Walk-Forward (OOS)
                         </button>
                         <button
                             type="button"
                             className={`tab-btn ${workspaceTab === 'paper_trading' ? 'active' : ''}`}
                             onClick={() => setWorkspaceTab('paper_trading')}
-                            style={{ borderColor: paperStatus?.is_active ? '#63dfb0' : undefined }}
+                            style={{ borderColor: paperStatus?.is_active ? 'var(--emerald-primary)' : undefined }}
                         >
-                            {paperStatus?.is_active ? '🔴 LIVE PAPER' : '📡 Live Paper Trading'}
+                            {paperStatus?.is_active ? '● Live Paper' : 'Paper Trading'}
                         </button>
                     </div>
 
@@ -973,7 +973,7 @@ export default function App() {
                         onClick={() => setShowExperiments(true)}
                         title="View and restore saved backtest experiments"
                     >
-                        📁 Saved Experiments ({experiments.length})
+                        Experiments ({experiments.length})
                     </button>
                     <button
                         type="button"
@@ -982,36 +982,36 @@ export default function App() {
                         title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} mode`}
                         aria-label="Toggle theme"
                     >
-                        {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
+                        {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
                     </button>
                     <div className="status">
-                        <span className="dot" /> SIMULATION ONLY
+                        <span className="dot" /> SIMULATION
                     </div>
                 </div>
             </header>
 
-            <section className="intro">
-                <div>
-                    <div className="eyebrow">INDIAN MARKETS · RESEARCH WORKSPACE</div>
-                    <h1>
-                        Test the rules.
-                        <br />
-                        <span>Trust the numbers.</span>
-                    </h1>
-                    <p>
-                        Backtest EMA & RSI strategies against live Indian indices and stocks
-                        or custom CSVs with full accounting, slippage, and visual trade signals.
-                    </p>
+            <section className="workspace-strip">
+                <div className="strip-title-group">
+                    <h1 className="strip-title">Strategy Research & Execution Lab</h1>
+                    <span className="strip-subtitle">Event-Driven Backtesting & Quantitative Risk Modeling · Indian Equities & Indices</span>
                 </div>
 
-                <div className="hero-card">
-                    <div className="hero-label">STARTING VIRTUAL CAPITAL</div>
-                    <div className="hero-money">{money(capital)}</div>
-                    <div className="hero-note">Editable · virtual money only</div>
-                    <div className="mini-bars">
-                        {Array.from({ length: 18 }, (_, index) => (
-                            <i key={index} />
-                        ))}
+                <div className="strip-badges">
+                    <div className="strip-badge">
+                        <span className="strip-badge-label">Active Symbol</span>
+                        <span className="strip-badge-val">{symbol || marketSymbol || 'NIFTY 50'}</span>
+                    </div>
+                    <div className="strip-badge">
+                        <span className="strip-badge-label">Timeframe</span>
+                        <span className="strip-badge-val">{marketInterval} · {marketPeriod}</span>
+                    </div>
+                    <div className="strip-badge">
+                        <span className="strip-badge-label">Starting Capital</span>
+                        <span className="strip-badge-val">{money(capital)}</span>
+                    </div>
+                    <div className="strip-badge">
+                        <span className="strip-badge-label">Engine Mode</span>
+                        <span className="strip-badge-val highlight">Deterministic · SEBI Charges</span>
                     </div>
                 </div>
             </section>
@@ -1637,19 +1637,19 @@ export default function App() {
                             <button
                                 className="secondary"
                                 style={{
-                                    background: '#1d352c',
-                                    color: '#63dfb0',
-                                    borderColor: '#2e6b56',
+                                    background: 'var(--emerald-surface)',
+                                    color: 'var(--emerald-primary)',
+                                    borderColor: 'var(--emerald-border)',
                                     fontWeight: 600,
                                 }}
                                 onClick={handleSaveExperiment}
                             >
-                                💾 Save Run to Database
+                                Save Run to Database
                             </button>
                             {saveStatus && (
                                 <span
                                     style={{
-                                        color: '#63dfb0',
+                                        color: 'var(--emerald-primary)',
                                         fontSize: '11px',
                                         alignSelf: 'center',
                                     }}
@@ -1767,13 +1767,13 @@ export default function App() {
                                     className={`chart-tab-btn ${activeChartTab === 'candlestick' ? 'active' : ''}`}
                                     onClick={() => setActiveChartTab('candlestick')}
                                 >
-                                    🕯️ Candlesticks & Signals
+                                    Candlesticks & Signals
                                 </button>
                                 <button
                                     className={`chart-tab-btn ${activeChartTab === 'equity' ? 'active' : ''}`}
                                     onClick={() => setActiveChartTab('equity')}
                                 >
-                                    📈 Equity Curve
+                                    Equity Curve
                                 </button>
                             </div>
                         </div>
@@ -2000,8 +2000,8 @@ export default function App() {
                                         <b>{money(result.final_equity)}</b>
                                     </div>
                                     {result.tax_summary && (
-                                        <div style={{ marginTop: '12px', padding: '10px', background: '#0a111b', borderRadius: '6px', border: '1px solid #1c2738' }}>
-                                            <b style={{ color: '#94a3b8', fontSize: '11px', display: 'block', marginBottom: '6px' }}>
+                                        <div style={{ marginTop: '12px', padding: '10px', background: 'var(--surface-card)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
+                                            <b style={{ color: 'var(--text-secondary)', fontSize: '11px', display: 'block', marginBottom: '6px' }}>
                                                 Statutory Indian Tax Breakdown
                                             </b>
                                             <div className="detail"><span>Brokerage</span><b>{money(result.tax_summary.brokerage)}</b></div>
@@ -2010,7 +2010,7 @@ export default function App() {
                                             <div className="detail"><span>Exchange Charges</span><b>{money(result.tax_summary.exchange_charges)}</b></div>
                                             <div className="detail"><span>Stamp Duty</span><b>{money(result.tax_summary.stamp_duty)}</b></div>
                                             <div className="detail"><span>SEBI Turnover</span><b>{money(result.tax_summary.sebi_charges)}</b></div>
-                                            <div className="detail" style={{ borderBottom: 0, fontWeight: 700, color: '#f87171' }}>
+                                            <div className="detail" style={{ borderBottom: 0, fontWeight: 700, color: 'var(--rose-primary)' }}>
                                                 <span>Total Taxes Paid</span>
                                                 <b>{money(result.tax_summary.total)}</b>
                                             </div>
@@ -2153,7 +2153,7 @@ export default function App() {
                                                     ).sort((a, b) => a - b);
                                                     return (
                                                         <tr key={f}>
-                                                            <td style={{ fontWeight: 700, color: '#f8fafc' }}>Fast {f}</td>
+                                                            <td style={{ fontWeight: 700, color: 'var(--text-primary)' }}>Fast {f}</td>
                                                             {slowCols.map((s) => {
                                                                 const cell = gridResults.results.find(
                                                                     (r) => r.fast_ema === f && r.slow_ema === s,
@@ -2234,7 +2234,7 @@ export default function App() {
                                         {paperBusy ? 'Evaluating…' : '⚡ Trigger Live Tick'}
                                     </button>
                                     <button className="run" onClick={handleStopPaperTrading} disabled={paperBusy} style={{ padding: '9px 18px', background: '#ef4444', color: '#fff' }}>
-                                        🛑 Stop Session
+                                        Stop Session
                                     </button>
                                 </>
                             ) : (
@@ -2263,7 +2263,7 @@ export default function App() {
                         <div style={{ flex: '1 1 200px' }}>
                             <label>
                                 Last Evaluated Price
-                                <div style={{ padding: '8px', fontWeight: 700, color: '#f8fafc' }}>
+                                <div style={{ padding: '8px', fontWeight: 700, color: 'var(--text-primary)' }}>
                                     {paperStatus?.last_evaluated_price ? `₹${paperStatus.last_evaluated_price.toFixed(2)}` : 'Awaiting tick'}
                                 </div>
                             </label>
@@ -2367,7 +2367,7 @@ export default function App() {
                                         style={{ width: '100%', marginTop: '4px' }}
                                         onClick={handleTestWebhook}
                                     >
-                                        🔔 Send Test Ping to Webhook
+                                        Send Test Ping
                                     </button>
                                     {webhookTestStatus && (
                                         <p style={{ fontSize: '11px', color: '#63dfb0', margin: '8px 0 0' }}>
@@ -2422,7 +2422,7 @@ export default function App() {
                             <p>Bootstrap resamples trade returns across thousands of random sequences to uncover catastrophic tail risk and clustering drawdowns.</p>
                         </div>
                         <button className="run" onClick={runMonteCarlo} disabled={mcBusy} style={{ padding: '10px 24px' }}>
-                            {mcBusy ? 'Simulating paths…' : '🎲 Run Monte Carlo'}
+                            {mcBusy ? 'Simulating paths…' : 'Run Monte Carlo'}
                         </button>
                     </div>
 
@@ -2525,7 +2525,7 @@ export default function App() {
                                         {paperBusy ? 'Evaluating…' : '⚡ Trigger Live Tick'}
                                     </button>
                                     <button className="run" onClick={handleStopPaperTrading} disabled={paperBusy} style={{ padding: '9px 18px', background: '#ef4444', color: '#fff' }}>
-                                        🛑 Stop Session
+                                        Stop Session
                                     </button>
                                 </>
                             ) : (
@@ -2554,7 +2554,7 @@ export default function App() {
                         <div style={{ flex: '1 1 200px' }}>
                             <label>
                                 Last Evaluated Price
-                                <div style={{ padding: '8px', fontWeight: 700, color: '#f8fafc' }}>
+                                <div style={{ padding: '8px', fontWeight: 700, color: 'var(--text-primary)' }}>
                                     {paperStatus?.last_evaluated_price ? `₹${paperStatus.last_evaluated_price.toFixed(2)}` : 'Awaiting tick'}
                                 </div>
                             </label>
@@ -2658,7 +2658,7 @@ export default function App() {
                                         style={{ width: '100%', marginTop: '4px' }}
                                         onClick={handleTestWebhook}
                                     >
-                                        🔔 Send Test Ping to Webhook
+                                        Send Test Ping
                                     </button>
                                     {webhookTestStatus && (
                                         <p style={{ fontSize: '11px', color: '#63dfb0', margin: '8px 0 0' }}>
@@ -2821,7 +2821,7 @@ export default function App() {
                                         {paperBusy ? 'Evaluating…' : '⚡ Trigger Live Tick'}
                                     </button>
                                     <button className="run" onClick={handleStopPaperTrading} disabled={paperBusy} style={{ padding: '9px 18px', background: '#ef4444', color: '#fff' }}>
-                                        🛑 Stop Session
+                                        Stop Session
                                     </button>
                                 </>
                             ) : (
@@ -2850,7 +2850,7 @@ export default function App() {
                         <div style={{ flex: '1 1 200px' }}>
                             <label>
                                 Last Evaluated Price
-                                <div style={{ padding: '8px', fontWeight: 700, color: '#f8fafc' }}>
+                                <div style={{ padding: '8px', fontWeight: 700, color: 'var(--text-primary)' }}>
                                     {paperStatus?.last_evaluated_price ? `₹${paperStatus.last_evaluated_price.toFixed(2)}` : 'Awaiting tick'}
                                 </div>
                             </label>
@@ -2954,7 +2954,7 @@ export default function App() {
                                         style={{ width: '100%', marginTop: '4px' }}
                                         onClick={handleTestWebhook}
                                     >
-                                        🔔 Send Test Ping to Webhook
+                                        Send Test Ping
                                     </button>
                                     {webhookTestStatus && (
                                         <p style={{ fontSize: '11px', color: '#63dfb0', margin: '8px 0 0' }}>
@@ -3108,7 +3108,7 @@ export default function App() {
                                         <tbody>
                                             {portfolioResults.symbol_breakdown.map((row) => (
                                                 <tr key={row.symbol}>
-                                                    <td style={{ fontWeight: 700, color: '#f8fafc' }}>{row.symbol}</td>
+                                                    <td style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{row.symbol}</td>
                                                     <td>{row.trade_count}</td>
                                                     <td>{row.win_rate_pct}%</td>
                                                     <td>{row.profit_factor !== null && row.profit_factor !== undefined ? String(row.profit_factor) : '—'}</td>
@@ -3144,7 +3144,7 @@ export default function App() {
                                         {paperBusy ? 'Evaluating…' : '⚡ Trigger Live Tick'}
                                     </button>
                                     <button className="run" onClick={handleStopPaperTrading} disabled={paperBusy} style={{ padding: '9px 18px', background: '#ef4444', color: '#fff' }}>
-                                        🛑 Stop Session
+                                        Stop Session
                                     </button>
                                 </>
                             ) : (
@@ -3173,7 +3173,7 @@ export default function App() {
                         <div style={{ flex: '1 1 200px' }}>
                             <label>
                                 Last Evaluated Price
-                                <div style={{ padding: '8px', fontWeight: 700, color: '#f8fafc' }}>
+                                <div style={{ padding: '8px', fontWeight: 700, color: 'var(--text-primary)' }}>
                                     {paperStatus?.last_evaluated_price ? `₹${paperStatus.last_evaluated_price.toFixed(2)}` : 'Awaiting tick'}
                                 </div>
                             </label>
@@ -3277,7 +3277,7 @@ export default function App() {
                                         style={{ width: '100%', marginTop: '4px' }}
                                         onClick={handleTestWebhook}
                                     >
-                                        🔔 Send Test Ping to Webhook
+                                        Send Test Ping
                                     </button>
                                     {webhookTestStatus && (
                                         <p style={{ fontSize: '11px', color: '#63dfb0', margin: '8px 0 0' }}>
@@ -3332,7 +3332,7 @@ export default function App() {
                             <p>Bootstrap resamples trade returns across thousands of random sequences to uncover catastrophic tail risk and clustering drawdowns.</p>
                         </div>
                         <button className="run" onClick={runMonteCarlo} disabled={mcBusy} style={{ padding: '10px 24px' }}>
-                            {mcBusy ? 'Simulating paths…' : '🎲 Run Monte Carlo'}
+                            {mcBusy ? 'Simulating paths…' : 'Run Monte Carlo'}
                         </button>
                     </div>
 
@@ -3435,7 +3435,7 @@ export default function App() {
                                         {paperBusy ? 'Evaluating…' : '⚡ Trigger Live Tick'}
                                     </button>
                                     <button className="run" onClick={handleStopPaperTrading} disabled={paperBusy} style={{ padding: '9px 18px', background: '#ef4444', color: '#fff' }}>
-                                        🛑 Stop Session
+                                        Stop Session
                                     </button>
                                 </>
                             ) : (
@@ -3464,7 +3464,7 @@ export default function App() {
                         <div style={{ flex: '1 1 200px' }}>
                             <label>
                                 Last Evaluated Price
-                                <div style={{ padding: '8px', fontWeight: 700, color: '#f8fafc' }}>
+                                <div style={{ padding: '8px', fontWeight: 700, color: 'var(--text-primary)' }}>
                                     {paperStatus?.last_evaluated_price ? `₹${paperStatus.last_evaluated_price.toFixed(2)}` : 'Awaiting tick'}
                                 </div>
                             </label>
@@ -3568,7 +3568,7 @@ export default function App() {
                                         style={{ width: '100%', marginTop: '4px' }}
                                         onClick={handleTestWebhook}
                                     >
-                                        🔔 Send Test Ping to Webhook
+                                        Send Test Ping
                                     </button>
                                     {webhookTestStatus && (
                                         <p style={{ fontSize: '11px', color: '#63dfb0', margin: '8px 0 0' }}>
@@ -3731,7 +3731,7 @@ export default function App() {
                                         {paperBusy ? 'Evaluating…' : '⚡ Trigger Live Tick'}
                                     </button>
                                     <button className="run" onClick={handleStopPaperTrading} disabled={paperBusy} style={{ padding: '9px 18px', background: '#ef4444', color: '#fff' }}>
-                                        🛑 Stop Session
+                                        Stop Session
                                     </button>
                                 </>
                             ) : (
@@ -3760,7 +3760,7 @@ export default function App() {
                         <div style={{ flex: '1 1 200px' }}>
                             <label>
                                 Last Evaluated Price
-                                <div style={{ padding: '8px', fontWeight: 700, color: '#f8fafc' }}>
+                                <div style={{ padding: '8px', fontWeight: 700, color: 'var(--text-primary)' }}>
                                     {paperStatus?.last_evaluated_price ? `₹${paperStatus.last_evaluated_price.toFixed(2)}` : 'Awaiting tick'}
                                 </div>
                             </label>
@@ -3864,7 +3864,7 @@ export default function App() {
                                         style={{ width: '100%', marginTop: '4px' }}
                                         onClick={handleTestWebhook}
                                     >
-                                        🔔 Send Test Ping to Webhook
+                                        Send Test Ping
                                     </button>
                                     {webhookTestStatus && (
                                         <p style={{ fontSize: '11px', color: '#63dfb0', margin: '8px 0 0' }}>

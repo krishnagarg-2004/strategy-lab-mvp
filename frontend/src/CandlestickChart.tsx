@@ -49,25 +49,25 @@ export default function CandlestickChart({ candles, trades, theme = 'dark' }: Pr
 
         const chart = createChart(container, {
             layout: {
-                background: { type: ColorType.Solid, color: isLight ? '#ffffff' : '#0d1522' },
-                textColor: isLight ? '#475569' : '#94a3b8',
-                fontSize: 12,
+                background: { type: ColorType.Solid, color: isLight ? '#ffffff' : '#0f1523' },
+                textColor: isLight ? '#334155' : '#94a3b8',
+                fontSize: 11,
             },
             grid: {
-                vertLines: { color: isLight ? '#f1f5f9' : '#1e293b' },
-                horzLines: { color: isLight ? '#f1f5f9' : '#1e293b' },
+                vertLines: { color: isLight ? '#eef2f6' : '#1c2638' },
+                horzLines: { color: isLight ? '#eef2f6' : '#1c2638' },
             },
             crosshair: {
-                vertLine: { color: isLight ? '#94a3b8' : '#475569', width: 1, style: 2 },
-                horzLine: { color: isLight ? '#94a3b8' : '#475569', width: 1, style: 2 },
+                vertLine: { color: isLight ? '#94a3b8' : '#364864', width: 1, style: 2 },
+                horzLine: { color: isLight ? '#94a3b8' : '#364864', width: 1, style: 2 },
             },
             timeScale: {
-                borderColor: isLight ? '#e2e8f0' : '#334155',
+                borderColor: isLight ? '#e2e8f0' : '#1c2638',
                 timeVisible: true,
                 secondsVisible: false,
             },
             rightPriceScale: {
-                borderColor: isLight ? '#e2e8f0' : '#334155',
+                borderColor: isLight ? '#e2e8f0' : '#1c2638',
                 scaleMargins: {
                     top: 0.1,
                     bottom: 0.25,
