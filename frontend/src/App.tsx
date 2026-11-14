@@ -331,6 +331,30 @@ export default function App() {
         'candlestick',
     );
 
+    // Theme Mode State ('dark' | 'light')
+    const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+        return (localStorage.getItem('strategy_lab_theme') as 'dark' | 'light') || 'dark';
+    });
+
+    useEffect(() => {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('strategy_lab_theme', theme);
+    }, [theme]);
+
+    // Collapsible Strategy Config Sections
+    const [openSections, setOpenSections] = useState<{ [key: string]: boolean }>({
+        direction: true,
+        dataSource: true,
+        indicators: true,
+        risk: true,
+        taxes: true,
+        account: true,
+    });
+
+    const toggleSection = (section: string) => {
+        setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
+    };
+
     // Database Experiments State
     const [experiments, setExperiments] = useState<ExperimentSummary[]>([]);
     const [showExperiments, setShowExperiments] = useState(false);
@@ -948,6 +972,15 @@ export default function App() {
                     >
                         📁 Saved Experiments ({experiments.length})
                     </button>
+                    <button
+                        type="button"
+                        className="theme-toggle-btn"
+                        onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+                        title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} mode`}
+                        aria-label="Toggle theme"
+                    >
+                        {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
+                    </button>
                     <div className="status">
                         <span className="dot" /> SIMULATION ONLY
                     </div>
@@ -981,7 +1014,7 @@ export default function App() {
             </section>
 
             {workspaceTab === 'single' && (
-            <div className="layout">
+            <div className="layout animated-tab-enter">
                 <aside className="panel config">
                     <div className="panel-heading">
                         <div>
@@ -1000,474 +1033,558 @@ export default function App() {
                         />
                     </label>
 
-                    <div className="section-label">TRADE DIRECTION</div>
-                    <div className="tab-group">
+                    <div className="section-label">
                         <button
                             type="button"
-                            className={`tab-btn ${strategy.trade_direction === 'LONG' ? 'active' : ''}`}
-                            onClick={() => update('trade_direction', 'LONG')}
+                            className="section-header-btn"
+                            onClick={() => toggleSection('direction')}
+                            aria-expanded={openSections.direction}
                         >
-                            Long Only
+                            <span>Trade Direction</span>
+                            <span className={`chevron ${openSections.direction ? 'open' : ''}`}>▾</span>
                         </button>
+                    </div>
+                    {openSections.direction && (
+                        <div className="section-content-animated">
+                            <div className="tab-group">
+                                <button
+                                    type="button"
+                                    className={`tab-btn ${strategy.trade_direction === 'LONG' ? 'active' : ''}`}
+                                    onClick={() => update('trade_direction', 'LONG')}
+                                >
+                                    Long Only
+                                </button>
+                                <button
+                                    type="button"
+                                    className={`tab-btn ${strategy.trade_direction === 'SHORT' ? 'active' : ''}`}
+                                    onClick={() => update('trade_direction', 'SHORT')}
+                                >
+                                    Short Only
+                                </button>
+                                <button
+                                    type="button"
+                                    className={`tab-btn ${strategy.trade_direction === 'BOTH' ? 'active' : ''}`}
+                                    onClick={() => update('trade_direction', 'BOTH')}
+                                >
+                                    Both
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="section-label">
                         <button
                             type="button"
-                            className={`tab-btn ${strategy.trade_direction === 'SHORT' ? 'active' : ''}`}
-                            onClick={() => update('trade_direction', 'SHORT')}
+                            className="section-header-btn"
+                            onClick={() => toggleSection('dataSource')}
+                            aria-expanded={openSections.dataSource}
                         >
-                            Short Only
-                        </button>
-                        <button
-                            type="button"
-                            className={`tab-btn ${strategy.trade_direction === 'BOTH' ? 'active' : ''}`}
-                            onClick={() => update('trade_direction', 'BOTH')}
-                        >
-                            Both
+                            <span>Data Source</span>
+                            <span className={`chevron ${openSections.dataSource ? 'open' : ''}`}>▾</span>
                         </button>
                     </div>
 
-                    <div className="section-label">DATA SOURCE</div>
-
-                    <div className="tab-group">
-                        <button
-                            type="button"
-                            className={`tab-btn ${dataSourceMode === 'indian_market' ? 'active' : ''}`}
-                            onClick={() => {
-                                setDataSourceMode('indian_market');
-                                setCsvData('');
-                                setMarketFetchSuccess('');
-                            }}
-                        >
-                            Indian Mkts
-                        </button>
-                        <button
-                            type="button"
-                            className={`tab-btn ${dataSourceMode === 'upload_csv' ? 'active' : ''}`}
-                            onClick={() => {
-                                setDataSourceMode('upload_csv');
-                                setMarketFetchSuccess('');
-                            }}
-                        >
-                            Upload CSV
-                        </button>
-                        <button
-                            type="button"
-                            className={`tab-btn ${dataSourceMode === 'synthetic_demo' ? 'active' : ''}`}
-                            onClick={() => {
-                                setDataSourceMode('synthetic_demo');
-                                clearCsv();
-                                setMarketFetchSuccess('');
-                            }}
-                        >
-                            Demo Data
-                        </button>
-                    </div>
-
-                    {dataSourceMode === 'indian_market' && (
-                        <div>
-                            <label>
-                                Select Indian Ticker
-                                <select
-                                    className="market-select"
-                                    value={marketSymbol}
-                                    onChange={(e) => {
-                                        setMarketSymbol(e.target.value);
-                                        const found = popularSymbols.find(
-                                            (s) => s.symbol === e.target.value,
-                                        );
-                                        if (found) setSymbol(found.name);
+                    {openSections.dataSource && (
+                        <div className="section-content-animated">
+                            <div className="tab-group">
+                                <button
+                                    type="button"
+                                    className={`tab-btn ${dataSourceMode === 'indian_market' ? 'active' : ''}`}
+                                    onClick={() => {
+                                        setDataSourceMode('indian_market');
+                                        setCsvData('');
+                                        setMarketFetchSuccess('');
                                     }}
                                 >
-                                    {popularSymbols.map((item) => (
-                                        <option key={item.symbol} value={item.symbol}>
-                                            {item.name} ({item.symbol})
-                                        </option>
-                                    ))}
-                                </select>
-                            </label>
+                                    Indian Mkts
+                                </button>
+                                <button
+                                    type="button"
+                                    className={`tab-btn ${dataSourceMode === 'upload_csv' ? 'active' : ''}`}
+                                    onClick={() => {
+                                        setDataSourceMode('upload_csv');
+                                        setMarketFetchSuccess('');
+                                    }}
+                                >
+                                    Upload CSV
+                                </button>
+                                <button
+                                    type="button"
+                                    className={`tab-btn ${dataSourceMode === 'synthetic_demo' ? 'active' : ''}`}
+                                    onClick={() => {
+                                        setDataSourceMode('synthetic_demo');
+                                        clearCsv();
+                                        setMarketFetchSuccess('');
+                                    }}
+                                >
+                                    Demo Data
+                                </button>
+                            </div>
 
-                            <label style={{ marginTop: '8px' }}>
-                                Or Custom Symbol
-                                <input
-                                    value={marketSymbol}
-                                    onChange={(e) => setMarketSymbol(e.target.value)}
-                                    placeholder="e.g. INFY.NS, ^NSEBANK"
-                                />
-                            </label>
+                            {dataSourceMode === 'indian_market' && (
+                                <div>
+                                    <label>
+                                        Select Indian Ticker
+                                        <select
+                                            className="market-select"
+                                            value={marketSymbol}
+                                            onChange={(e) => {
+                                                setMarketSymbol(e.target.value);
+                                                const found = popularSymbols.find(
+                                                    (s) => s.symbol === e.target.value,
+                                                );
+                                                if (found) setSymbol(found.name);
+                                            }}
+                                        >
+                                            {popularSymbols.map((item) => (
+                                                <option key={item.symbol} value={item.symbol}>
+                                                    {item.name} ({item.symbol})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </label>
 
-                            <div className="two" style={{ marginTop: '8px' }}>
-                                <label>
-                                    Period
-                                    <select
-                                        className="market-select"
-                                        value={marketPeriod}
-                                        onChange={(e) => setMarketPeriod(e.target.value)}
+                                    <label style={{ marginTop: '8px' }}>
+                                        Or Custom Symbol
+                                        <input
+                                            value={marketSymbol}
+                                            onChange={(e) => setMarketSymbol(e.target.value)}
+                                            placeholder="e.g. INFY.NS, ^NSEBANK"
+                                        />
+                                    </label>
+
+                                    <div className="two" style={{ marginTop: '8px' }}>
+                                        <label>
+                                            Period
+                                            <select
+                                                className="market-select"
+                                                value={marketPeriod}
+                                                onChange={(e) => setMarketPeriod(e.target.value)}
+                                            >
+                                                <option value="5d">5 Days</option>
+                                                <option value="1mo">1 Month</option>
+                                                <option value="3mo">3 Months</option>
+                                                <option value="6mo">6 Months</option>
+                                                <option value="1y">1 Year</option>
+                                            </select>
+                                        </label>
+                                        <label>
+                                            Timeframe
+                                            <select
+                                                className="market-select"
+                                                value={marketInterval}
+                                                onChange={(e) => setMarketInterval(e.target.value)}
+                                            >
+                                                <option value="5m">5 Min</option>
+                                                <option value="15m">15 Min</option>
+                                                <option value="30m">30 Min</option>
+                                                <option value="1h">1 Hour</option>
+                                                <option value="1d">Daily</option>
+                                            </select>
+                                        </label>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        className="fetch-btn"
+                                        onClick={handleFetchMarketData}
+                                        disabled={marketFetching}
                                     >
-                                        <option value="5d">5 Days</option>
-                                        <option value="1mo">1 Month</option>
-                                        <option value="3mo">3 Months</option>
-                                        <option value="6mo">6 Months</option>
-                                        <option value="1y">1 Year</option>
-                                    </select>
+                                        {marketFetching
+                                            ? 'Fetching from Yahoo Finance…'
+                                            : '⚡ Fetch & Load Candles'}
+                                    </button>
+
+                                    {marketFetchSuccess && (
+                                        <div className="rule-note" style={{ marginTop: '10px' }}>
+                                            <span>✓</span>
+                                            <p>{marketFetchSuccess}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {dataSourceMode === 'upload_csv' && (
+                                <div>
+                                    <label>
+                                        Upload OHLCV CSV
+                                        <input
+                                            type="file"
+                                            accept=".csv,text/csv"
+                                            onChange={handleCsvUpload}
+                                            disabled={busy}
+                                        />
+                                    </label>
+
+                                    {csvFileName && (
+                                        <div className="rule-note">
+                                            <span>✓</span>
+                                            <div>
+                                                <p>
+                                                    Selected: <b>{csvFileName}</b>
+                                                </p>
+                                                <button
+                                                    type="button"
+                                                    className="secondary"
+                                                    onClick={clearCsv}
+                                                    disabled={busy}
+                                                >
+                                                    Clear file
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <p className="metric-sub">
+                                        Required columns: timestamp, open, high, low, close, volume.
+                                    </p>
+                                </div>
+                            )}
+
+                            {dataSourceMode === 'synthetic_demo' && (
+                                <div className="rule-note">
+                                    <span>i</span>
+                                    <p>
+                                        Using synthetic 5-minute demo candles across simulated IST sessions.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    <div className="section-label">
+                        <button
+                            type="button"
+                            className="section-header-btn"
+                            onClick={() => toggleSection('indicators')}
+                            aria-expanded={openSections.indicators}
+                        >
+                            <span>Technical Indicators</span>
+                            <span className={`chevron ${openSections.indicators ? 'open' : ''}`}>▾</span>
+                        </button>
+                    </div>
+
+                    {openSections.indicators && (
+                        <div className="section-content-animated">
+                            <div className="two">
+                                <label>
+                                    Fast EMA
+                                    <input
+                                        type="number"
+                                        min="2"
+                                        value={strategy.fast_ema}
+                                        onChange={(event) =>
+                                            update('fast_ema', Number(event.target.value))
+                                        }
+                                    />
                                 </label>
                                 <label>
-                                    Timeframe
-                                    <select
-                                        className="market-select"
-                                        value={marketInterval}
-                                        onChange={(e) => setMarketInterval(e.target.value)}
-                                    >
-                                        <option value="5m">5 Min</option>
-                                        <option value="15m">15 Min</option>
-                                        <option value="30m">30 Min</option>
-                                        <option value="1h">1 Hour</option>
-                                        <option value="1d">Daily</option>
-                                    </select>
+                                    Slow EMA
+                                    <input
+                                        type="number"
+                                        min="3"
+                                        value={strategy.slow_ema}
+                                        onChange={(event) =>
+                                            update('slow_ema', Number(event.target.value))
+                                        }
+                                    />
                                 </label>
                             </div>
 
-                            <button
-                                type="button"
-                                className="fetch-btn"
-                                onClick={handleFetchMarketData}
-                                disabled={marketFetching}
-                            >
-                                {marketFetching
-                                    ? 'Fetching from Yahoo Finance…'
-                                    : '⚡ Fetch & Load Candles'}
-                            </button>
-
-                            {marketFetchSuccess && (
-                                <div className="rule-note" style={{ marginTop: '10px' }}>
-                                    <span>✓</span>
-                                    <p>{marketFetchSuccess}</p>
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {dataSourceMode === 'upload_csv' && (
-                        <div>
-                            <label>
-                                Upload OHLCV CSV
+                            <label className="toggle-row">
+                                <span>
+                                    <b>RSI filter</b>
+                                    <small>Only enter when RSI meets threshold</small>
+                                </span>
                                 <input
-                                    type="file"
-                                    accept=".csv,text/csv"
-                                    onChange={handleCsvUpload}
-                                    disabled={busy}
-                                />
-                            </label>
-
-                            {csvFileName && (
-                                <div className="rule-note">
-                                    <span>✓</span>
-                                    <div>
-                                        <p>
-                                            Selected: <b>{csvFileName}</b>
-                                        </p>
-                                        <button
-                                            type="button"
-                                            className="secondary"
-                                            onClick={clearCsv}
-                                            disabled={busy}
-                                        >
-                                            Clear file
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-
-                            <p className="metric-sub">
-                                Required columns: timestamp, open, high, low, close, volume.
-                            </p>
-                        </div>
-                    )}
-
-                    {dataSourceMode === 'synthetic_demo' && (
-                        <div className="rule-note">
-                            <span>i</span>
-                            <p>
-                                Using synthetic 5-minute demo candles across simulated IST sessions.
-                            </p>
-                        </div>
-                    )}
-
-                    <div className="section-label">INDICATORS</div>
-
-                    <div className="two">
-                        <label>
-                            Fast EMA
-                            <input
-                                type="number"
-                                min="2"
-                                value={strategy.fast_ema}
-                                onChange={(event) =>
-                                    update('fast_ema', Number(event.target.value))
-                                }
-                            />
-                        </label>
-                        <label>
-                            Slow EMA
-                            <input
-                                type="number"
-                                min="3"
-                                value={strategy.slow_ema}
-                                onChange={(event) =>
-                                    update('slow_ema', Number(event.target.value))
-                                }
-                            />
-                        </label>
-                    </div>
-
-                    <label className="toggle-row">
-                        <span>
-                            <b>RSI filter</b>
-                            <small>Only enter when RSI meets threshold</small>
-                        </span>
-                        <input
-                            type="checkbox"
-                            checked={strategy.use_rsi_filter}
-                            onChange={(event) =>
-                                update('use_rsi_filter', event.target.checked)
-                            }
-                        />
-                    </label>
-
-                    {strategy.use_rsi_filter && (
-                        <div className="two">
-                            <label>
-                                RSI period
-                                <input
-                                    type="number"
-                                    min="2"
-                                    value={strategy.rsi_period}
+                                    type="checkbox"
+                                    checked={strategy.use_rsi_filter}
                                     onChange={(event) =>
-                                        update('rsi_period', Number(event.target.value))
+                                        update('use_rsi_filter', event.target.checked)
                                     }
                                 />
                             </label>
-                            <label>
-                                Minimum RSI
+
+                            {strategy.use_rsi_filter && (
+                                <div className="two">
+                                    <label>
+                                        RSI period
+                                        <input
+                                            type="number"
+                                            min="2"
+                                            value={strategy.rsi_period}
+                                            onChange={(event) =>
+                                                update('rsi_period', Number(event.target.value))
+                                            }
+                                        />
+                                    </label>
+                                    <label>
+                                        Minimum RSI
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max="100"
+                                            value={strategy.rsi_min}
+                                            onChange={(event) =>
+                                                update('rsi_min', Number(event.target.value))
+                                            }
+                                        />
+                                    </label>
+                                </div>
+                            )}
+
+                            <label className="toggle-row" style={{ marginTop: '10px' }}>
+                                <span>
+                                    <b>Intraday VWAP filter</b>
+                                    <small>Long above VWAP, Short below VWAP</small>
+                                </span>
+                                <input
+                                    type="checkbox"
+                                    checked={strategy.use_vwap_filter}
+                                    onChange={(event) =>
+                                        update('use_vwap_filter', event.target.checked)
+                                    }
+                                />
+                            </label>
+
+                            <label className="toggle-row" style={{ marginTop: '10px' }}>
+                                <span>
+                                    <b>Supertrend filter</b>
+                                    <small>Align with ATR trend direction</small>
+                                </span>
+                                <input
+                                    type="checkbox"
+                                    checked={strategy.use_supertrend_filter}
+                                    onChange={(event) =>
+                                        update('use_supertrend_filter', event.target.checked)
+                                    }
+                                />
+                            </label>
+
+                            {strategy.use_supertrend_filter && (
+                                <div className="two" style={{ marginTop: '8px' }}>
+                                    <label>
+                                        ATR Period
+                                        <input
+                                            type="number"
+                                            min="2"
+                                            value={strategy.supertrend_period}
+                                            onChange={(event) =>
+                                                update('supertrend_period', Number(event.target.value))
+                                            }
+                                        />
+                                    </label>
+                                    <label>
+                                        Multiplier
+                                        <input
+                                            type="number"
+                                            min="0.5"
+                                            step="0.5"
+                                            value={strategy.supertrend_multiplier}
+                                            onChange={(event) =>
+                                                update('supertrend_multiplier', Number(event.target.value))
+                                            }
+                                        />
+                                    </label>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    <div className="section-label">
+                        <button
+                            type="button"
+                            className="section-header-btn"
+                            onClick={() => toggleSection('risk')}
+                            aria-expanded={openSections.risk}
+                        >
+                            <span>Risk & Execution</span>
+                            <span className={`chevron ${openSections.risk ? 'open' : ''}`}>▾</span>
+                        </button>
+                    </div>
+
+                    {openSections.risk && (
+                        <div className="section-content-animated">
+                            <div className="two">
+                                <label>
+                                    Stop loss (%)
+                                    <input
+                                        type="number"
+                                        min="0.01"
+                                        step="0.1"
+                                        value={strategy.stop_loss_pct}
+                                        onChange={(event) =>
+                                            update('stop_loss_pct', Number(event.target.value))
+                                        }
+                                    />
+                                </label>
+                                <label>
+                                    Take profit (%)
+                                    <input
+                                        type="number"
+                                        min="0.01"
+                                        step="0.1"
+                                        value={strategy.take_profit_pct}
+                                        onChange={(event) =>
+                                            update('take_profit_pct', Number(event.target.value))
+                                        }
+                                    />
+                                </label>
+                            </div>
+
+                            <label className="toggle-row" style={{ marginTop: '10px' }}>
+                                <span>
+                                    <b>Trailing Stop-Loss</b>
+                                    <small>Trail stop price behind peak favorable price</small>
+                                </span>
+                                <input
+                                    type="checkbox"
+                                    checked={strategy.use_trailing_stop}
+                                    onChange={(event) =>
+                                        update('use_trailing_stop', event.target.checked)
+                                    }
+                                />
+                            </label>
+
+                            {strategy.use_trailing_stop && (
+                                <label style={{ marginTop: '8px' }}>
+                                    Trailing distance (%)
+                                    <input
+                                        type="number"
+                                        min="0.05"
+                                        step="0.1"
+                                        value={strategy.trailing_stop_pct}
+                                        onChange={(event) =>
+                                            update('trailing_stop_pct', Number(event.target.value))
+                                        }
+                                    />
+                                </label>
+                            )}
+
+                            <div className="two">
+                                <label>
+                                    Start time (IST)
+                                    <input
+                                        type="time"
+                                        value={strategy.trading_start}
+                                        onChange={(event) =>
+                                            update('trading_start', event.target.value)
+                                        }
+                                    />
+                                </label>
+                                <label>
+                                    End time (IST)
+                                    <input
+                                        type="time"
+                                        value={strategy.trading_end}
+                                        onChange={(event) =>
+                                            update('trading_end', event.target.value)
+                                        }
+                                    />
+                                </label>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="section-label">
+                        <button
+                            type="button"
+                            className="section-header-btn"
+                            onClick={() => toggleSection('taxes')}
+                            aria-expanded={openSections.taxes}
+                        >
+                            <span>Indian Taxes & Charges</span>
+                            <span className={`chevron ${openSections.taxes ? 'open' : ''}`}>▾</span>
+                        </button>
+                    </div>
+
+                    {openSections.taxes && (
+                        <div className="section-content-animated">
+                            <label className="toggle-row">
+                                <span>
+                                    <b>Real Indian Charges (STT & GST)</b>
+                                    <small>SEBI, STT (0.025%), GST (18%), Stamp Duty</small>
+                                </span>
+                                <input
+                                    type="checkbox"
+                                    checked={strategy.use_regulatory_charges}
+                                    onChange={(event) =>
+                                        update('use_regulatory_charges', event.target.checked)
+                                    }
+                                />
+                            </label>
+
+                            <label style={{ marginTop: '8px' }}>
+                                Brokerage per order leg (₹)
                                 <input
                                     type="number"
                                     min="0"
-                                    max="100"
-                                    value={strategy.rsi_min}
+                                    value={strategy.brokerage_per_order}
                                     onChange={(event) =>
-                                        update('rsi_min', Number(event.target.value))
+                                        update('brokerage_per_order', Number(event.target.value))
                                     }
+                                    placeholder="20 (e.g. Zerodha/Groww)"
                                 />
                             </label>
                         </div>
                     )}
 
-                    <label className="toggle-row" style={{ marginTop: '10px' }}>
-                        <span>
-                            <b>Intraday VWAP filter</b>
-                            <small>Long above VWAP, Short below VWAP</small>
-                        </span>
-                        <input
-                            type="checkbox"
-                            checked={strategy.use_vwap_filter}
-                            onChange={(event) =>
-                                update('use_vwap_filter', event.target.checked)
-                            }
-                        />
-                    </label>
+                    <div className="section-label">
+                        <button
+                            type="button"
+                            className="section-header-btn"
+                            onClick={() => toggleSection('account')}
+                            aria-expanded={openSections.account}
+                        >
+                            <span>Virtual Account Capital</span>
+                            <span className={`chevron ${openSections.account ? 'open' : ''}`}>▾</span>
+                        </button>
+                    </div>
 
-                    <label className="toggle-row" style={{ marginTop: '10px' }}>
-                        <span>
-                            <b>Supertrend filter</b>
-                            <small>Align with ATR trend direction</small>
-                        </span>
-                        <input
-                            type="checkbox"
-                            checked={strategy.use_supertrend_filter}
-                            onChange={(event) =>
-                                update('use_supertrend_filter', event.target.checked)
-                            }
-                        />
-                    </label>
-
-                    {strategy.use_supertrend_filter && (
-                        <div className="two" style={{ marginTop: '8px' }}>
+                    {openSections.account && (
+                        <div className="section-content-animated">
                             <label>
-                                ATR Period
+                                Starting capital (₹)
                                 <input
                                     type="number"
-                                    min="2"
-                                    value={strategy.supertrend_period}
-                                    onChange={(event) =>
-                                        update('supertrend_period', Number(event.target.value))
-                                    }
+                                    min="1"
+                                    value={capital}
+                                    onChange={(event) => setCapital(Number(event.target.value))}
                                 />
                             </label>
+
+                            <div className="two">
+                                <label>
+                                    Quantity (shares)
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value={qty}
+                                        onChange={(event) => setQty(Number(event.target.value))}
+                                    />
+                                </label>
+                                <label>
+                                    Fee per order (₹)
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        value={fee}
+                                        onChange={(event) => setFee(Number(event.target.value))}
+                                    />
+                                </label>
+                            </div>
+
                             <label>
-                                Multiplier
+                                Slippage (basis points)
                                 <input
                                     type="number"
-                                    min="0.5"
-                                    step="0.5"
-                                    value={strategy.supertrend_multiplier}
-                                    onChange={(event) =>
-                                        update('supertrend_multiplier', Number(event.target.value))
-                                    }
+                                    min="0"
+                                    value={slippage}
+                                    onChange={(event) => setSlippage(Number(event.target.value))}
                                 />
                             </label>
                         </div>
                     )}
-
-                    <div className="section-label">RISK & EXECUTION</div>
-
-                    <div className="two">
-                        <label>
-                            Stop loss (%)
-                            <input
-                                type="number"
-                                min="0.01"
-                                step="0.1"
-                                value={strategy.stop_loss_pct}
-                                onChange={(event) =>
-                                    update('stop_loss_pct', Number(event.target.value))
-                                }
-                            />
-                        </label>
-                        <label>
-                            Take profit (%)
-                            <input
-                                type="number"
-                                min="0.01"
-                                step="0.1"
-                                value={strategy.take_profit_pct}
-                                onChange={(event) =>
-                                    update('take_profit_pct', Number(event.target.value))
-                                }
-                            />
-                        </label>
-                    </div>
-
-                    <label className="toggle-row" style={{ marginTop: '10px' }}>
-                        <span>
-                            <b>Trailing Stop-Loss</b>
-                            <small>Trail stop price behind peak favorable price</small>
-                        </span>
-                        <input
-                            type="checkbox"
-                            checked={strategy.use_trailing_stop}
-                            onChange={(event) =>
-                                update('use_trailing_stop', event.target.checked)
-                            }
-                        />
-                    </label>
-
-                    {strategy.use_trailing_stop && (
-                        <label style={{ marginTop: '8px' }}>
-                            Trailing distance (%)
-                            <input
-                                type="number"
-                                min="0.05"
-                                step="0.1"
-                                value={strategy.trailing_stop_pct}
-                                onChange={(event) =>
-                                    update('trailing_stop_pct', Number(event.target.value))
-                                }
-                            />
-                        </label>
-                    )}
-
-                    <div className="two">
-                        <label>
-                            Start time (IST)
-                            <input
-                                type="time"
-                                value={strategy.trading_start}
-                                onChange={(event) =>
-                                    update('trading_start', event.target.value)
-                                }
-                            />
-                        </label>
-                        <label>
-                            End time (IST)
-                            <input
-                                type="time"
-                                value={strategy.trading_end}
-                                onChange={(event) =>
-                                    update('trading_end', event.target.value)
-                                }
-                            />
-                        </label>
-                    </div>
-
-                    <div className="section-label">INDIAN TAXES & STATUTORY CHARGES</div>
-
-                    <label className="toggle-row">
-                        <span>
-                            <b>Real Indian Charges (STT & GST)</b>
-                            <small>SEBI, STT (0.025%), GST (18%), Stamp Duty</small>
-                        </span>
-                        <input
-                            type="checkbox"
-                            checked={strategy.use_regulatory_charges}
-                            onChange={(event) =>
-                                update('use_regulatory_charges', event.target.checked)
-                            }
-                        />
-                    </label>
-
-                    <label style={{ marginTop: '8px' }}>
-                        Brokerage per order leg (₹)
-                        <input
-                            type="number"
-                            min="0"
-                            value={strategy.brokerage_per_order}
-                            onChange={(event) =>
-                                update('brokerage_per_order', Number(event.target.value))
-                            }
-                            placeholder="20 (e.g. Zerodha/Groww)"
-                        />
-                    </label>
-
-                    <div className="section-label">VIRTUAL ACCOUNT</div>
-
-                    <label>
-                        Starting capital (₹)
-                        <input
-                            type="number"
-                            min="1"
-                            value={capital}
-                            onChange={(event) => setCapital(Number(event.target.value))}
-                        />
-                    </label>
-
-                    <div className="two">
-                        <label>
-                            Quantity (shares)
-                            <input
-                                type="number"
-                                min="1"
-                                value={qty}
-                                onChange={(event) => setQty(Number(event.target.value))}
-                            />
-                        </label>
-                        <label>
-                            Fee per order (₹)
-                            <input
-                                type="number"
-                                min="0"
-                                value={fee}
-                                onChange={(event) => setFee(Number(event.target.value))}
-                            />
-                        </label>
-                    </div>
-
-                    <label>
-                        Slippage (basis points)
-                        <input
-                            type="number"
-                            min="0"
-                            value={slippage}
-                            onChange={(event) => setSlippage(Number(event.target.value))}
-                        />
-                    </label>
 
                     <div className="rule-note">
                         <span>i</span>
@@ -1665,6 +1782,7 @@ export default function App() {
                                 <CandlestickChart
                                     candles={result.candles}
                                     trades={result.trades}
+                                    theme={theme}
                                 />
                             ) : (
                                 <div className="chart">
@@ -1718,9 +1836,11 @@ export default function App() {
                                                     'Equity',
                                                 ]}
                                                 contentStyle={{
-                                                    background: '#101827',
-                                                    border: '1px solid #2a374c',
+                                                    background: 'var(--surface-dropdown)',
+                                                    border: '1px solid var(--border-panel)',
                                                     borderRadius: 8,
+                                                    color: 'var(--text-primary)',
+                                                    boxShadow: 'var(--shadow-md)',
                                                 }}
                                             />
                                             <Line
@@ -1927,7 +2047,7 @@ export default function App() {
 
             {/* Phase 3: Grid Search Optimization View */}
             {workspaceTab === 'grid_search' && (
-                <section className="results" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
+                <section className="results animated-tab-enter" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
                     <div className="panel result-head">
                         <div>
                             <span className="eyebrow">PHASE 3 / PARAMETER OPTIMIZATION</span>
@@ -2097,7 +2217,7 @@ export default function App() {
 
             {/* Advanced: Live Paper Trading & Real-Time Alert Engine */}
             {workspaceTab === 'paper_trading' && (
-                <section className="results" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
+                <section className="results animated-tab-enter" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
                     <div className="panel result-head">
                         <div>
                             <span className="eyebrow">ADVANCED / LIVE PAPER TRADING ENGINE</span>
@@ -2291,7 +2411,7 @@ export default function App() {
 
             {/* Intermediate: Monte Carlo Stress Test View */}
             {workspaceTab === 'monte_carlo' && (
-                <section className="results" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
+                <section className="results animated-tab-enter" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
                     <div className="panel result-head">
                         <div>
                             <span className="eyebrow">ROBUSTNESS / MONTE CARLO STRESS TEST</span>
@@ -2369,7 +2489,7 @@ export default function App() {
                                             <XAxis dataKey="trade_step" stroke="#5a6c82" tick={{ fontSize: 10 }} />
                                             <YAxis stroke="#5a6c82" domain={['auto', 'auto']} tick={{ fontSize: 10 }} />
                                             <Tooltip
-                                                contentStyle={{ backgroundColor: '#0d1624', borderColor: '#202c3d', borderRadius: '8px' }}
+                                                contentStyle={{ backgroundColor: 'var(--surface-dropdown)', borderColor: 'var(--border-panel)', borderRadius: '8px', color: 'var(--text-primary)' }}
                                                 formatter={(val: any) => [money(Number(val)), '']}
                                             />
                                             <Line type="monotone" dataKey="p95" stroke="#38bdf8" strokeWidth={1.5} dot={false} name="95th Percentile" />
@@ -2388,7 +2508,7 @@ export default function App() {
 
             {/* Advanced: Live Paper Trading & Real-Time Alert Engine */}
             {workspaceTab === 'paper_trading' && (
-                <section className="results" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
+                <section className="results animated-tab-enter" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
                     <div className="panel result-head">
                         <div>
                             <span className="eyebrow">ADVANCED / LIVE PAPER TRADING ENGINE</span>
@@ -2582,7 +2702,7 @@ export default function App() {
 
             {/* Intermediate: Walk-Forward Out-Of-Sample (OOS) View */}
             {workspaceTab === 'walk_forward' && (
-                <section className="results" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
+                <section className="results animated-tab-enter" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
                     <div className="panel result-head">
                         <div>
                             <span className="eyebrow">OVERFITTING DETECTION / WALK-FORWARD</span>
@@ -2684,7 +2804,7 @@ export default function App() {
 
             {/* Advanced: Live Paper Trading & Real-Time Alert Engine */}
             {workspaceTab === 'paper_trading' && (
-                <section className="results" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
+                <section className="results animated-tab-enter" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
                     <div className="panel result-head">
                         <div>
                             <span className="eyebrow">ADVANCED / LIVE PAPER TRADING ENGINE</span>
@@ -2879,7 +2999,7 @@ export default function App() {
 
             {/* Phase 3: Portfolio Watchlist Multi-Stock Runner */}
             {workspaceTab === 'portfolio' && (
-                <section className="results" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
+                <section className="results animated-tab-enter" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
                     <div className="panel result-head">
                         <div>
                             <span className="eyebrow">PHASE 3 / PORTFOLIO WATCHLIST</span>
@@ -3007,7 +3127,7 @@ export default function App() {
 
             {/* Advanced: Live Paper Trading & Real-Time Alert Engine */}
             {workspaceTab === 'paper_trading' && (
-                <section className="results" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
+                <section className="results animated-tab-enter" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
                     <div className="panel result-head">
                         <div>
                             <span className="eyebrow">ADVANCED / LIVE PAPER TRADING ENGINE</span>
@@ -3201,7 +3321,7 @@ export default function App() {
 
             {/* Intermediate: Monte Carlo Stress Test View */}
             {workspaceTab === 'monte_carlo' && (
-                <section className="results" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
+                <section className="results animated-tab-enter" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
                     <div className="panel result-head">
                         <div>
                             <span className="eyebrow">ROBUSTNESS / MONTE CARLO STRESS TEST</span>
@@ -3279,7 +3399,7 @@ export default function App() {
                                             <XAxis dataKey="trade_step" stroke="#5a6c82" tick={{ fontSize: 10 }} />
                                             <YAxis stroke="#5a6c82" domain={['auto', 'auto']} tick={{ fontSize: 10 }} />
                                             <Tooltip
-                                                contentStyle={{ backgroundColor: '#0d1624', borderColor: '#202c3d', borderRadius: '8px' }}
+                                                contentStyle={{ backgroundColor: 'var(--surface-dropdown)', borderColor: 'var(--border-panel)', borderRadius: '8px', color: 'var(--text-primary)' }}
                                                 formatter={(val: any) => [money(Number(val)), '']}
                                             />
                                             <Line type="monotone" dataKey="p95" stroke="#38bdf8" strokeWidth={1.5} dot={false} name="95th Percentile" />
@@ -3298,7 +3418,7 @@ export default function App() {
 
             {/* Advanced: Live Paper Trading & Real-Time Alert Engine */}
             {workspaceTab === 'paper_trading' && (
-                <section className="results" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
+                <section className="results animated-tab-enter" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
                     <div className="panel result-head">
                         <div>
                             <span className="eyebrow">ADVANCED / LIVE PAPER TRADING ENGINE</span>
@@ -3492,7 +3612,7 @@ export default function App() {
 
             {/* Intermediate: Walk-Forward Out-Of-Sample (OOS) View */}
             {workspaceTab === 'walk_forward' && (
-                <section className="results" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
+                <section className="results animated-tab-enter" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
                     <div className="panel result-head">
                         <div>
                             <span className="eyebrow">OVERFITTING DETECTION / WALK-FORWARD</span>
@@ -3594,7 +3714,7 @@ export default function App() {
 
             {/* Advanced: Live Paper Trading & Real-Time Alert Engine */}
             {workspaceTab === 'paper_trading' && (
-                <section className="results" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
+                <section className="results animated-tab-enter" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
                     <div className="panel result-head">
                         <div>
                             <span className="eyebrow">ADVANCED / LIVE PAPER TRADING ENGINE</span>

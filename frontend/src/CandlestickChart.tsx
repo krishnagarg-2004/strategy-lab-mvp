@@ -33,9 +33,10 @@ export type TradeMarker = {
 interface Props {
     candles: CandleData[];
     trades: TradeMarker[];
+    theme?: 'dark' | 'light';
 }
 
-export default function CandlestickChart({ candles, trades }: Props) {
+export default function CandlestickChart({ candles, trades, theme = 'dark' }: Props) {
     const containerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -44,27 +45,29 @@ export default function CandlestickChart({ candles, trades }: Props) {
         const container = containerRef.current;
         container.innerHTML = '';
 
+        const isLight = theme === 'light';
+
         const chart = createChart(container, {
             layout: {
-                background: { type: ColorType.Solid, color: '#0f172a' },
-                textColor: '#94a3b8',
+                background: { type: ColorType.Solid, color: isLight ? '#ffffff' : '#0d1522' },
+                textColor: isLight ? '#475569' : '#94a3b8',
                 fontSize: 12,
             },
             grid: {
-                vertLines: { color: '#1e293b' },
-                horzLines: { color: '#1e293b' },
+                vertLines: { color: isLight ? '#f1f5f9' : '#1e293b' },
+                horzLines: { color: isLight ? '#f1f5f9' : '#1e293b' },
             },
             crosshair: {
-                vertLine: { color: '#475569', width: 1, style: 2 },
-                horzLine: { color: '#475569', width: 1, style: 2 },
+                vertLine: { color: isLight ? '#94a3b8' : '#475569', width: 1, style: 2 },
+                horzLine: { color: isLight ? '#94a3b8' : '#475569', width: 1, style: 2 },
             },
             timeScale: {
-                borderColor: '#334155',
+                borderColor: isLight ? '#e2e8f0' : '#334155',
                 timeVisible: true,
                 secondsVisible: false,
             },
             rightPriceScale: {
-                borderColor: '#334155',
+                borderColor: isLight ? '#e2e8f0' : '#334155',
                 scaleMargins: {
                     top: 0.1,
                     bottom: 0.25,
@@ -189,7 +192,9 @@ export default function CandlestickChart({ candles, trades }: Props) {
             window.removeEventListener('resize', handleResize);
             chart.remove();
         };
-    }, [candles, trades]);
+    }, [candles, trades, theme]);
+
+    const isLight = theme === 'light';
 
     return (
         <div style={{ width: '100%', position: 'relative' }}>
@@ -200,7 +205,8 @@ export default function CandlestickChart({ candles, trades }: Props) {
                     height: '440px',
                     borderRadius: '8px',
                     overflow: 'hidden',
-                    border: '1px solid #1e293b',
+                    border: isLight ? '1px solid #e2e8f0' : '1px solid #1e293b',
+                    transition: 'border-color 200ms ease',
                 }}
             />
         </div>
