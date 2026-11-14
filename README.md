@@ -11,10 +11,14 @@
 
 It equips quantitative analysts, systematic retail traders, and financial engineers with institutional-grade strategy evaluation: zero look-ahead bias next-bar execution, multi-indicator filtering (EMA, VWAP, Supertrend, RSI), real Indian statutory charges modeling (STT, GST, Stamp Duty, SEBI turnover fees), parameter optimization heatmaps, multi-stock portfolio testing, Monte Carlo sequence risk stress testing, Walk-Forward out-of-sample validation, and live forward paper trading with Discord/Telegram alert webhooks.
 
+> 📘 **Looking for the Trader's Manual?**  
+> If you are a trader looking for step-by-step instructions on how to use every feature, configure indicators, read the performance metrics, or set up webhook alerts in plain English, check out the **[User Guide & Trader Handbook](USER_GUIDE.md)**.
+
 ---
 
 ## 📑 Table of Contents
 
+* [📘 User Guide & Trader Handbook (Plain English)](USER_GUIDE.md)
 1. [🌐 Live Cloud Access (Render)](#-live-cloud-access-render)
 2. [🎯 Target Audience](#-target-audience)
 3. [🔄 Architecture & Data Flow Diagram](#-architecture--data-flow-diagram)
@@ -27,7 +31,7 @@ It equips quantitative analysts, systematic retail traders, and financial engine
    * [Option 1: Run with Docker Compose](#option-1-run-with-docker-compose-recommended)
    * [Option 2: Run Locally (Without Docker)](#option-2-run-locally-without-docker)
 8. [⚙️ Environment Variables Configuration](#️-environment-variables-configuration)
-9. [📖 How to Use Strategy Lab](#-how-to-use-strategy-lab)
+9. [📖 The 6 Quantitative Workspaces](#-the-6-quantitative-workspaces)
 10. [📐 Quantitative Methodology & Risk Metrics](#-quantitative-methodology--risk-metrics)
 11. [🛠️ API Reference](#️-api-reference)
 12. [📊 CSV Upload Specification](#-csv-upload-specification)
@@ -341,55 +345,18 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ---
 
-## 📖 How to Use Strategy Lab
+## 📖 The 6 Quantitative Workspaces
 
-### 1. Single Run Backtest
-1. Open the **Single Run** tab.
-2. Select your **Trade Direction** (`Long Only`, `Short Only`, or `Both`).
-3. Choose a **Data Source**:
-   * **Indian Mkts**: Pick from major NSE/BSE tickers (NIFTY 50, BANKNIFTY, RELIANCE, TCS, etc.) and click **Fetch & Load Candles**.
-   * **Upload CSV**: Upload your own 6-column OHLCV dataset.
-   * **Demo Data**: Test instantly with synthetic candles.
-4. Configure **Technical Indicators** (Fast/Slow EMA, RSI filter, Intraday VWAP, Supertrend).
-5. Set **Risk Management & Taxes** (Stop Loss %, Take Profit %, Trailing Stop-Loss %, Indian STT & GST toggle, Brokerage per leg).
-6. Click **Run Backtest**.
-7. Analyze the **Performance Report**:
-   * Net P&L, Win Rate %, Profit Factor, Max Drawdown %, Sharpe Ratio, Sortino Ratio, and Max Consecutive Losses.
-   * Switch between the **TradingView Candlestick Chart** (with BUY/EXIT signal markers) and the **Cumulative Equity Curve**.
-   * Review the trade ledger table with duration, exit reason, and net P&L.
-8. Click **Save Run to Database** to preserve the experiment or **Export trades CSV** to download the ledger.
+Strategy Lab provides six dedicated modules for complete lifecycle strategy engineering. For step-by-step instructions and practical examples, see the **[User Guide & Trader Handbook](USER_GUIDE.md)**.
 
-### 2. Parameter Optimization (Grid Search)
-1. Switch to the **Grid Search** tab.
-2. Enter the parameter ranges (e.g., Fast EMAs: `5, 9, 13, 21` and Slow EMAs: `21, 34, 55, 89`).
-3. Click **Run Grid Search**.
-4. Inspect the interactive 2D Heatmap. Green cells represent profitable/high-Sharpe regions, while red cells indicate drawdown areas.
-5. Click any cell to inspect its exact metrics or automatically load those parameters into the Single Run tab.
+1. **Single Run Backtest**: Candle-by-candle simulation with bi-directional execution (Long/Short), zero look-ahead next-bar fill, trailing stop-losses, and realistic Indian statutory fees (STT, GST, SEBI).
+2. **Parameter Optimization (Grid Search)**: Exhaustive 2D parameter sweep across Fast $\times$ Slow EMA combinations to detect stable parameter plateaus.
+3. **Multi-Stock Portfolio Watchlist**: Run batch backtests across a basket of equities and indices simultaneously to evaluate diversification benefits.
+4. **Monte Carlo Stress Test**: Reshuffles trade sequences over 1,000+ bootstrap iterations to uncover sequence risk and risk of ruin probabilities.
+5. **Walk-Forward Out-of-Sample (OOS)**: Chronologically segments data into In-Sample (Train) vs Out-of-Sample (Test) periods to verify Walk-Forward Efficiency (WFE %) and flag curve-fitting.
+6. **Live Paper Trading & Alert Hub**: Practice real-time forward execution with simulated ticks, automated trailing stop updates, and instant alert dispatching to Discord and Telegram webhooks.
 
-### 3. Multi-Stock Portfolio Batch Test
-1. Switch to the **Portfolio Watchlist** tab.
-2. Toggle on the instruments you want in your portfolio basket (e.g., RELIANCE, HDFCBANK, INFY, TCS).
-3. Click **Run Portfolio Test**.
-4. View the consolidated portfolio return, total trades, average win rate, and cross-asset performance comparison table.
-
-### 4. Monte Carlo Sequence Stress Test
-1. Switch to the **Monte Carlo** tab.
-2. Enter the number of simulation iterations (e.g., `1000` to `5000`).
-3. Click **Run Monte Carlo**.
-4. Review the **Risk of Ruin %**, 95th percentile worst-case drawdown, and the multi-path percentile fan chart to evaluate sequence-of-returns vulnerability.
-
-### 5. Walk-Forward Out-of-Sample Validation
-1. Switch to the **Walk-Forward (OOS)** tab.
-2. Choose your In-Sample Train % (default: `70%`).
-3. Click **Run Walk-Forward Split**.
-4. Compare In-Sample vs Out-of-Sample Sharpe, Net P&L, and Win Rate. Inspect the Walk-Forward Efficiency (WFE %) score to detect if a strategy is overfitted.
-
-### 6. Live Paper Trading & Real-Time Alerts
-1. Switch to the **Live Paper Trading** tab.
-2. Optional: Paste your **Discord** or **Telegram** webhook URL and toggle **Enable Live Webhook Alerts** (test via **Send Test Ping**).
-3. Click **Start Live Paper Session**.
-4. Click **Trigger Live Tick** to forward-simulate incoming market quotes, update trailing stops in real-time, and broadcast signal alerts.
-5. Click **Stop Session** when completed.
+> 📖 **Read the complete guide:** For detailed instructions on how to use every setting, read [USER_GUIDE.md](USER_GUIDE.md).
 
 ---
 
