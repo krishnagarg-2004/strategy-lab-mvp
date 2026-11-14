@@ -12,6 +12,9 @@ import {
 import CandlestickChart from './CandlestickChart';
 import type { CandleData } from './CandlestickChart';
 
+// In production on Render, direct API calls to the live backend URL
+const API_BASE = (import.meta as any).env?.VITE_BACKEND_URL || (typeof window !== 'undefined' && window.location.hostname.includes('onrender.com') ? 'https://strategy-lab-backend-dj9l.onrender.com' : '');
+
 type Strategy = {
     name: string;
     fast_ema: number;
@@ -406,7 +409,7 @@ export default function App() {
 
     // Fetch initial popular symbols & experiments list
     useEffect(() => {
-        fetch('/api/market-data/symbols')
+        fetch(`${API_BASE}/api/market-data/symbols`)
             .then((res) => res.json())
             .then((data) => {
                 if (data.symbols && Array.isArray(data.symbols)) {
@@ -421,7 +424,7 @@ export default function App() {
 
     async function loadPaperTradingStatus() {
         try {
-            const res = await fetch('/api/paper-trading/status');
+            const res = await fetch(`${API_BASE}/api/paper-trading/status`);
             const data = await res.json();
             setPaperStatus(data as PaperTradingStatus);
         } catch {
@@ -431,7 +434,7 @@ export default function App() {
 
     async function loadExperimentsList() {
         try {
-            const res = await fetch('/api/experiments');
+            const res = await fetch(`${API_BASE}/api/experiments`);
             const data = await res.json();
             if (data.experiments && Array.isArray(data.experiments)) {
                 setExperiments(data.experiments);
@@ -493,7 +496,7 @@ export default function App() {
         setMarketFetchSuccess('');
 
         try {
-            const res = await fetch('/api/market-data/fetch', {
+            const res = await fetch(`${API_BASE}/api/market-data/fetch`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -541,7 +544,7 @@ export default function App() {
                 }
             } // synthetic_demo passes null csv_data
 
-            const response = await fetch('/api/backtest', {
+            const response = await fetch(`${API_BASE}/api/backtest`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -584,7 +587,7 @@ export default function App() {
                 throw new Error('Please enter valid numeric EMA lists.');
             }
 
-            const response = await fetch('/api/grid-search', {
+            const response = await fetch(`${API_BASE}/api/grid-search`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -620,7 +623,7 @@ export default function App() {
                 throw new Error('Please select at least one symbol for the portfolio.');
             }
 
-            const response = await fetch('/api/portfolio-backtest', {
+            const response = await fetch(`${API_BASE}/api/portfolio-backtest`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -653,7 +656,7 @@ export default function App() {
         setError('');
         try {
             const tradePnls = result.trades.map((t) => t.net_pnl);
-            const response = await fetch('/api/monte-carlo', {
+            const response = await fetch(`${API_BASE}/api/monte-carlo`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -675,7 +678,7 @@ export default function App() {
         setWfBusy(true);
         setError('');
         try {
-            const response = await fetch('/api/walk-forward', {
+            const response = await fetch(`${API_BASE}/api/walk-forward`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -704,7 +707,7 @@ export default function App() {
         setPaperBusy(true);
         setError('');
         try {
-            const response = await fetch('/api/paper-trading/start', {
+            const response = await fetch(`${API_BASE}/api/paper-trading/start`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -731,7 +734,7 @@ export default function App() {
     async function handleStopPaperTrading() {
         setPaperBusy(true);
         try {
-            const response = await fetch('/api/paper-trading/stop', { method: 'POST' });
+            const response = await fetch(`${API_BASE}/api/paper-trading/stop`, { method: 'POST' });
             const data = await parseJsonResponse(response);
             setPaperStatus(data as PaperTradingStatus);
         } catch (e) {
@@ -744,7 +747,7 @@ export default function App() {
     async function handlePaperTradingTick(manualPrice?: number) {
         setPaperBusy(true);
         try {
-            const response = await fetch('/api/paper-trading/tick', {
+            const response = await fetch(`${API_BASE}/api/paper-trading/tick`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ manual_price: manualPrice }),
@@ -765,7 +768,7 @@ export default function App() {
         }
         setWebhookTestStatus('Sending test ping…');
         try {
-            const res = await fetch('/api/paper-trading/webhook-test', {
+            const res = await fetch(`${API_BASE}/api/paper-trading/webhook-test`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -788,7 +791,7 @@ export default function App() {
             `${result.symbol} ${result.strategy.fast_ema}/${result.strategy.slow_ema} (${result.return_pct}%)`;
 
         try {
-            const res = await fetch('/api/experiments', {
+            const res = await fetch(`${API_BASE}/api/experiments`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -828,7 +831,7 @@ export default function App() {
 
     async function handleLoadExperiment(id: number) {
         try {
-            const res = await fetch(`/api/experiments/${id}`);
+            const res = await fetch(`${API_BASE}/api/experiments/${id}`);
             if (!res.ok) throw new Error('Could not load experiment.');
             const data = await res.json();
             setResult(data as Result);
@@ -850,7 +853,7 @@ export default function App() {
     async function handleDeleteExperiment(id: number, event: React.MouseEvent) {
         event.stopPropagation();
         try {
-            const res = await fetch(`/api/experiments/${id}`, { method: 'DELETE' });
+            const res = await fetch(`${API_BASE}/api/experiments/${id}`, { method: 'DELETE' });
             if (!res.ok) throw new Error('Could not delete experiment.');
             setExperiments((prev) => prev.filter((exp) => exp.id !== id));
         } catch (e) {
