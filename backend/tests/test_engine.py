@@ -604,7 +604,7 @@ def test_grid_search_api():
 
 def test_market_data_cache():
     """Verify that repeat calls to fetch_indian_market_data hit cache."""
-    from backend.app.market_data import fetch_indian_market_data, _DATA_CACHE
+    from app.market_data import fetch_indian_market_data, _DATA_CACHE
     sym = "^NSEI"
     csv1, df1 = fetch_indian_market_data(sym, period="5d", interval="15m")
     assert (sym, "5d", "15m") in _DATA_CACHE

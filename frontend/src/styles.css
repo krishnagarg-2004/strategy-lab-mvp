@@ -1476,3 +1476,376 @@ footer {
         gap: 10px;
     }
 }
+
+/* ==========================================================================
+   Phase 1, 2 & 4 Extensions: Provenance, Watchlist, Community & Presets
+   ========================================================================== */
+
+/* Data Provenance Banners */
+.data-provenance-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border-radius: var(--radius-md);
+    margin-bottom: 16px;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.real-data-banner {
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    color: var(--accent-positive);
+}
+
+.synthetic-data-banner {
+    background: rgba(245, 158, 11, 0.08);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    color: var(--accent-warning);
+}
+
+.csv-data-banner {
+    background: rgba(59, 130, 246, 0.08);
+    border: 1px solid rgba(59, 130, 246, 0.25);
+    color: var(--accent-info, #3B82F6);
+}
+
+.switch-real-btn {
+    margin-top: 6px;
+    background: var(--accent-warning);
+    color: #000;
+    font-weight: 600;
+    border: none;
+    padding: 4px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 11px;
+}
+.switch-real-btn:hover {
+    filter: brightness(1.1);
+}
+
+/* Enhanced Metric Rating Badges */
+.metric-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.metric-rating-badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    letter-spacing: 0.02em;
+}
+
+.badge-good {
+    background: rgba(16, 185, 129, 0.12);
+    color: var(--accent-positive);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.badge-warning {
+    background: rgba(245, 158, 11, 0.12);
+    color: var(--accent-warning);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.badge-bad {
+    background: rgba(239, 68, 68, 0.12);
+    color: var(--accent-negative);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.badge-neutral {
+    background: var(--surface-card);
+    color: var(--text-muted);
+    border: 1px solid var(--border-subtle);
+}
+
+/* Strategy Preset Selector Card */
+.strategy-preset-card {
+    background: var(--surface-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 12px;
+    margin-bottom: 16px;
+}
+
+.preset-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.preset-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.4;
+    margin-top: 6px;
+}
+
+/* Watchlist & Live Indices */
+.market-indices-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+.index-card {
+    background: var(--surface-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.index-card:hover {
+    border-color: var(--border-focus);
+    transform: translateY(-1px);
+}
+
+.index-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.index-price {
+    font-size: 18px;
+    font-weight: 700;
+    font-family: 'DM Mono', monospace;
+    margin: 6px 0 2px;
+}
+
+.index-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.change-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+}
+.change-badge.pos, .change-pill.pos {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--accent-positive);
+}
+.change-badge.neg, .change-pill.neg {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--accent-negative);
+}
+
+.change-pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+}
+
+.watchlist-table th, .watchlist-table td {
+    padding: 12px 14px;
+}
+
+.watchlist-row:hover {
+    background: var(--table-row-hover);
+}
+
+.btn-table-action {
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+    padding: 4px 10px;
+    font-size: 11px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.btn-table-action:hover {
+    border-color: var(--brand-primary);
+    color: var(--brand-primary);
+}
+.btn-table-action.run-backtest-btn {
+    background: rgba(99, 223, 176, 0.1);
+    color: var(--accent-positive);
+    border-color: rgba(99, 223, 176, 0.3);
+    font-weight: 600;
+}
+.btn-table-action.run-backtest-btn:hover {
+    background: var(--accent-positive);
+    color: #000;
+}
+.btn-table-action.remove-btn:hover {
+    border-color: var(--accent-negative);
+    color: var(--accent-negative);
+}
+
+/* Community Strategies Grid */
+.community-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.strategy-community-card {
+    background: var(--surface-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.strategy-community-card:hover {
+    border-color: var(--border-focus);
+    transform: translateY(-2px);
+}
+
+.card-top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.category-pill {
+    background: rgba(99, 223, 176, 0.1);
+    color: var(--brand-primary);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+}
+
+.author-name {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.strategy-card-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 4px 0 6px;
+    color: var(--text-primary);
+}
+
+.strategy-card-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    margin-bottom: 12px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.strategy-tags-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.tag-badge {
+    font-size: 10px;
+    color: var(--text-muted);
+    background: var(--surface-card);
+    border: 1px solid var(--border-subtle);
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+}
+
+.verified-performance-box {
+    background: var(--surface-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+    margin-bottom: 12px;
+}
+
+.verified-badge {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--accent-positive);
+    margin-bottom: 4px;
+}
+
+.verified-stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    text-align: center;
+}
+
+.stat-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.stat-val {
+    font-size: 12px;
+    font-weight: 700;
+    font-family: 'DM Mono', monospace;
+}
+
+.strategy-rules-pill {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px dashed var(--border-subtle);
+    padding: 6px 8px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 14px;
+}
+
+.card-footer-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--border-subtle);
+    padding-top: 12px;
+}
+
+.btn-icon-count {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 4px;
+    transition: color 0.15s ease;
+}
+.btn-icon-count:hover {
+    color: var(--accent-positive);
+}
+
+.btn-fork-strategy {
+    background: var(--accent-positive);
+    color: #000;
+    font-weight: 700;
+    font-size: 12px;
+    border: none;
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: filter 0.15s ease;
+}
+.btn-fork-strategy:hover {
+    filter: brightness(1.1);
+}
+

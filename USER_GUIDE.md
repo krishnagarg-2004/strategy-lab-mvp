@@ -44,15 +44,45 @@ Want to see how your first strategy performs in under 60 seconds?
 
 ## 🧭 Understanding the Workspaces
 
-Strategy Lab is divided into 6 specialized quantitative research tabs:
+Strategy Lab is divided into 8 specialized quantitative research tabs:
 
 ```text
-[ Single Run ]  [ Grid Search ]  [ Portfolio Watchlist ]  [ Monte Carlo ]  [ Walk-Forward ]  [ Paper Trading ]
+[ Single Run ]  [ Live Watchlist ]  [ Community Hub ]  [ Grid Search ]  [ Multi-Asset Batch ]  [ Monte Carlo ]  [ Walk-Forward ]  [ Paper Trading ]
 ```
 
 ---
 
-### 1. Single Run (Core Backtesting)
+### 1. Single Run (Core Backtesting & Presets)
+
+The Single Run tab is your primary strategy testing ground. It executes a candle-by-candle deterministic simulation without look-ahead bias.
+
+#### Quickstart with Curated Presets:
+Don't want to adjust 18 inputs manually? Select any proven preset from the **Curated Strategy Presets** dropdown:
+* **Intraday 9/21 Momentum Scalp:** Fast EMA crossover + RSI confirmation for active trends.
+* **Supertrend + VWAP Trend Follower:** High-conviction intraday trend following above VWAP with a trailing stop.
+* **Classic 50/200 Swing Trend:** The institutional golden cross benchmark for multi-day swings.
+* **Bi-Directional Long & Short Scalper:** Exploits both bullish expansions and sharp bearish breakdowns.
+
+---
+
+### 2. Live Indian Market Watchlist
+
+The **Live Watchlist** workspace lets you monitor real-time / delayed price action across the National Stock Exchange (NSE):
+* **Live Indices & Stocks:** Tracks NIFTY 50, BANK NIFTY, NIFTY IT, Reliance, TCS, HDFC Bank, Infosys, and more.
+* **Real-time Price Metrics:** Displays Last Traded Price (LTP ₹), Day Change (₹ and %), Day High/Low, and Total Volume.
+* **Search & Personalize:** Search any stock or index ticker, add it to your personal watchlist, and remove with one click (saved in your browser).
+* **⚡ 1-Click Backtest in Lab:** Click the "Backtest in Lab" button next to any stock, and Strategy Lab automatically loads its real historical data into the backtesting engine and executes a test!
+
+---
+
+### 3. Community Strategy Showcase & Exchange
+
+Collaborate with other systematic traders without risking your capital:
+* **Browse Shared Strategies:** Filter strategies by category (`Intraday`, `Swing`, `Momentum`, `Mean Reversion`) or search by tags (`#nifty`, `#scalp`).
+* **Verified Performance Badges:** View verified backtest statistics (Net Return %, Win Rate %, Sharpe Ratio, Max Drawdown) certified by the backtesting engine.
+* **Like & Discuss:** Give a thumbs-up to promising strategies and leave constructive feedback in the discussion comments.
+* **⚡ 1-Click Copy to Lab (Forking):** Click "Copy to My Lab" to load any shared strategy's exact configuration into your workspace and run independent tests.
+* **Share Your Own Strategy:** Click "Share My Strategy" to publish your strategy with its verified performance proof to the community.
 
 The Single Run tab is your primary strategy testing ground. It executes a candle-by-candle deterministic simulation without look-ahead bias.
 
@@ -75,7 +105,7 @@ The Single Run tab is your primary strategy testing ground. It executes a candle
 
 ---
 
-### 2. Grid Search (Parameter Optimization Heatmap)
+### 4. Grid Search (Parameter Optimization Heatmap)
 
 *Ever wondered: "Would my strategy perform better with an 8/20 EMA or a 13/34 EMA?"*
 
@@ -94,11 +124,11 @@ Grid Search removes the guesswork by systematically testing an entire matrix of 
 
 ---
 
-### 3. Portfolio Watchlist (Multi-Asset Basket Testing)
+### 5. Multi-Asset Batch Backtest
 
-A strategy that works well on NIFTY 50 might fail on individual volatile mid-caps. The Portfolio Watchlist tests your strategy across multiple assets simultaneously.
+A strategy that works well on NIFTY 50 might fail on individual volatile mid-caps. The Multi-Asset Batch runner tests your strategy across multiple assets simultaneously.
 
-1. Switch to the **Portfolio Watchlist** tab.
+1. Switch to the **Multi-Asset Batch** tab.
 2. Select the instruments you want to include in your basket (e.g. `NIFTY 50`, `RELIANCE`, `TCS`, `INFY`, `HDFCBANK`).
 3. Set your **Virtual Capital Per Stock** (e.g. ₹50,000 per symbol).
 4. Click **Run Portfolio Test**.
@@ -109,7 +139,7 @@ A strategy that works well on NIFTY 50 might fail on individual volatile mid-cap
 
 ---
 
-### 4. Monte Carlo (Sequence Risk & Ruin Analysis)
+### 6. Monte Carlo (Sequence Risk & Ruin Analysis)
 
 *Even a winning strategy can blow up an account if all its losing trades happen to occur back-to-back.*
 
@@ -126,7 +156,7 @@ Monte Carlo stress-testing randomly reshuffles the order of your historical trad
 
 ---
 
-### 5. Walk-Forward (Overfitting & Curve-Fitting Detection)
+### 7. Walk-Forward (Overfitting & Curve-Fitting Detection)
 
 Curve-fitting happens when you tweak parameters until a strategy looks artificially perfect on historical data, only for it to fail when used in real trading.
 
@@ -144,7 +174,7 @@ Walk-Forward analysis prevents this by splitting your historical data chronologi
 
 ---
 
-### 6. Live Paper Trading & Real-Time Alerts
+### 8. Live Paper Trading & Real-Time Alerts
 
 Practice forward-testing your strategy without risking real capital.
 

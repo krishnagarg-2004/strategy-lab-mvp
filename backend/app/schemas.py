@@ -206,5 +206,31 @@ class WebhookTestRequest(BaseModel):
     message: Optional[str] = None
 
 
+class BatchQuotesRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    symbols: List[str] = Field(..., min_length=1, max_length=50)
+
+
+class PublishCommunityStrategyRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    title: str = Field(..., min_length=3, max_length=140)
+    description: str = Field(..., min_length=10, max_length=2000)
+    author_name: str = Field(default="Anonymous Quant", min_length=2, max_length=80)
+    category: str = Field(default="Intraday", min_length=2, max_length=50)
+    tags: str = Field(default="momentum,nifty", max_length=255)
+    strategy: StrategySpec
+    verified_stats: Optional[Dict[str, Any]] = None
+
+
+class AddCommentRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    author_name: str = Field(default="Trader", min_length=2, max_length=80)
+    comment: str = Field(..., min_length=2, max_length=1000)
+
+
+
 
 

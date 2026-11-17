@@ -15,16 +15,25 @@ from .engine import (
     run_portfolio_backtest,
     run_walk_forward,
 )
-from .market_data import POPULAR_INDIAN_SYMBOLS, fetch_indian_market_data
-from .models import BacktestExperiment
+from .market_data import (
+    POPULAR_INDIAN_SYMBOLS,
+    fetch_indian_market_data,
+    fetch_quotes_batch,
+    fetch_symbol_quote,
+    search_indian_symbols,
+)
+from .models import BacktestExperiment, CommunityStrategy, StrategyComment
 from .paper_trading import paper_session
 from .schemas import (
+    AddCommentRequest,
     BacktestRequest,
+    BatchQuotesRequest,
     GridSearchRequest,
     MarketDataFetchRequest,
     MonteCarloRequest,
     PaperTradingTickRequest,
     PortfolioBacktestRequest,
+    PublishCommunityStrategyRequest,
     SaveExperimentRequest,
     StartPaperTradingRequest,
     WalkForwardRequest,
@@ -111,6 +120,32 @@ def strategy_template():
 def get_popular_symbols():
     """Return pre-configured list of popular Indian indices and large-cap stocks."""
     return {"symbols": POPULAR_INDIAN_SYMBOLS}
+
+
+@app.get("/api/market-data/search")
+def search_symbols(q: str = ""):
+    """Search Indian indices and stocks by name or ticker."""
+    return {"results": search_indian_symbols(q)}
+
+
+@app.get("/api/market-data/quote/{symbol}")
+def get_quote(symbol: str):
+    """Get current/delayed quote for an Indian stock or index."""
+    try:
+        quote = fetch_symbol_quote(symbol)
+        return quote
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch quote: {exc}") from exc
+
+
+@app.post("/api/market-data/quotes")
+def get_batch_quotes(request: BatchQuotesRequest):
+    """Get current/delayed quotes for multiple watchlist symbols in batch."""
+    try:
+        quotes = fetch_quotes_batch(request.symbols)
+        return {"quotes": quotes}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch batch quotes: {exc}") from exc
 
 
 @app.post("/api/market-data/fetch")
@@ -326,3 +361,119 @@ def delete_experiment(experiment_id: int, db: Session = Depends(get_db)):
     db.delete(exp)
     db.commit()
     return {"status": "deleted", "id": experiment_id}
+
+
+# ==========================================
+# Community Strategy Sharing & Collaboration
+# ==========================================
+
+
+@app.get("/api/community/strategies")
+def list_community_strategies(
+    category: Optional[str] = None,
+    tag: Optional[str] = None,
+    q: Optional[str] = None,
+    db: Session = Depends(get_db),
+):
+    """List published community strategies with optional category, tag, or text filtering."""
+    query = db.query(CommunityStrategy).order_by(CommunityStrategy.likes_count.desc(), CommunityStrategy.created_at.desc())
+
+    if category and category.lower() != "all":
+        query = query.filter(CommunityStrategy.category.ilike(f"%{category}%"))
+
+    if tag:
+        query = query.filter(CommunityStrategy.tags.ilike(f"%{tag}%"))
+
+    if q:
+        query = query.filter(
+            (CommunityStrategy.title.ilike(f"%{q}%"))
+            | (CommunityStrategy.description.ilike(f"%{q}%"))
+            | (CommunityStrategy.author_name.ilike(f"%{q}%"))
+        )
+
+    strategies = query.limit(50).all()
+    return {"strategies": [s.to_summary_dict() for s in strategies]}
+
+
+@app.post("/api/community/strategies")
+def publish_community_strategy(
+    request: PublishCommunityStrategyRequest,
+    db: Session = Depends(get_db),
+):
+    """Publish a trading strategy with verified metrics to the community gallery."""
+    try:
+        strat = CommunityStrategy(
+            title=request.title,
+            description=request.description,
+            author_name=request.author_name,
+            category=request.category,
+            tags=request.tags,
+            strategy_json=json.dumps(request.strategy.model_dump()),
+            verified_stats_json=json.dumps(request.verified_stats) if request.verified_stats else None,
+            likes_count=0,
+            copies_count=0,
+        )
+        db.add(strat)
+        db.commit()
+        db.refresh(strat)
+        return {"status": "published", "strategy": strat.to_summary_dict()}
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Could not publish strategy: {exc}") from exc
+
+
+@app.get("/api/community/strategies/{strategy_id}")
+def get_community_strategy(strategy_id: int, db: Session = Depends(get_db)):
+    """Get full details and comments of a shared community strategy."""
+    strat = db.query(CommunityStrategy).filter(CommunityStrategy.id == strategy_id).first()
+    if not strat:
+        raise HTTPException(status_code=404, detail="Community strategy not found.")
+    return strat.to_detail_dict()
+
+
+@app.post("/api/community/strategies/{strategy_id}/like")
+def like_community_strategy(strategy_id: int, db: Session = Depends(get_db)):
+    """Increment like count for a community strategy."""
+    strat = db.query(CommunityStrategy).filter(CommunityStrategy.id == strategy_id).first()
+    if not strat:
+        raise HTTPException(status_code=404, detail="Community strategy not found.")
+    strat.likes_count += 1
+    db.commit()
+    return {"status": "liked", "likes_count": strat.likes_count}
+
+
+@app.post("/api/community/strategies/{strategy_id}/fork")
+def fork_community_strategy(strategy_id: int, db: Session = Depends(get_db)):
+    """Increment copy/fork count when a user imports a shared strategy to their workspace."""
+    strat = db.query(CommunityStrategy).filter(CommunityStrategy.id == strategy_id).first()
+    if not strat:
+        raise HTTPException(status_code=404, detail="Community strategy not found.")
+    strat.copies_count += 1
+    db.commit()
+    return {"status": "forked", "copies_count": strat.copies_count}
+
+
+@app.post("/api/community/strategies/{strategy_id}/comments")
+def add_strategy_comment(
+    strategy_id: int,
+    request: AddCommentRequest,
+    db: Session = Depends(get_db),
+):
+    """Add a review or comment to a published strategy."""
+    strat = db.query(CommunityStrategy).filter(CommunityStrategy.id == strategy_id).first()
+    if not strat:
+        raise HTTPException(status_code=404, detail="Community strategy not found.")
+    try:
+        comment = StrategyComment(
+            strategy_id=strategy_id,
+            author_name=request.author_name,
+            comment=request.comment,
+        )
+        db.add(comment)
+        db.commit()
+        db.refresh(comment)
+        return {"status": "added", "comment": comment.to_dict()}
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Could not post comment: {exc}") from exc
+

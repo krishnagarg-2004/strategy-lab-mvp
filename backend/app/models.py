@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 import json
-from sqlalchemy import Column, Integer, String, Float, DateTime, Text
+from sqlalchemy import Column, Integer, String, Float, DateTime, Text, ForeignKey
+from sqlalchemy.orm import relationship
 from .db import Base
 
 
@@ -68,3 +69,65 @@ class BacktestExperiment(Base):
         })
         return summary
 
+
+class CommunityStrategy(Base):
+    __tablename__ = "community_strategies"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
+    title = Column(String(140), nullable=False)
+    description = Column(Text, nullable=False)
+    author_name = Column(String(80), default="Anonymous Quant", nullable=False)
+    category = Column(String(50), default="Intraday", nullable=False)
+    tags = Column(String(255), default="momentum,nifty", nullable=False)
+    strategy_json = Column(Text, nullable=False)
+    verified_stats_json = Column(Text, nullable=True)
+    likes_count = Column(Integer, default=0, nullable=False)
+    copies_count = Column(Integer, default=0, nullable=False)
+
+    comments = relationship("StrategyComment", back_populates="strategy", cascade="all, delete-orphan")
+
+    def to_summary_dict(self):
+        strategy = json.loads(self.strategy_json) if self.strategy_json else {}
+        verified_stats = json.loads(self.verified_stats_json) if self.verified_stats_json else None
+        tag_list = [t.strip() for t in self.tags.split(",") if t.strip()]
+        return {
+            "id": self.id,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "title": self.title,
+            "description": self.description,
+            "author_name": self.author_name,
+            "category": self.category,
+            "tags": tag_list,
+            "strategy": strategy,
+            "verified_stats": verified_stats,
+            "likes_count": self.likes_count,
+            "copies_count": self.copies_count,
+            "comment_count": len(self.comments) if self.comments else 0,
+        }
+
+    def to_detail_dict(self):
+        summary = self.to_summary_dict()
+        summary["comments"] = [c.to_dict() for c in sorted(self.comments, key=lambda x: x.created_at or datetime.min, reverse=True)]
+        return summary
+
+
+class StrategyComment(Base):
+    __tablename__ = "strategy_comments"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    strategy_id = Column(Integer, ForeignKey("community_strategies.id", ondelete="CASCADE"), nullable=False, index=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
+    author_name = Column(String(80), default="Trader", nullable=False)
+    comment = Column(Text, nullable=False)
+
+    strategy = relationship("CommunityStrategy", back_populates="comments")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "strategy_id": self.strategy_id,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "author_name": self.author_name,
+            "comment": self.comment,
+        }

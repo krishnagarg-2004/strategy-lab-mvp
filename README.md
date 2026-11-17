@@ -31,7 +31,7 @@ It equips quantitative analysts, systematic retail traders, and financial engine
    * [Option 1: Run with Docker Compose](#option-1-run-with-docker-compose-recommended)
    * [Option 2: Run Locally (Without Docker)](#option-2-run-locally-without-docker)
 8. [⚙️ Environment Variables Configuration](#️-environment-variables-configuration)
-9. [📖 The 6 Quantitative Workspaces](#-the-6-quantitative-workspaces)
+9. [📖 The 8 Quantitative Workspaces](#-the-8-quantitative-workspaces)
 10. [📐 Quantitative Methodology & Risk Metrics](#-quantitative-methodology--risk-metrics)
 11. [🛠️ API Reference](#️-api-reference)
 12. [📊 CSV Upload Specification](#-csv-upload-specification)
@@ -345,16 +345,18 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ---
 
-## 📖 The 6 Quantitative Workspaces
+## 📖 The 8 Quantitative Workspaces
 
-Strategy Lab provides six dedicated modules for complete lifecycle strategy engineering. For step-by-step instructions and practical examples, see the **[User Guide & Trader Handbook](USER_GUIDE.md)**.
+Strategy Lab provides eight dedicated modules for complete lifecycle strategy engineering. For step-by-step instructions and practical examples, see the **[User Guide & Trader Handbook](USER_GUIDE.md)**.
 
-1. **Single Run Backtest**: Candle-by-candle simulation with bi-directional execution (Long/Short), zero look-ahead next-bar fill, trailing stop-losses, and realistic Indian statutory fees (STT, GST, SEBI).
-2. **Parameter Optimization (Grid Search)**: Exhaustive 2D parameter sweep across Fast $\times$ Slow EMA combinations to detect stable parameter plateaus.
-3. **Multi-Stock Portfolio Watchlist**: Run batch backtests across a basket of equities and indices simultaneously to evaluate diversification benefits.
-4. **Monte Carlo Stress Test**: Reshuffles trade sequences over 1,000+ bootstrap iterations to uncover sequence risk and risk of ruin probabilities.
-5. **Walk-Forward Out-of-Sample (OOS)**: Chronologically segments data into In-Sample (Train) vs Out-of-Sample (Test) periods to verify Walk-Forward Efficiency (WFE %) and flag curve-fitting.
-6. **Live Paper Trading & Alert Hub**: Practice real-time forward execution with simulated ticks, automated trailing stop updates, and instant alert dispatching to Discord and Telegram webhooks.
+1. **Single Run Backtest**: Candle-by-candle simulation with bi-directional execution (Long/Short), zero look-ahead next-bar fill, curated Strategy Presets (Intraday Scalp, Supertrend, Golden Cross), clear Synthetic Demo vs. Real Data provenance banners, trailing stop-losses, and realistic Indian statutory fees (STT, GST, SEBI).
+2. **Live Indian Market Watchlist**: Real-time / delayed price tracking across NIFTY 50, BANK NIFTY, and top NSE stocks with LTP, Day Change (%), Day High/Low, and one-click "Backtest in Lab" integration.
+3. **Community Strategy Showcase & Exchange**: Public gallery of verified quantitative strategies. Filter by tags or categories, like, comment, and copy any community strategy directly into your workspace with 1-click forking.
+4. **Parameter Optimization (Grid Search)**: Exhaustive 2D parameter sweep across Fast $\times$ Slow EMA combinations to detect stable parameter plateaus.
+5. **Multi-Stock Portfolio Batch**: Run batch backtests across a basket of equities and indices simultaneously to evaluate diversification benefits.
+6. **Monte Carlo Stress Test**: Reshuffles trade sequences over 1,000+ bootstrap iterations to uncover sequence risk and risk of ruin probabilities.
+7. **Walk-Forward Out-of-Sample (OOS)**: Chronologically segments data into In-Sample (Train) vs Out-of-Sample (Test) periods to verify Walk-Forward Efficiency (WFE %) and flag curve-fitting.
+8. **Live Paper Trading & Alert Hub**: Practice real-time forward execution with simulated ticks, automated trailing stop updates, and instant alert dispatching to Discord and Telegram webhooks.
 
 > 📖 **Read the complete guide:** For detailed instructions on how to use every setting, read [USER_GUIDE.md](USER_GUIDE.md).
 

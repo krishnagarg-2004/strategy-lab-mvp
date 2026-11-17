@@ -11,6 +11,12 @@ import {
 } from 'recharts';
 import CandlestickChart from './CandlestickChart';
 import type { CandleData } from './CandlestickChart';
+import { STRATEGY_PRESETS } from './components/StrategyPresets';
+import type { StrategyConfig } from './components/StrategyPresets';
+import { MetricCard, getSharpeRating, getProfitFactorRating, getDrawdownRating } from './components/MetricCard';
+import { DemoDataNotice } from './components/DemoDataNotice';
+import { WatchlistPanel } from './components/WatchlistPanel';
+import { CommunityHub } from './components/CommunityHub';
 
 // In production on Render, direct API calls to the live backend URL
 const API_BASE = (import.meta as any).env?.VITE_BACKEND_URL || (typeof window !== 'undefined' && window.location.hostname.includes('onrender.com') ? 'https://strategy-lab-backend-dj9l.onrender.com' : '');
@@ -364,8 +370,86 @@ export default function App() {
     const [experimentName, setExperimentName] = useState('');
     const [saveStatus, setSaveStatus] = useState('');
 
-    // Workspace View Tab & State (Phase 3 + Intermediate + Advanced)
-    const [workspaceTab, setWorkspaceTab] = useState<'single' | 'grid_search' | 'portfolio' | 'monte_carlo' | 'walk_forward' | 'paper_trading'>('single');
+    // Workspace View Tab & State (Phase 1, 2, 4 + Advanced)
+    const [workspaceTab, setWorkspaceTab] = useState<'single' | 'watchlist' | 'community' | 'grid_search' | 'portfolio' | 'monte_carlo' | 'walk_forward' | 'paper_trading'>('single');
+    const [selectedPresetId, setSelectedPresetId] = useState<string>('intraday_momentum');
+
+    const handleSelectPreset = (presetId: string) => {
+        setSelectedPresetId(presetId);
+        if (presetId === 'custom') return;
+        const found = STRATEGY_PRESETS.find((p) => p.id === presetId);
+        if (found && found.config) {
+            setStrategy((prev) => ({
+                ...prev,
+                ...found.config,
+            }));
+        }
+    };
+
+    const handleWatchlistSelectForBacktest = (sym: string) => {
+        setMarketSymbol(sym);
+        setSymbol(sym);
+        setDataSourceMode('indian_market');
+        setCsvData('');
+        setCsvFileName('');
+        setWorkspaceTab('single');
+        // Trigger backtest with this symbol
+        setTimeout(() => {
+            fetchMarketDataAndRun(sym);
+        }, 50);
+    };
+
+    const handleCopyStrategyToLab = (copiedStrat: StrategyConfig, sym?: string) => {
+        setStrategy(copiedStrat);
+        if (sym) {
+            setMarketSymbol(sym);
+            setSymbol(sym);
+            setDataSourceMode('indian_market');
+        }
+        setWorkspaceTab('single');
+    };
+
+    async function fetchMarketDataAndRun(sym: string) {
+        setBusy(true);
+        setError('');
+        try {
+            const res = await fetch(`${API_BASE}/api/market-data/fetch`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    symbol: sym,
+                    period: marketPeriod,
+                    interval: marketInterval,
+                }),
+            });
+            const data = await parseJsonResponse(res);
+            setCsvData(data.csv_data);
+            setSymbol(data.symbol);
+            setMarketFetchSuccess(`✓ Loaded ${data.candle_count} candles for ${data.symbol}`);
+
+            const backtestRes = await fetch(`${API_BASE}/api/backtest`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    strategy,
+                    initial_capital: capital,
+                    quantity: qty,
+                    fee_per_order: fee,
+                    slippage_bps: slippage,
+                    symbol: data.symbol,
+                    csv_data: data.csv_data,
+                    market_period: marketPeriod,
+                    market_interval: marketInterval,
+                }),
+            });
+            const resultData = await parseJsonResponse(backtestRes);
+            setResult(resultData as Result);
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'Error testing symbol');
+        } finally {
+            setBusy(false);
+        }
+    }
 
     // Live Paper Trading State
     const [paperStatus, setPaperStatus] = useState<PaperTradingStatus | null>(null);
@@ -932,6 +1016,20 @@ export default function App() {
                         </button>
                         <button
                             type="button"
+                            className={`tab-btn ${workspaceTab === 'watchlist' ? 'active' : ''}`}
+                            onClick={() => setWorkspaceTab('watchlist')}
+                        >
+                            Live Watchlist
+                        </button>
+                        <button
+                            type="button"
+                            className={`tab-btn ${workspaceTab === 'community' ? 'active' : ''}`}
+                            onClick={() => setWorkspaceTab('community')}
+                        >
+                            Community Hub
+                        </button>
+                        <button
+                            type="button"
                             className={`tab-btn ${workspaceTab === 'grid_search' ? 'active' : ''}`}
                             onClick={() => setWorkspaceTab('grid_search')}
                         >
@@ -942,7 +1040,7 @@ export default function App() {
                             className={`tab-btn ${workspaceTab === 'portfolio' ? 'active' : ''}`}
                             onClick={() => setWorkspaceTab('portfolio')}
                         >
-                            Portfolio Watchlist
+                            Multi-Asset Batch
                         </button>
                         <button
                             type="button"
@@ -1025,6 +1123,32 @@ export default function App() {
                             <h2>Strategy rules</h2>
                         </div>
                         <span className="lock">RULES LOCKED TO INPUT</span>
+                    </div>
+
+                    <div className="strategy-preset-card">
+                        <div className="preset-title-row">
+                            <span className="eyebrow" style={{ fontSize: '10px' }}>CURATED STRATEGY PRESETS</span>
+                            <span className="badge-good" style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '4px' }}>
+                                {STRATEGY_PRESETS.find((p) => p.id === selectedPresetId)?.badge || 'Curated'}
+                            </span>
+                        </div>
+                        <select
+                            value={selectedPresetId}
+                            onChange={(e) => handleSelectPreset(e.target.value)}
+                            style={{ width: '100%', marginTop: '4px', padding: '8px 10px', borderRadius: '6px' }}
+                        >
+                            <option value="custom">⚙ Custom Parameters</option>
+                            {STRATEGY_PRESETS.map((p) => (
+                                <option key={p.id} value={p.id}>
+                                    {p.title}
+                                </option>
+                            ))}
+                        </select>
+                        {selectedPresetId !== 'custom' && (
+                            <div className="preset-desc">
+                                {STRATEGY_PRESETS.find((p) => p.id === selectedPresetId)?.tagline}
+                            </div>
+                        )}
                     </div>
 
                     <label>
@@ -1627,7 +1751,7 @@ export default function App() {
                     </div>
 
                     {result && (
-                        <div className="save-exp-box">
+                        <div className="save-exp-box" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                             <input
                                 className="save-exp-input"
                                 placeholder={`Name this run (e.g. ${result.symbol} Fast ${result.strategy.fast_ema})`}
@@ -1646,6 +1770,15 @@ export default function App() {
                             >
                                 Save Run to Database
                             </button>
+                            <button
+                                type="button"
+                                className="btn-outline"
+                                style={{ borderColor: 'var(--brand-primary)', color: 'var(--brand-primary)', fontWeight: 600 }}
+                                onClick={() => setWorkspaceTab('community')}
+                                title="Share this verified backtest with the community"
+                            >
+                                🚀 Share to Community
+                            </button>
                             {saveStatus && (
                                 <span
                                     style={{
@@ -1660,41 +1793,29 @@ export default function App() {
                         </div>
                     )}
 
-                    {result && result.is_real_market_data === false && (
-                        <div className="warning">
-                            <b>DEMO DATA</b>
-                            <span>
-                                These results use synthetic candles, not actual market data. Do
-                                not use them to make trading decisions.
-                            </span>
-                        </div>
-                    )}
-
-                    {result && result.is_real_market_data === true && (
-                        <div
-                            className="rule-note"
-                            style={{
-                                background: '#122538',
-                                borderColor: '#204366',
-                                marginTop: '14px',
+                    {result && (
+                        <DemoDataNotice
+                            dataSource={result.data_source}
+                            isRealMarketData={result.is_real_market_data}
+                            symbol={result.symbol}
+                            onSwitchToRealData={() => {
+                                setDataSourceMode('indian_market');
+                                setCsvData('');
+                                setCsvFileName('');
+                                handleFetchMarketData();
                             }}
-                        >
-                            <span>⚡</span>
-                            <p style={{ color: '#93c5fd' }}>
-                                Real historical market data fetched from Yahoo Finance. No live
-                                broker orders are sent.
-                            </p>
-                        </div>
+                        />
                     )}
 
                     <div className="metrics">
-                        <Metric
+                        <MetricCard
                             label="Net P&L"
                             value={result ? money(result.net_pnl) : '—'}
                             sub={result ? `${result.return_pct}% return` : 'Waiting for run'}
                             positive={!!result && result.net_pnl >= 0}
+                            ratingBadge={result ? { text: result.net_pnl >= 0 ? '🟢 Profit' : '🔴 Net Loss', tone: result.net_pnl >= 0 ? 'good' : 'bad' } : undefined}
                         />
-                        <Metric
+                        <MetricCard
                             label="Win rate"
                             value={result ? `${result.win_rate_pct}%` : '—'}
                             sub={
@@ -1702,8 +1823,9 @@ export default function App() {
                                     ? `${result.wins}W / ${result.losses}L`
                                     : 'Awaiting trades'
                             }
+                            positive={!!result && result.win_rate_pct >= 50}
                         />
-                        <Metric
+                        <MetricCard
                             label="Profit factor"
                             value={
                                 result
@@ -1715,30 +1837,33 @@ export default function App() {
                             sub={
                                 result
                                     ? result.profit_factor && result.profit_factor >= 1.5
-                                        ? 'Healthy'
+                                        ? 'Healthy Edge'
                                         : 'Caution'
-                                    : 'Ratio'
+                                    : 'Gross Win / Gross Loss'
                             }
+                            ratingBadge={result ? getProfitFactorRating(result.profit_factor) : undefined}
                         />
-                        <Metric
+                        <MetricCard
                             label="Max drawdown"
                             value={result ? `${result.max_drawdown_pct}%` : '—'}
-                            sub={result ? 'Peak-to-trough' : 'Risk metric'}
+                            sub={result ? 'Peak-to-trough drop' : 'Risk metric'}
                             positive={!!result && result.max_drawdown_pct < 10}
+                            ratingBadge={result ? getDrawdownRating(result.max_drawdown_pct) : undefined}
                         />
-                        <Metric
+                        <MetricCard
                             label="Sharpe Ratio"
                             value={result && result.sharpe_ratio !== undefined && result.sharpe_ratio !== null ? String(result.sharpe_ratio) : '—'}
-                            sub={result ? (result.sharpe_ratio && result.sharpe_ratio > 1 ? 'Good risk/reward' : 'Low Sharpe') : 'Annualized'}
+                            sub={result ? 'Risk-adjusted annual return' : 'Annualized'}
                             positive={!!result && (result.sharpe_ratio ?? 0) >= 1.0}
+                            ratingBadge={result ? getSharpeRating(result.sharpe_ratio) : undefined}
                         />
-                        <Metric
+                        <MetricCard
                             label="Sortino / Consec"
                             value={result && result.sortino_ratio !== undefined && result.sortino_ratio !== null ? `${result.sortino_ratio} / ${result.max_consecutive_losses ?? 0}` : '—'}
-                            sub={result ? `Downside risk / Max Ls: ${result.max_consecutive_losses ?? 0}` : 'Sortino / Max L streak'}
+                            sub={result ? `Downside risk / Max L streak: ${result.max_consecutive_losses ?? 0}` : 'Sortino / Max L streak'}
                             positive={!!result && (result.sortino_ratio ?? 0) >= 1.5}
                         />
-                        <Metric
+                        <MetricCard
                             label="Taxes & Charges"
                             value={result && result.total_taxes_and_charges !== undefined ? money(result.total_taxes_and_charges) : '—'}
                             sub={result?.tax_summary ? `STT: ${money(result.tax_summary.stt)} | GST: ${money(result.tax_summary.gst)}` : 'Govt & exchange levies'}
@@ -2046,6 +2171,34 @@ export default function App() {
                     </div>
                 </section>
             </div>
+            )}
+
+            {/* Live Indian Markets Watchlist View */}
+            {workspaceTab === 'watchlist' && (
+                <WatchlistPanel
+                    apiBase={API_BASE}
+                    onSelectSymbolForBacktest={handleWatchlistSelectForBacktest}
+                />
+            )}
+
+            {/* Community Strategy Sharing & Exploration View */}
+            {workspaceTab === 'community' && (
+                <CommunityHub
+                    apiBase={API_BASE}
+                    currentStrategy={strategy}
+                    latestVerifiedStats={
+                        result
+                            ? {
+                                  symbol: result.symbol,
+                                  return_pct: result.return_pct,
+                                  win_rate_pct: result.win_rate_pct,
+                                  sharpe_ratio: result.sharpe_ratio,
+                                  max_drawdown_pct: result.max_drawdown_pct,
+                              }
+                            : null
+                    }
+                    onCopyStrategyToLab={handleCopyStrategyToLab}
+                />
             )}
 
             {/* Phase 3: Grid Search Optimization View */}
