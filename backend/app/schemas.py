@@ -231,6 +231,13 @@ class AddCommentRequest(BaseModel):
     comment: str = Field(..., min_length=2, max_length=1000)
 
 
+class AIStrategyCompileRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    prompt: str = Field(..., min_length=3, max_length=1500)
+
+
+
 
 
 

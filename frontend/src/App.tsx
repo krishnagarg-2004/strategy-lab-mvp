@@ -17,6 +17,7 @@ import { MetricCard, getSharpeRating, getProfitFactorRating, getDrawdownRating }
 import { DemoDataNotice } from './components/DemoDataNotice';
 import { WatchlistPanel } from './components/WatchlistPanel';
 import { CommunityHub } from './components/CommunityHub';
+import { AIChatDrawer } from './components/AIChatDrawer';
 
 // In production on Render, direct API calls to the live backend URL
 const API_BASE = (import.meta as any).env?.VITE_BACKEND_URL || (typeof window !== 'undefined' && window.location.hostname.includes('onrender.com') ? 'https://strategy-lab-backend-dj9l.onrender.com' : '');
@@ -373,6 +374,8 @@ export default function App() {
     // Workspace View Tab & State (Phase 1, 2, 4 + Advanced)
     const [workspaceTab, setWorkspaceTab] = useState<'single' | 'watchlist' | 'community' | 'grid_search' | 'portfolio' | 'monte_carlo' | 'walk_forward' | 'paper_trading'>('single');
     const [selectedPresetId, setSelectedPresetId] = useState<string>('intraday_momentum');
+    const [showAIChat, setShowAIChat] = useState(false);
+    const [aiLoadedNotice, setAiLoadedNotice] = useState('');
 
     const handleSelectPreset = (presetId: string) => {
         setSelectedPresetId(presetId);
@@ -407,6 +410,19 @@ export default function App() {
             setDataSourceMode('indian_market');
         }
         setWorkspaceTab('single');
+    };
+
+    const handleApplyAIStrategy = (compiledStrat: StrategyConfig, sym?: string) => {
+        setStrategy(compiledStrat);
+        setSelectedPresetId('custom');
+        if (sym) {
+            setMarketSymbol(sym);
+            setSymbol(sym);
+            setDataSourceMode('indian_market');
+        }
+        setWorkspaceTab('single');
+        setAiLoadedNotice(`✓ AI Strategy "${compiledStrat.name}" loaded into Lab! Review settings and click Run Backtest.`);
+        setTimeout(() => setAiLoadedNotice(''), 8000);
     };
 
     async function fetchMarketDataAndRun(sym: string) {
@@ -1067,6 +1083,27 @@ export default function App() {
                     </div>
 
                     <button
+                        type="button"
+                        className="ai-assistant-btn"
+                        onClick={() => setShowAIChat(true)}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            background: 'rgba(99, 223, 176, 0.12)',
+                            border: '1px solid rgba(99, 223, 176, 0.35)',
+                            color: 'var(--accent-positive)',
+                            padding: '6px 14px',
+                            borderRadius: '6px',
+                            fontWeight: 600,
+                            fontSize: '12px',
+                            cursor: 'pointer',
+                        }}
+                    >
+                        <span>🤖</span> AI Strategy Assistant
+                    </button>
+
+                    <button
                         className="exp-badge"
                         onClick={() => setShowExperiments(true)}
                         title="View and restore saved backtest experiments"
@@ -1149,7 +1186,44 @@ export default function App() {
                                 {STRATEGY_PRESETS.find((p) => p.id === selectedPresetId)?.tagline}
                             </div>
                         )}
+                        <button
+                            type="button"
+                            className="btn-outline"
+                            style={{
+                                width: '100%',
+                                marginTop: '10px',
+                                padding: '6px 12px',
+                                fontSize: '11px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px',
+                                borderColor: 'rgba(99, 223, 176, 0.4)',
+                                color: 'var(--accent-positive)',
+                                fontWeight: 600,
+                            }}
+                            onClick={() => setShowAIChat(true)}
+                        >
+                            <span>🤖</span> Describe in Natural Language
+                        </button>
                     </div>
+
+                    {aiLoadedNotice && (
+                        <div
+                            style={{
+                                background: 'rgba(99, 223, 176, 0.12)',
+                                border: '1px solid rgba(99, 223, 176, 0.35)',
+                                color: 'var(--accent-positive)',
+                                padding: '8px 12px',
+                                borderRadius: '6px',
+                                fontSize: '12px',
+                                marginBottom: '14px',
+                                lineHeight: 1.4,
+                            }}
+                        >
+                            {aiLoadedNotice}
+                        </div>
+                    )}
 
                     <label>
                         Instrument label
@@ -2994,6 +3068,14 @@ export default function App() {
                     </div>
                 </div>
             )}
+
+            {/* AI Strategy Assistant Drawer */}
+            <AIChatDrawer
+                isOpen={showAIChat}
+                onClose={() => setShowAIChat(false)}
+                apiBase={API_BASE}
+                onApplyStrategy={handleApplyAIStrategy}
+            />
 
             <footer>
                 STRATEGY LAB · MVP 0.2 · INDIAN MARKETS BACKTESTING WORKSPACE

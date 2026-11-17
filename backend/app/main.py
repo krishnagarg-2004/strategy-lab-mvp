@@ -2,11 +2,16 @@ from contextlib import asynccontextmanager
 import json
 import logging
 from typing import List, Optional
+from dotenv import load_dotenv
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
+# Load environment secrets
+load_dotenv()
+
+from .ai_assistant import compile_strategy_from_natural_language
 from .db import Base, engine, get_db
 from .engine import (
     run_backtest,
@@ -26,6 +31,7 @@ from .models import BacktestExperiment, CommunityStrategy, StrategyComment
 from .paper_trading import paper_session
 from .schemas import (
     AddCommentRequest,
+    AIStrategyCompileRequest,
     BacktestRequest,
     BatchQuotesRequest,
     GridSearchRequest,
@@ -109,6 +115,15 @@ def strategy_template():
         },
         "note": "This is a rule template, not a recommendation.",
     }
+
+
+@app.post("/api/ai/compile-strategy")
+def compile_strategy(request: AIStrategyCompileRequest):
+    """Translate natural language trading rules into validated StrategySpec."""
+    try:
+        return compile_strategy_from_natural_language(request.prompt)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 # ==========================================
