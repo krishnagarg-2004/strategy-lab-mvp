@@ -1943,4 +1943,9 @@ footer {
     background: rgba(255, 255, 255, 0.08);
 }
 
+.ticker-item-hover:hover {
+    background: rgba(99, 223, 176, 0.12) !important;
+}
+
+
 
