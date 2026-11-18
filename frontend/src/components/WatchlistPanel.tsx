@@ -28,6 +28,8 @@ interface WatchlistPanelProps {
 }
 
 const DEFAULT_WATCHLIST = ['^NSEI', '^NSEBANK', 'RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'INFY.NS', 'TATAMOTORS.NS', 'SBIN.NS'];
+type WatchlistSortKey = 'symbol' | 'price' | 'change';
+type WatchlistSortDirection = 'asc' | 'desc';
 
 export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
     apiBase,
@@ -51,6 +53,7 @@ export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
     const [searchLoading, setSearchLoading] = useState(false);
     const [showSearchModal, setShowSearchModal] = useState(false);
     const [liveChartSymbol, setLiveChartSymbol] = useState<string | null>(null);
+    const [sort, setSort] = useState<{ key: WatchlistSortKey; direction: WatchlistSortDirection }>({ key: 'symbol', direction: 'asc' });
 
     useEffect(() => {
         localStorage.setItem('strategy_lab_user_watchlist', JSON.stringify(watchlistSymbols));
@@ -123,6 +126,29 @@ export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
         });
     };
 
+    const toggleSort = (key: WatchlistSortKey) => {
+        setSort((current) => ({
+            key,
+            direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc',
+        }));
+    };
+
+    const sortedSymbols = [...watchlistSymbols].sort((left, right) => {
+        const leftQuote = quotes[left];
+        const rightQuote = quotes[right];
+        let comparison = 0;
+        if (sort.key === 'symbol') {
+            comparison = left.localeCompare(right);
+        } else {
+            const leftValue = sort.key === 'price' ? leftQuote?.last_price : leftQuote?.change_pct;
+            const rightValue = sort.key === 'price' ? rightQuote?.last_price : rightQuote?.change_pct;
+            if (leftValue == null && rightValue != null) return 1;
+            if (leftValue != null && rightValue == null) return -1;
+            comparison = (leftValue ?? 0) - (rightValue ?? 0);
+        }
+        return sort.direction === 'asc' ? comparison : -comparison;
+    });
+
     return (
         <div className="watchlist-workspace animated-tab-enter">
             {/* Header Toolbar */}
@@ -194,16 +220,22 @@ export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
                     <table className="watchlist-table">
                         <thead>
                             <tr>
-                                <th>SYMBOL</th>
-                                <th>LTP (₹)</th>
-                                <th>DAY CHANGE</th>
+                                <th aria-sort={sort.key === 'symbol' ? (sort.direction === 'asc' ? 'ascending' : 'descending') : 'none'}>
+                                    <button type="button" className="watchlist-sort" onClick={() => toggleSort('symbol')}>SYMBOL {sort.key === 'symbol' ? (sort.direction === 'asc' ? '↑' : '↓') : '↕'}</button>
+                                </th>
+                                <th aria-sort={sort.key === 'price' ? (sort.direction === 'asc' ? 'ascending' : 'descending') : 'none'}>
+                                    <button type="button" className="watchlist-sort" onClick={() => toggleSort('price')}>LTP (₹) {sort.key === 'price' ? (sort.direction === 'asc' ? '↑' : '↓') : '↕'}</button>
+                                </th>
+                                <th aria-sort={sort.key === 'change' ? (sort.direction === 'asc' ? 'ascending' : 'descending') : 'none'}>
+                                    <button type="button" className="watchlist-sort" onClick={() => toggleSort('change')}>DAY CHANGE {sort.key === 'change' ? (sort.direction === 'asc' ? '↑' : '↓') : '↕'}</button>
+                                </th>
                                 <th>DAY HIGH / LOW</th>
                                 <th>VOLUME</th>
                                 <th>ACTIONS</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {watchlistSymbols.map((sym) => {
+                            {sortedSymbols.map((sym) => {
                                 const q = quotes[sym];
                                 const isPos = q ? q.change >= 0 : true;
 
@@ -236,10 +268,16 @@ export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
                                             )}
                                         </td>
                                         <td>
-                                            {q && q.day_high !== null && q.day_low !== null ? (
-                                                <span style={{ fontSize: '12px' }}>
-                                                    H: ₹{q.day_high.toLocaleString('en-IN')} / L: ₹{q.day_low.toLocaleString('en-IN')}
-                                                </span>
+                                            {q && q.last_price !== null && q.day_high !== null && q.day_low !== null ? (
+                                                <div className="day-range" title={`Day low ₹${q.day_low.toLocaleString('en-IN')} · day high ₹${q.day_high.toLocaleString('en-IN')}`}>
+                                                    <div className="day-range-track" aria-label={`Price within day range: ${q.day_low} to ${q.day_high}`}>
+                                                        <span className="day-range-marker" style={{ left: `${q.day_high > q.day_low ? Math.min(100, Math.max(0, ((q.last_price! - q.day_low) / (q.day_high - q.day_low)) * 100)) : 50}%` }} />
+                                                    </div>
+                                                    <div className="day-range-labels">
+                                                        <span>L ₹{q.day_low.toLocaleString('en-IN')}</span>
+                                                        <span>H ₹{q.day_high.toLocaleString('en-IN')}</span>
+                                                    </div>
+                                                </div>
                                             ) : (
                                                 '—'
                                             )}
@@ -292,6 +330,9 @@ export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
                                     </tr>
                                 );
                             })}
+                            {watchlistSymbols.length === 0 && (
+                                <tr><td colSpan={6}><div className="empty-table-state">Your watchlist is empty. Add an instrument to start tracking it here.</div></td></tr>
+                            )}
                         </tbody>
                     </table>
                 </div>

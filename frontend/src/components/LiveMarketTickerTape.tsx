@@ -53,6 +53,8 @@ export const LiveMarketTickerTape: React.FC<LiveMarketTickerTapeProps> = ({
 }) => {
     const [quotes, setQuotes] = useState<Record<string, TickerQuote>>({});
     const [marketOpen, setMarketOpen] = useState(isMarketOpenIST());
+    const [quoteLoading, setQuoteLoading] = useState(true);
+    const [quoteError, setQuoteError] = useState(false);
 
     useEffect(() => {
         setMarketOpen(isMarketOpenIST());
@@ -68,6 +70,7 @@ export const LiveMarketTickerTape: React.FC<LiveMarketTickerTapeProps> = ({
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ symbols }),
             });
+            if (!res.ok) throw new Error(`Quote request failed (${res.status})`);
             const data = await res.json();
             if (data.quotes && Array.isArray(data.quotes)) {
                 const map: Record<string, TickerQuote> = {};
@@ -82,9 +85,15 @@ export const LiveMarketTickerTape: React.FC<LiveMarketTickerTapeProps> = ({
                     };
                 }
                 setQuotes(map);
+                setQuoteError(false);
+            } else {
+                setQuoteError(true);
             }
         } catch (e) {
+            setQuoteError(true);
             console.error('Failed to update live ticker tape:', e);
+        } finally {
+            setQuoteLoading(false);
         }
     };
 
@@ -159,15 +168,20 @@ export const LiveMarketTickerTape: React.FC<LiveMarketTickerTapeProps> = ({
                     whiteSpace: 'nowrap',
                     flex: 1,
                 }}
+                aria-label="Market quotes. Scroll horizontally to see more symbols."
+                tabIndex={0}
             >
                 {TRACKED_SYMBOLS.map((item) => {
                     const q = quotes[item.symbol];
                     const isPos = q ? q.change >= 0 : true;
-                    const priceFormatted = q && q.last_price !== null ? `₹${q.last_price.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '...';
+                    const priceFormatted = q && q.last_price !== null
+                        ? `₹${q.last_price.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                        : quoteLoading ? 'Loading…' : quoteError ? 'Unavailable' : '—';
                     const pctFormatted = q && q.last_price !== null ? `${isPos ? '+' : ''}${q.change_pct.toFixed(2)}%` : '';
 
                     return (
-                        <div
+                        <button
+                            type="button"
                             key={item.symbol}
                             onClick={() => onSelectSymbol && onSelectSymbol(item.symbol)}
                             style={{
@@ -178,6 +192,9 @@ export const LiveMarketTickerTape: React.FC<LiveMarketTickerTapeProps> = ({
                                 borderRadius: '4px',
                                 cursor: onSelectSymbol ? 'pointer' : 'default',
                                 transition: 'background 0.15s ease',
+                                border: 0,
+                                background: 'transparent',
+                                font: 'inherit',
                             }}
                             className="ticker-item-hover"
                             title={`Click to analyze ${item.displayName} in Strategy Lab`}
@@ -201,7 +218,7 @@ export const LiveMarketTickerTape: React.FC<LiveMarketTickerTapeProps> = ({
                                 </span>
                             )}
                             <span style={{ color: isLight ? '#cbd5e1' : 'rgba(255, 255, 255, 0.15)', fontSize: '10px' }}>•</span>
-                        </div>
+                        </button>
                     );
                 })}
             </div>

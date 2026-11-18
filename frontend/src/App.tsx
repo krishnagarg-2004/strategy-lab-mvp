@@ -6,6 +6,7 @@ import {
     XAxis,
     YAxis,
     Tooltip,
+    Legend,
     ResponsiveContainer,
     CartesianGrid,
 } from 'recharts';
@@ -344,6 +345,8 @@ export default function App() {
     const [activeChartTab, setActiveChartTab] = useState<'candlestick' | 'equity'>(
         'candlestick',
     );
+    const [activeChartRange, setActiveChartRange] = useState<'1w' | '1m' | '3m' | 'all'>('all');
+    const [showBuyHoldBenchmark, setShowBuyHoldBenchmark] = useState(false);
 
     // Theme Mode State ('dark' | 'light')
     const [theme, setTheme] = useState<'dark' | 'light'>(() => {
@@ -372,6 +375,7 @@ export default function App() {
     // Database Experiments State
     const [experiments, setExperiments] = useState<ExperimentSummary[]>([]);
     const [showExperiments, setShowExperiments] = useState(false);
+    const [compareExperimentIds, setCompareExperimentIds] = useState<number[]>([]);
     const [experimentName, setExperimentName] = useState('');
     const [saveStatus, setSaveStatus] = useState('');
 
@@ -1047,6 +1051,34 @@ export default function App() {
         setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 
+    const chartCandles = result?.candles ?? [];
+    const latestChartTime = chartCandles.length
+        ? chartCandles[chartCandles.length - 1].time
+        : result?.equity_curve.length
+            ? Math.floor(new Date(result.equity_curve[result.equity_curve.length - 1].timestamp).getTime() / 1000)
+            : Math.floor(Date.now() / 1000);
+    const chartRangeDays = activeChartRange === '1w' ? 7 : activeChartRange === '1m' ? 30 : activeChartRange === '3m' ? 90 : null;
+    const chartCutoff = chartRangeDays === null ? -Infinity : latestChartTime - chartRangeDays * 86400;
+    const visibleChartCandles = chartCandles.filter((candle) => candle.time >= chartCutoff);
+    const visibleChartTrades = result?.trades.filter((trade) => Math.floor(new Date(trade.exit_time).getTime() / 1000) >= chartCutoff) ?? [];
+    const visibleEquityCurve = result?.equity_curve.filter((point) => Math.floor(new Date(point.timestamp).getTime() / 1000) >= chartCutoff) ?? [];
+    const visibleChartFirstClose = visibleChartCandles[0]?.close ?? 0;
+    const visibleEquityStart = visibleEquityCurve[0]?.equity ?? 0;
+    const chartCandleByTimestamp = new Map(visibleChartCandles.map((candle) => [candle.timestamp, candle]));
+    const equityChartData = visibleEquityCurve.map((point) => {
+        const candle = chartCandleByTimestamp.get(point.timestamp);
+        return {
+            ...point,
+            equity: showBuyHoldBenchmark && visibleEquityStart > 0
+                ? (result?.initial_capital ?? 0) * point.equity / visibleEquityStart
+                : point.equity,
+            benchmark: showBuyHoldBenchmark && candle && visibleChartFirstClose > 0
+                ? (result?.initial_capital ?? 0) * candle.close / visibleChartFirstClose
+                : undefined,
+        };
+    });
+    const comparedExperiments = experiments.filter((experiment) => compareExperimentIds.includes(experiment.id));
+
     return (
         <main className="shell">
             <LiveMarketTickerTape
@@ -1062,11 +1094,12 @@ export default function App() {
                         <div className="sub">Quantitative Research & Execution Workspace</div>
                     </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div className="tab-group" style={{ margin: 0 }}>
+                <div className="top-actions" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div className="tab-group workspace-tabs" style={{ margin: 0 }} role="group" aria-label="Workspaces">
                         <button
                             type="button"
                             className={`tab-btn ${workspaceTab === 'single' ? 'active' : ''}`}
+                            aria-pressed={workspaceTab === 'single'}
                             onClick={() => setWorkspaceTab('single')}
                         >
                             Single Run
@@ -1074,6 +1107,7 @@ export default function App() {
                         <button
                             type="button"
                             className={`tab-btn ${workspaceTab === 'watchlist' ? 'active' : ''}`}
+                            aria-pressed={workspaceTab === 'watchlist'}
                             onClick={() => setWorkspaceTab('watchlist')}
                         >
                             Live Watchlist
@@ -1081,6 +1115,7 @@ export default function App() {
                         <button
                             type="button"
                             className={`tab-btn ${workspaceTab === 'community' ? 'active' : ''}`}
+                            aria-pressed={workspaceTab === 'community'}
                             onClick={() => setWorkspaceTab('community')}
                         >
                             Community Hub
@@ -1088,6 +1123,7 @@ export default function App() {
                         <button
                             type="button"
                             className={`tab-btn ${workspaceTab === 'grid_search' ? 'active' : ''}`}
+                            aria-pressed={workspaceTab === 'grid_search'}
                             onClick={() => setWorkspaceTab('grid_search')}
                         >
                             Grid Search
@@ -1095,6 +1131,7 @@ export default function App() {
                         <button
                             type="button"
                             className={`tab-btn ${workspaceTab === 'portfolio' ? 'active' : ''}`}
+                            aria-pressed={workspaceTab === 'portfolio'}
                             onClick={() => setWorkspaceTab('portfolio')}
                         >
                             Multi-Asset Batch
@@ -1102,6 +1139,7 @@ export default function App() {
                         <button
                             type="button"
                             className={`tab-btn ${workspaceTab === 'monte_carlo' ? 'active' : ''}`}
+                            aria-pressed={workspaceTab === 'monte_carlo'}
                             onClick={() => setWorkspaceTab('monte_carlo')}
                         >
                             Monte Carlo
@@ -1109,6 +1147,7 @@ export default function App() {
                         <button
                             type="button"
                             className={`tab-btn ${workspaceTab === 'walk_forward' ? 'active' : ''}`}
+                            aria-pressed={workspaceTab === 'walk_forward'}
                             onClick={() => setWorkspaceTab('walk_forward')}
                         >
                             Walk-Forward (OOS)
@@ -1116,6 +1155,7 @@ export default function App() {
                         <button
                             type="button"
                             className={`tab-btn ${workspaceTab === 'paper_trading' ? 'active' : ''}`}
+                            aria-pressed={workspaceTab === 'paper_trading'}
                             onClick={() => setWorkspaceTab('paper_trading')}
                             style={{ borderColor: paperStatus?.is_active ? 'var(--emerald-primary)' : undefined }}
                         >
@@ -2055,7 +2095,9 @@ export default function App() {
                                     <p>
                                         {activeChartTab === 'candlestick'
                                             ? 'Interactive TradingView price action with BUY & EXIT markers'
-                                            : 'Cash plus closed-trade mark-to-market'}
+                                            : showBuyHoldBenchmark
+                                                ? 'Strategy equity indexed to range start · benchmark excludes fees'
+                                                : 'Cash plus closed-trade mark-to-market'}
                                     </p>
                                 </div>
                             </div>
@@ -2073,22 +2115,46 @@ export default function App() {
                                     Equity Curve
                                 </button>
                             </div>
+                            <div className="chart-range" role="group" aria-label="Chart date range">
+                                {(['1w', '1m', '3m', 'all'] as const).map((range) => (
+                                    <button
+                                        key={range}
+                                        type="button"
+                                        className={`chart-range-btn ${activeChartRange === range ? 'active' : ''}`}
+                                        aria-pressed={activeChartRange === range}
+                                        onClick={() => setActiveChartRange(range)}
+                                    >
+                                        {range === 'all' ? 'All' : range.toUpperCase()}
+                                    </button>
+                                ))}
+                            </div>
+                            {activeChartTab === 'equity' && (
+                                <button
+                                    type="button"
+                                    className={`benchmark-toggle ${showBuyHoldBenchmark ? 'active' : ''}`}
+                                    aria-pressed={showBuyHoldBenchmark}
+                                    disabled={!visibleChartCandles.length}
+                                    title={visibleChartCandles.length ? 'Compare with a buy-and-hold return using the selected range; excludes trading charges' : 'Benchmark requires candlestick data'}
+                                    onClick={() => setShowBuyHoldBenchmark((value) => !value)}
+                                >
+                                    Buy &amp; hold
+                                </button>
+                            )}
                         </div>
 
                         {result ? (
                             activeChartTab === 'candlestick' &&
-                            result.candles &&
-                            result.candles.length > 0 ? (
+                            visibleChartCandles.length > 0 ? (
                                 <CandlestickChart
-                                    candles={result.candles}
-                                    trades={result.trades}
+                                    candles={visibleChartCandles}
+                                    trades={visibleChartTrades}
                                     theme={theme}
                                 />
                             ) : (
                                 <div className="chart">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <LineChart
-                                            data={result.equity_curve.filter(
+                                            data={equityChartData.filter(
                                                 (_, index, array) =>
                                                     index %
                                                         Math.max(
@@ -2131,9 +2197,9 @@ export default function App() {
                                                         'en-IN',
                                                     )
                                                 }
-                                                formatter={(value) => [
+                                                formatter={(value, name) => [
                                                     money(Number(value)),
-                                                    'Equity',
+                                                    name === 'Buy & hold (price only)' ? 'Buy & hold (price only)' : 'Strategy equity',
                                                 ]}
                                                 contentStyle={{
                                                     background: 'var(--surface-dropdown)',
@@ -2143,27 +2209,46 @@ export default function App() {
                                                     boxShadow: 'var(--shadow-md)',
                                                 }}
                                             />
+                                            {showBuyHoldBenchmark && <Legend />}
                                             <Line
                                                 type="monotone"
                                                 dataKey="equity"
+                                                name="Strategy equity"
                                                 stroke="#63dfb0"
                                                 strokeWidth={2}
                                                 dot={false}
                                                 activeDot={{ r: 4 }}
                                             />
+                                            {showBuyHoldBenchmark && (
+                                                <Line
+                                                    type="monotone"
+                                                    dataKey="benchmark"
+                                                    name="Buy & hold (price only)"
+                                                    stroke="#38bdf8"
+                                                    strokeWidth={1.5}
+                                                    strokeDasharray="5 4"
+                                                    dot={false}
+                                                    activeDot={{ r: 3 }}
+                                                />
+                                            )}
                                         </LineChart>
                                     </ResponsiveContainer>
                                 </div>
                             )
                         ) : (
-                            <div className="empty-chart">
-                                <div className="chart-placeholder">
+                            <div className={`empty-chart ${busy ? 'is-running' : ''}`} aria-live="polite">
+                                <div className={`chart-placeholder ${busy ? 'is-running' : ''}`} aria-hidden="true">
                                     {Array.from({ length: 12 }, (_, index) => (
                                         <span key={index} />
                                     ))}
                                 </div>
-                                <p>Your chart and trade markers will appear here</p>
-                                <small>Configure the strategy and run a simulation</small>
+                                <p>{busy ? 'Running your simulation…' : 'Your first performance report starts here'}</p>
+                                <small>{busy ? 'Evaluating candles and applying fees' : 'Review your data and strategy settings, then generate a report'}</small>
+                                {!busy && (
+                                    <button type="button" className="btn-outline empty-chart-action" onClick={run}>
+                                        Run first backtest
+                                    </button>
+                                )}
                             </div>
                         )}
                     </div>
@@ -3150,6 +3235,20 @@ export default function App() {
                                         </div>
                                         <div className="exp-card-actions">
                                             <button
+                                                className={`btn-sm btn-compare ${compareExperimentIds.includes(exp.id) ? 'selected' : ''}`}
+                                                aria-pressed={compareExperimentIds.includes(exp.id)}
+                                                onClick={() => setCompareExperimentIds((current) =>
+                                                    current.includes(exp.id)
+                                                        ? current.filter((id) => id !== exp.id)
+                                                        : current.length >= 2
+                                                            ? [...current.slice(1), exp.id]
+                                                            : [...current, exp.id],
+                                                )}
+                                                title="Select up to two saved runs to compare"
+                                            >
+                                                {compareExperimentIds.includes(exp.id) ? 'Selected' : 'Compare'}
+                                            </button>
+                                            <button
                                                 className="btn-sm btn-load"
                                                 onClick={() => handleLoadExperiment(exp.id)}
                                             >
@@ -3164,6 +3263,34 @@ export default function App() {
                                         </div>
                                     </div>
                                 ))
+                            )}
+                            {comparedExperiments.length > 0 && (
+                                <section className="compare-panel" aria-live="polite">
+                                    <div className="compare-panel-header">
+                                        <div>
+                                            <h4>Compare saved runs</h4>
+                                            <p>Select up to two runs. Selecting a third replaces the oldest selection.</p>
+                                        </div>
+                                        <span>{comparedExperiments.length} / 2 selected</span>
+                                    </div>
+                                    {comparedExperiments.length === 2 ? (
+                                        <div className="compare-grid">
+                                            {comparedExperiments.map((exp) => (
+                                                <div className="compare-column" key={exp.id}>
+                                                    <strong>{exp.name}</strong>
+                                                    <span>{exp.symbol} · {exp.data_source}</span>
+                                                    <div className="detail"><span>Return</span><b className={exp.net_pnl >= 0 ? 'good' : 'bad'}>{exp.return_pct}% ({money(exp.net_pnl)})</b></div>
+                                                    <div className="detail"><span>Win rate</span><b>{exp.win_rate_pct}%</b></div>
+                                                    <div className="detail"><span>Trades</span><b>{exp.trade_count}</b></div>
+                                                    <div className="detail"><span>Max drawdown</span><b>{exp.max_drawdown_pct}%</b></div>
+                                                    <div className="detail"><span>Profit factor</span><b>{exp.profit_factor ?? '—'}</b></div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="compare-hint">Choose one more saved run to see a side-by-side comparison.</p>
+                                    )}
+                                </section>
                             )}
                         </div>
                     </div>
