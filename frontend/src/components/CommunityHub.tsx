@@ -424,7 +424,7 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({
 
                         <form onSubmit={handlePublish} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                             {currentUser ? (
-                                <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '6px', padding: '8px 12px', fontSize: '11px', color: 'var(--accent-positive)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <div style={{ background: 'var(--brand-surface)', border: '1px solid var(--brand-border)', borderRadius: '6px', padding: '8px 12px', fontSize: '11px', color: 'var(--accent-positive)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                     <CheckCircle2 size={13} /> Publishing as Verified Trader: <strong>{currentUser.name}</strong> ({currentUser.email})
                                 </div>
                             ) : (
@@ -510,7 +510,7 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({
                             )}
 
                             {publishStatus && (
-                                <div style={{ fontSize: '13px', color: publishStatus.toLowerCase().includes('success') ? '#10B981' : '#F59E0B', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <div style={{ fontSize: '13px', color: publishStatus.toLowerCase().includes('success') ? 'var(--accent-positive)' : 'var(--accent-warning)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                     <CheckCircle2 size={13} /> {publishStatus}
                                 </div>
                             )}

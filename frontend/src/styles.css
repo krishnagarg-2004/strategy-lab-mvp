@@ -9,25 +9,25 @@
    1. Design Tokens - Dark Obsidian (Default)
    -------------------------------------------------------------------------- */
 :root {
-    --bg-base: #090d16;
-    --bg-gradient: #090d16;
+    --bg-base: #0b0f17;
+    --bg-gradient: #0b0f17;
 
     /* Surfaces */
-    --surface-solid: #0f1523;
-    --surface-panel: #0f1523;
-    --surface-card: #141c2c;
-    --surface-card-hover: #192337;
+    --surface-solid: #111827;
+    --surface-panel: #111827;
+    --surface-card: #151e2e;
+    --surface-card-hover: #1c273c;
     --surface-overlay: #111827;
-    --surface-input: #0a0f18;
-    --surface-dropdown: #0f1523;
-    --surface-modal: #0f1523;
-    --surface-fallback: #0f1523;
-    --modal-backdrop: rgba(4, 7, 13, 0.75);
+    --surface-input: #0c121e;
+    --surface-dropdown: #111827;
+    --surface-modal: #111827;
+    --surface-fallback: #111827;
+    --modal-backdrop: rgba(5, 8, 15, 0.75);
 
     /* Clean Borders (Crisp 1px dividers, no milky glass) */
-    --border-subtle: #1c2638;
-    --border-panel: #233146;
-    --border-hover: #364864;
+    --border-subtle: #1e293b;
+    --border-panel: #283548;
+    --border-hover: #3b4b66;
     --border-focus: #10b981;
 
     /* Shadows - Grounded & Subtle */
@@ -40,39 +40,61 @@
     --text-primary: #f8fafc;
     --text-secondary: #94a3b8;
     --text-muted: #64748b;
-    --text-inverse: #090d16;
+    --text-inverse: #0b0f17;
+
+    /* Primary Brand & Semantic Design Tokens */
+    --brand-primary: #10b981;
+    --brand-primary-hover: #059669;
+    --brand-surface: rgba(16, 185, 129, 0.1);
+    --brand-border: rgba(16, 185, 129, 0.28);
+
+    --accent-positive: #10b981;
+    --accent-positive-surface: rgba(16, 185, 129, 0.1);
+    --accent-positive-border: rgba(16, 185, 129, 0.28);
+
+    --accent-negative: #f43f5e;
+    --accent-negative-surface: rgba(244, 63, 94, 0.1);
+    --accent-negative-border: rgba(244, 63, 94, 0.28);
+
+    --accent-warning: #f59e0b;
+    --accent-warning-surface: rgba(245, 158, 11, 0.1);
+    --accent-warning-border: rgba(245, 158, 11, 0.28);
+
+    --accent-info: #0ea5e9;
+    --accent-info-surface: rgba(14, 165, 233, 0.1);
+    --accent-info-border: rgba(14, 165, 233, 0.28);
 
     /* Financial Accents */
     --emerald-primary: #10b981;
     --emerald-accent: #34d399;
-    --emerald-surface: rgba(16, 185, 129, 0.12);
+    --emerald-surface: rgba(16, 185, 129, 0.1);
     --emerald-border: rgba(16, 185, 129, 0.28);
 
     --rose-primary: #f43f5e;
     --rose-accent: #fb7185;
-    --rose-surface: rgba(244, 63, 94, 0.12);
+    --rose-surface: rgba(244, 63, 94, 0.1);
     --rose-border: rgba(244, 63, 94, 0.28);
 
     --amber-primary: #f59e0b;
     --amber-accent: #fbbf24;
-    --amber-surface: rgba(245, 158, 11, 0.12);
+    --amber-surface: rgba(245, 158, 11, 0.1);
     --amber-border: rgba(245, 158, 11, 0.28);
 
-    --cyan-primary: #38bdf8;
-    --cyan-accent: #7dd3fc;
-    --cyan-surface: rgba(56, 189, 248, 0.12);
-    --cyan-border: rgba(56, 189, 248, 0.28);
+    --cyan-primary: #0ea5e9;
+    --cyan-accent: #38bdf8;
+    --cyan-surface: rgba(14, 165, 233, 0.1);
+    --cyan-border: rgba(14, 165, 233, 0.28);
 
     /* Interactive Elements */
-    --tab-track-bg: #0b101a;
-    --tab-active-bg: #1c273a;
+    --tab-track-bg: #0c121e;
+    --tab-active-bg: #1c273c;
     --tab-active-text: #f8fafc;
-    --tab-hover-bg: rgba(255, 255, 255, 0.04);
-    --table-row-hover: rgba(255, 255, 255, 0.025);
-    --btn-primary-bg: #059669;
-    --btn-primary-hover: #10b981;
-    --btn-secondary-bg: #141c2c;
-    --btn-secondary-hover: #1c273a;
+    --tab-hover-bg: rgba(255, 255, 255, 0.05);
+    --table-row-hover: rgba(255, 255, 255, 0.03);
+    --btn-primary-bg: #10b981;
+    --btn-primary-hover: #059669;
+    --btn-secondary-bg: #151e2e;
+    --btn-secondary-hover: #1c273c;
 
     --radius-sm: 4px;
     --radius-md: 6px;
@@ -87,14 +109,14 @@
    2. Design Tokens - Light Theme (Soft Slate & Warm Ivory, Never Blinding)
    -------------------------------------------------------------------------- */
 [data-theme="light"] {
-    --bg-base: #f0f2f5;
-    --bg-gradient: #f0f2f5;
+    --bg-base: #f8fafc;
+    --bg-gradient: #f8fafc;
 
     /* Layered Surfaces with distinct contrast */
     --surface-solid: #ffffff;
     --surface-panel: #ffffff;
     --surface-card: #f8fafc;
-    --surface-card-hover: #edf2f7;
+    --surface-card-hover: #f1f5f9;
     --surface-overlay: #ffffff;
     --surface-input: #ffffff;
     --surface-dropdown: #ffffff;
@@ -119,6 +141,28 @@
     --text-secondary: #334155;
     --text-muted: #64748b;
     --text-inverse: #ffffff;
+
+    /* Primary Brand & Semantic Design Tokens */
+    --brand-primary: #059669;
+    --brand-primary-hover: #047857;
+    --brand-surface: rgba(5, 150, 105, 0.08);
+    --brand-border: rgba(5, 150, 105, 0.25);
+
+    --accent-positive: #059669;
+    --accent-positive-surface: rgba(5, 150, 105, 0.08);
+    --accent-positive-border: rgba(5, 150, 105, 0.25);
+
+    --accent-negative: #e11d48;
+    --accent-negative-surface: rgba(225, 29, 72, 0.08);
+    --accent-negative-border: rgba(225, 29, 72, 0.25);
+
+    --accent-warning: #d97706;
+    --accent-warning-surface: rgba(217, 119, 6, 0.08);
+    --accent-warning-border: rgba(217, 119, 6, 0.25);
+
+    --accent-info: #0284c7;
+    --accent-info-surface: rgba(2, 132, 199, 0.08);
+    --accent-info-border: rgba(2, 132, 199, 0.25);
 
     /* Refined Financial Indicators */
     --emerald-primary: #059669;
@@ -730,27 +774,68 @@ input[type="file"] {
    -------------------------------------------------------------------------- */
 .run {
     width: 100%;
-    border: 0;
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: var(--radius-md);
-    background: var(--btn-primary-bg);
+    background: linear-gradient(180deg, #10b981 0%, #059669 100%);
     color: #ffffff;
     font: 600 12px 'Inter', sans-serif;
     letter-spacing: 0.2px;
-    padding: 11px 16px;
+    padding: 10px 16px;
     cursor: pointer;
-    box-shadow: var(--shadow-xs);
-    transition: background-color var(--t-micro) var(--ease-out);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transition: all var(--t-micro) var(--ease-out);
     white-space: nowrap;
 }
 .run:hover:not(:disabled) {
-    background: var(--btn-primary-hover);
+    background: linear-gradient(180deg, #34d399 0%, #10b981 100%);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 .run:active:not(:disabled) {
     transform: translateY(1px);
 }
 .run:disabled {
-    opacity: 0.5;
+    opacity: 0.45;
     cursor: not-allowed;
+    filter: grayscale(0.4);
+}
+
+.ai-assistant-btn {
+    background: var(--brand-surface);
+    border: 1px solid var(--brand-border);
+    color: var(--brand-primary);
+    padding: 6px 13px;
+    border-radius: var(--radius-md);
+    font: 600 12px 'Inter', sans-serif;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: all var(--t-micro) var(--ease-out);
+}
+.ai-assistant-btn:hover {
+    background: rgba(16, 185, 129, 0.18);
+    border-color: var(--brand-primary);
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.2);
+}
+
+.auth-profile-btn {
+    background: var(--surface-card);
+    border: 1px solid var(--border-panel);
+    color: var(--text-primary);
+    padding: 6px 12px;
+    border-radius: var(--radius-md);
+    font: 600 12px 'Inter', sans-serif;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: all var(--t-micro) var(--ease-out);
+}
+.auth-profile-btn:hover {
+    background: var(--surface-card-hover);
+    border-color: var(--border-hover);
 }
 
 .result-head .run {
@@ -2009,14 +2094,14 @@ footer {
     color: var(--brand-primary);
 }
 .btn-table-action.run-backtest-btn {
-    background: rgba(99, 223, 176, 0.1);
+    background: var(--brand-surface);
     color: var(--accent-positive);
-    border-color: rgba(99, 223, 176, 0.3);
+    border-color: var(--brand-border);
     font-weight: 600;
 }
 .btn-table-action.run-backtest-btn:hover {
     background: var(--accent-positive);
-    color: #000;
+    color: #ffffff;
 }
 .btn-table-action.remove-btn:hover {
     border-color: var(--accent-negative);
@@ -2054,13 +2139,14 @@ footer {
 }
 
 .category-pill {
-    background: rgba(99, 223, 176, 0.1);
+    background: var(--brand-surface);
     color: var(--brand-primary);
     font-size: 10px;
     font-weight: 700;
     text-transform: uppercase;
     padding: 2px 8px;
     border-radius: var(--radius-sm);
+    border: 1px solid var(--brand-border);
 }
 
 .author-name {
@@ -2170,7 +2256,7 @@ footer {
 
 .btn-fork-strategy {
     background: var(--accent-positive);
-    color: #000;
+    color: #ffffff;
     font-weight: 700;
     font-size: 12px;
     border: none;
@@ -2241,7 +2327,7 @@ footer {
     bottom: 24px;
     right: 24px;
     background: var(--surface-panel);
-    border: 1px solid rgba(99, 223, 176, 0.4);
+    border: 1px solid var(--brand-border);
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
     border-radius: 30px;
     padding: 10px 18px;
@@ -2278,7 +2364,7 @@ footer {
 }
 
 .ticker-item-hover:hover {
-    background: rgba(99, 223, 176, 0.12) !important;
+    background: var(--tab-hover-bg) !important;
 }
 
 .ticker-track:focus-visible {

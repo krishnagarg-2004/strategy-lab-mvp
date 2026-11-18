@@ -318,9 +318,9 @@ export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
                             display: 'flex',
                             alignItems: 'center',
                             gap: '6px',
-                            background: 'rgba(99, 223, 176, 0.12)',
-                            borderColor: 'var(--accent-positive)',
-                            color: 'var(--accent-positive)',
+                            background: 'var(--brand-surface)',
+                            borderColor: 'var(--brand-border)',
+                            color: 'var(--brand-primary)',
                             fontWeight: 600,
                         }}
                     >
@@ -528,7 +528,7 @@ export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
                                                     onClick={() => setLiveChartSymbol(sym)}
                                                     title={`Open live TradingView candlestick chart for ${sym}`}
                                                     style={{
-                                                        borderColor: 'rgba(99, 223, 176, 0.4)',
+                                                        borderColor: 'var(--brand-border)',
                                                         color: 'var(--accent-positive)',
                                                         fontWeight: 600,
                                                         display: 'flex',
@@ -558,7 +558,7 @@ export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
                                                     title="Remove from Watchlist"
                                                     style={{
                                                         color: 'var(--accent-negative)',
-                                                        borderColor: 'rgba(239, 68, 68, 0.3)',
+                                                        borderColor: 'var(--accent-negative-border)',
                                                         display: 'inline-flex',
                                                         alignItems: 'center',
                                                         justifyContent: 'center',
@@ -656,8 +656,8 @@ export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
                                     justifyContent: 'space-between',
                                     alignItems: 'center',
                                     padding: '8px 12px',
-                                    background: 'rgba(99, 223, 176, 0.08)',
-                                    border: '1px dashed rgba(99, 223, 176, 0.4)',
+                                    background: 'var(--brand-surface)',
+                                    border: '1px dashed var(--brand-border)',
                                     borderRadius: '6px',
                                     margin: '8px 0',
                                 }}

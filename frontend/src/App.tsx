@@ -1118,20 +1118,7 @@ export default function App() {
                         type="button"
                         className="ai-assistant-btn"
                         onClick={() => setShowAIChat(true)}
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            background: 'rgba(99, 223, 176, 0.12)',
-                            border: '1px solid rgba(99, 223, 176, 0.35)',
-                            color: 'var(--accent-positive)',
-                            padding: '6px 14px',
-                            borderRadius: '6px',
-                            fontWeight: 600,
-                            fontSize: '12px',
-                            cursor: 'pointer',
-                            whiteSpace: 'nowrap',
-                        }}
+                        title="Open AI Strategy Assistant"
                     >
                         <Bot size={14} /> AI Strategy Assistant
                     </button>
@@ -1149,38 +1136,15 @@ export default function App() {
                             type="button"
                             className="auth-profile-btn"
                             onClick={() => setShowAuthModal(true)}
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                                background: 'rgba(16, 185, 129, 0.12)',
-                                border: '1px solid rgba(16, 185, 129, 0.35)',
-                                color: 'var(--accent-positive)',
-                                padding: '6px 12px',
-                                borderRadius: '6px',
-                                fontWeight: 600,
-                                fontSize: '12px',
-                                cursor: 'pointer',
-                                whiteSpace: 'nowrap',
-                            }}
                             title={`Signed in as ${currentUser.email}`}
                         >
-                            <CheckCircle2 size={13} /> {currentUser.name || currentUser.email.split('@')[0]}
+                            <CheckCircle2 size={13} color="var(--accent-positive)" /> {currentUser.name || currentUser.email.split('@')[0]}
                         </button>
                     ) : (
                         <button
                             type="button"
                             className="btn-outline"
                             onClick={() => setShowAuthModal(true)}
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                                padding: '6px 12px',
-                                fontSize: '12px',
-                                borderRadius: '6px',
-                                whiteSpace: 'nowrap',
-                            }}
                         >
                             <User size={13} /> Sign In
                         </button>
@@ -1347,8 +1311,9 @@ export default function App() {
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 gap: '6px',
-                                borderColor: 'rgba(99, 223, 176, 0.4)',
-                                color: 'var(--accent-positive)',
+                                background: 'var(--brand-surface)',
+                                borderColor: 'var(--brand-border)',
+                                color: 'var(--brand-primary)',
                                 fontWeight: 600,
                             }}
                             onClick={() => setShowAIChat(true)}
@@ -1360,8 +1325,8 @@ export default function App() {
                     {aiLoadedNotice && (
                         <div
                             style={{
-                                background: 'rgba(99, 223, 176, 0.12)',
-                                border: '1px solid rgba(99, 223, 176, 0.35)',
+                                background: 'var(--brand-surface)',
+                                border: '1px solid var(--brand-border)',
                                 color: 'var(--accent-positive)',
                                 padding: '8px 12px',
                                 borderRadius: '6px',
@@ -2259,7 +2224,7 @@ export default function App() {
                                                 type="monotone"
                                                 dataKey="equity"
                                                 name="Strategy equity"
-                                                stroke="#63dfb0"
+                                                stroke="#10b981"
                                                 strokeWidth={2}
                                                 dot={false}
                                                 activeDot={{ r: 4 }}
@@ -2647,9 +2612,9 @@ export default function App() {
                                                                         key={s}
                                                                         style={{
                                                                             backgroundColor: isGood
-                                                                                ? 'rgba(99, 223, 176, 0.12)'
-                                                                                : 'rgba(239, 68, 68, 0.12)',
-                                                                            color: isGood ? '#63dfb0' : '#f87171',
+                                                                                ? 'rgba(16, 185, 129, 0.12)'
+                                                                                : 'rgba(244, 63, 94, 0.12)',
+                                                                            color: isGood ? 'var(--accent-positive)' : 'var(--accent-negative)',
                                                                             fontWeight: 600,
                                                                             cursor: 'pointer',
                                                                         }}
@@ -2897,10 +2862,10 @@ export default function App() {
                                                 formatter={(val: any) => [money(Number(val)), '']}
                                             />
                                             <Line type="monotone" dataKey="p95" stroke="#38bdf8" strokeWidth={1.5} dot={false} name="95th Percentile" />
-                                            <Line type="monotone" dataKey="p75" stroke="#63dfb0" strokeWidth={1} dot={false} name="75th Percentile" />
+                                            <Line type="monotone" dataKey="p75" stroke="#34d399" strokeWidth={1} dot={false} name="75th Percentile" />
                                             <Line type="monotone" dataKey="p50_median" stroke="#10b981" strokeWidth={2.5} dot={false} name="50th Median" />
                                             <Line type="monotone" dataKey="p25" stroke="#fbbf24" strokeWidth={1} dot={false} name="25th Percentile" />
-                                            <Line type="monotone" dataKey="p05" stroke="#ef4444" strokeWidth={1.5} dot={false} name="5th Percentile (Tail)" />
+                                            <Line type="monotone" dataKey="p05" stroke="#f43f5e" strokeWidth={1.5} dot={false} name="5th Percentile (Tail)" />
                                         </LineChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -2938,8 +2903,8 @@ export default function App() {
                             </label>
                         </div>
                         <div style={{ flex: '2 1 300px' }}>
-                            <p style={{ fontSize: '12px', color: '#8594a8', margin: 0 }}>
-                                Evaluating instrument: <b style={{ color: '#63dfb0' }}>{dataSourceMode === 'indian_market' ? marketSymbol : (symbol || 'Demo Data')}</b>
+                            <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0 }}>
+                                Evaluating instrument: <b style={{ color: 'var(--accent-positive)' }}>{dataSourceMode === 'indian_market' ? marketSymbol : (symbol || 'Demo Data')}</b>
                                 <br />
                                 Parameter configuration: Fast {strategy.fast_ema} / Slow {strategy.slow_ema} ({strategy.trade_direction})
                             </p>
@@ -2977,8 +2942,8 @@ export default function App() {
 
                             <div className="two" style={{ marginTop: '16px' }}>
                                 <div className="panel" style={{ padding: '20px' }}>
-                                    <h3 style={{ color: '#93c5fd', margin: '0 0 4px' }}>In-Sample Period (Training)</h3>
-                                    <p style={{ fontSize: '11px', color: '#8594a8', marginBottom: '14px' }}>
+                                    <h3 style={{ color: 'var(--accent-info)', margin: '0 0 4px' }}>In-Sample Period (Training)</h3>
+                                    <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '14px' }}>
                                         {new Date(wfResults.train_date_range.start).toLocaleDateString()} to {new Date(wfResults.train_date_range.end).toLocaleDateString()}
                                     </p>
                                     <div className="detail"><span>Net P&L</span><b>{money(wfResults.in_sample.net_pnl)}</b></div>
@@ -2990,11 +2955,11 @@ export default function App() {
                                     <div className="detail"><span>Sharpe Ratio</span><b>{wfResults.in_sample.sharpe_ratio ?? '—'}</b></div>
                                 </div>
 
-                                <div className="panel" style={{ padding: '20px', borderColor: wfResults.is_overfitted ? '#ef4444' : '#22c55e' }}>
-                                    <h3 style={{ color: wfResults.is_overfitted ? '#f87171' : '#63dfb0', margin: '0 0 4px' }}>
+                                <div className="panel" style={{ padding: '20px', borderColor: wfResults.is_overfitted ? 'var(--accent-negative)' : 'var(--accent-positive)' }}>
+                                    <h3 style={{ color: wfResults.is_overfitted ? 'var(--accent-negative)' : 'var(--accent-positive)', margin: '0 0 4px' }}>
                                         Out-of-Sample Period (Unseen Test)
                                     </h3>
-                                    <p style={{ fontSize: '11px', color: '#8594a8', marginBottom: '14px' }}>
+                                    <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '14px' }}>
                                         {new Date(wfResults.test_date_range.start).toLocaleDateString()} to {new Date(wfResults.test_date_range.end).toLocaleDateString()}
                                     </p>
                                     <div className="detail"><span>Net P&L</span><b>{money(wfResults.out_of_sample.net_pnl)}</b></div>
@@ -3271,8 +3236,8 @@ export default function App() {
                                                         style={{
                                                             color:
                                                                 exp.net_pnl >= 0
-                                                                    ? '#63dfb0'
-                                                                    : '#f87171',
+                                                                    ? 'var(--accent-positive)'
+                                                                    : 'var(--accent-negative)',
                                                         }}
                                                     >
                                                         {exp.return_pct}% ({money(exp.net_pnl)})

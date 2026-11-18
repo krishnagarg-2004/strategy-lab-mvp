@@ -142,8 +142,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                                     <span
                                         style={{
                                             fontSize: '10px',
-                                            background: 'rgba(16, 185, 129, 0.15)',
-                                            color: 'var(--accent-positive)',
+                                            background: 'var(--brand-surface)',
+                                            border: '1px solid var(--brand-border)',
+                                            color: 'var(--brand-primary)',
                                             padding: '2px 6px',
                                             borderRadius: '4px',
                                             fontWeight: 700,

@@ -111,8 +111,8 @@ export const LiveMarketTickerTape: React.FC<LiveMarketTickerTapeProps> = ({
             className="live-ticker-strip"
             style={{
                 width: '100%',
-                background: isLight ? '#ffffff' : '#080d16',
-                borderBottom: `1px solid ${isLight ? '#e2e8f0' : 'rgba(255, 255, 255, 0.08)'}`,
+                background: 'var(--surface-panel)',
+                borderBottom: '1px solid var(--border-subtle)',
                 display: 'flex',
                 alignItems: 'center',
                 overflow: 'hidden',
@@ -131,14 +131,14 @@ export const LiveMarketTickerTape: React.FC<LiveMarketTickerTapeProps> = ({
                     gap: '6px',
                     padding: '0 14px',
                     height: '100%',
-                    background: isLight ? '#f1f5f9' : '#0d1527',
-                    borderRight: `1px solid ${isLight ? '#e2e8f0' : 'rgba(255, 255, 255, 0.08)'}`,
+                    background: 'var(--surface-card)',
+                    borderRight: '1px solid var(--border-subtle)',
                     whiteSpace: 'nowrap',
                     fontWeight: 700,
                     fontSize: '11px',
                     letterSpacing: '0.04em',
                     flexShrink: 0,
-                    color: marketOpen ? '#10b981' : '#f59e0b',
+                    color: marketOpen ? 'var(--accent-positive)' : 'var(--accent-warning)',
                 }}
                 title={marketOpen ? 'Indian Market is Open (09:15 - 15:30 IST)' : 'Market Closed (Showing Official Closing LTP)'}
             >
@@ -148,8 +148,8 @@ export const LiveMarketTickerTape: React.FC<LiveMarketTickerTapeProps> = ({
                         width: '7px',
                         height: '7px',
                         borderRadius: '50%',
-                        background: marketOpen ? '#10b981' : '#f59e0b',
-                        boxShadow: marketOpen ? '0 0 8px #10b981' : 'none',
+                        background: marketOpen ? 'var(--accent-positive)' : 'var(--accent-warning)',
+                        boxShadow: marketOpen ? '0 0 8px var(--accent-positive)' : 'none',
                     }}
                 />
                 {marketOpen ? 'NSE/BSE LIVE' : 'NSE CLOSED'}
@@ -199,10 +199,10 @@ export const LiveMarketTickerTape: React.FC<LiveMarketTickerTapeProps> = ({
                             className="ticker-item-hover"
                             title={`Click to analyze ${item.displayName} in Strategy Lab`}
                         >
-                            <span style={{ fontWeight: 700, color: isLight ? '#0f172a' : '#f1f5f9', letterSpacing: '0.02em' }}>
+                            <span style={{ fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '0.02em' }}>
                                 {item.displayName}
                             </span>
-                            <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: isLight ? '#334155' : '#cbd5e1' }}>
+                            <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--text-secondary)' }}>
                                 {priceFormatted}
                             </span>
                             {pctFormatted && (
@@ -211,13 +211,13 @@ export const LiveMarketTickerTape: React.FC<LiveMarketTickerTapeProps> = ({
                                         fontFamily: 'var(--font-mono)',
                                         fontSize: '11px',
                                         fontWeight: 600,
-                                        color: isPos ? '#10b981' : '#ef4444',
+                                        color: isPos ? 'var(--accent-positive)' : 'var(--accent-negative)',
                                     }}
                                 >
                                     {pctFormatted}
                                 </span>
                             )}
-                            <span style={{ color: isLight ? '#cbd5e1' : 'rgba(255, 255, 255, 0.15)', fontSize: '10px' }}>•</span>
+                            <span style={{ color: 'var(--text-muted)', fontSize: '10px' }}>•</span>
                         </button>
                     );
                 })}

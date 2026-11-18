@@ -131,8 +131,8 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({
                 {/* Engine Protection Notice */}
                 <div
                     style={{
-                        background: 'rgba(99, 223, 176, 0.08)',
-                        border: '1px solid rgba(99, 223, 176, 0.25)',
+                        background: 'var(--brand-surface)',
+                        border: '1px solid var(--brand-border)',
                         borderRadius: '6px',
                         padding: '6px 10px',
                         fontSize: '11px',
