@@ -138,9 +138,9 @@ def get_popular_symbols():
 
 
 @app.get("/api/market-data/search")
-def search_symbols(q: str = ""):
-    """Search Indian indices and stocks by name or ticker."""
-    return {"results": search_indian_symbols(q)}
+def search_symbols(q: str = "", category: str = ""):
+    """Search Indian indices and stocks by name, ticker, or sector."""
+    return {"results": search_indian_symbols(q, category)}
 
 
 @app.get("/api/market-data/quote/{symbol}")

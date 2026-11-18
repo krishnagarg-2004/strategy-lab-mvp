@@ -42,43 +42,124 @@ def normalize_indian_symbol(sym: str) -> str:
 
 
 POPULAR_INDIAN_SYMBOLS = [
+    # --- Major Indices ---
     {"symbol": "^NSEI", "name": "NIFTY 50", "category": "Index", "sector": "Benchmark"},
     {"symbol": "^NSEBANK", "name": "BANK NIFTY", "category": "Index", "sector": "Banking"},
     {"symbol": "^CNXIT", "name": "NIFTY IT", "category": "Index", "sector": "Technology"},
-    {"symbol": "RELIANCE.NS", "name": "Reliance Industries", "category": "Stock", "sector": "Energy & Retail"},
-    {"symbol": "TCS.NS", "name": "Tata Consultancy Services", "category": "Stock", "sector": "IT Services"},
-    {"symbol": "HDFCBANK.NS", "name": "HDFC Bank", "category": "Stock", "sector": "Private Banking"},
-    {"symbol": "INFY.NS", "name": "Infosys Ltd", "category": "Stock", "sector": "IT Services"},
-    {"symbol": "ICICIBANK.NS", "name": "ICICI Bank", "category": "Stock", "sector": "Private Banking"},
-    {"symbol": "BHARTIARTL.NS", "name": "Bharti Airtel", "category": "Stock", "sector": "Telecom"},
-    {"symbol": "SBIN.NS", "name": "State Bank of India", "category": "Stock", "sector": "Public Banking"},
-    {"symbol": "LICI.NS", "name": "Life Insurance Corp (LIC)", "category": "Stock", "sector": "Insurance"},
-    {"symbol": "ITC.NS", "name": "ITC Ltd", "category": "Stock", "sector": "FMCG"},
-    {"symbol": "HINDUNILVR.NS", "name": "Hindustan Unilever", "category": "Stock", "sector": "FMCG"},
-    {"symbol": "LT.NS", "name": "Larsen & Toubro", "category": "Stock", "sector": "Capital Goods"},
-    {"symbol": "BAJFINANCE.NS", "name": "Bajaj Finance", "category": "Stock", "sector": "NBFC"},
+    {"symbol": "^BSESN", "name": "SENSEX", "category": "Index", "sector": "Benchmark"},
+    {"symbol": "NIFTY_FIN_SERVICE.NS", "name": "FINNIFTY", "category": "Index", "sector": "Financial Services"},
+    {"symbol": "^CNXAUTO", "name": "NIFTY AUTO", "category": "Index", "sector": "Automobile"},
+    {"symbol": "^CNXFMCG", "name": "NIFTY FMCG", "category": "Index", "sector": "Consumer Goods"},
+    {"symbol": "^CNXPHARMA", "name": "NIFTY PHARMA", "category": "Index", "sector": "Healthcare"},
+    {"symbol": "^CNXMETAL", "name": "NIFTY METAL", "category": "Index", "sector": "Metals"},
+    {"symbol": "^CNXENERGY", "name": "NIFTY ENERGY", "category": "Index", "sector": "Energy"},
+
+    # --- Banking & Financial Services ---
+    {"symbol": "HDFCBANK.NS", "name": "HDFC Bank", "category": "Stock", "sector": "Banking"},
+    {"symbol": "ICICIBANK.NS", "name": "ICICI Bank", "category": "Stock", "sector": "Banking"},
+    {"symbol": "SBIN.NS", "name": "State Bank of India", "category": "Stock", "sector": "Banking"},
+    {"symbol": "KOTAKBANK.NS", "name": "Kotak Mahindra Bank", "category": "Stock", "sector": "Banking"},
+    {"symbol": "AXISBANK.NS", "name": "Axis Bank", "category": "Stock", "sector": "Banking"},
+    {"symbol": "INDUSINDBK.NS", "name": "IndusInd Bank", "category": "Stock", "sector": "Banking"},
+    {"symbol": "BAJFINANCE.NS", "name": "Bajaj Finance", "category": "Stock", "sector": "Financial Services"},
+    {"symbol": "BAJAJFINSV.NS", "name": "Bajaj Finserv", "category": "Stock", "sector": "Financial Services"},
+    {"symbol": "CHOLAFIN.NS", "name": "Cholamandalam Inv", "category": "Stock", "sector": "Financial Services"},
+    {"symbol": "LICI.NS", "name": "Life Insurance Corp (LIC)", "category": "Stock", "sector": "Financial Services"},
+    {"symbol": "JIOFIN.NS", "name": "Jio Financial Services", "category": "Stock", "sector": "Financial Services"},
+    {"symbol": "CANBK.NS", "name": "Canara Bank", "category": "Stock", "sector": "Banking"},
+    {"symbol": "PNB.NS", "name": "Punjab National Bank", "category": "Stock", "sector": "Banking"},
+
+    # --- IT & Technology ---
+    {"symbol": "TCS.NS", "name": "Tata Consultancy Services", "category": "Stock", "sector": "Technology"},
+    {"symbol": "INFY.NS", "name": "Infosys Ltd", "category": "Stock", "sector": "Technology"},
+    {"symbol": "HCLTECH.NS", "name": "HCL Technologies", "category": "Stock", "sector": "Technology"},
+    {"symbol": "WIPRO.NS", "name": "Wipro Ltd", "category": "Stock", "sector": "Technology"},
+    {"symbol": "TECHM.NS", "name": "Tech Mahindra", "category": "Stock", "sector": "Technology"},
+    {"symbol": "LTIM.NS", "name": "LTIMindtree Ltd", "category": "Stock", "sector": "Technology"},
+    {"symbol": "PERSISTENT.NS", "name": "Persistent Systems", "category": "Stock", "sector": "Technology"},
+    {"symbol": "COFORGE.NS", "name": "Coforge Ltd", "category": "Stock", "sector": "Technology"},
+
+    # --- Energy, Oil & Utilities ---
+    {"symbol": "RELIANCE.NS", "name": "Reliance Industries", "category": "Stock", "sector": "Energy"},
+    {"symbol": "ONGC.NS", "name": "Oil & Natural Gas Corp", "category": "Stock", "sector": "Energy"},
+    {"symbol": "NTPC.NS", "name": "NTPC Ltd", "category": "Stock", "sector": "Energy"},
+    {"symbol": "POWERGRID.NS", "name": "Power Grid Corp", "category": "Stock", "sector": "Energy"},
+    {"symbol": "BPCL.NS", "name": "Bharat Petroleum", "category": "Stock", "sector": "Energy"},
+    {"symbol": "COALINDIA.NS", "name": "Coal India Ltd", "category": "Stock", "sector": "Energy"},
+    {"symbol": "IOC.NS", "name": "Indian Oil Corp", "category": "Stock", "sector": "Energy"},
+    {"symbol": "GAIL.NS", "name": "GAIL (India) Ltd", "category": "Stock", "sector": "Energy"},
+    {"symbol": "TATAPOWER.NS", "name": "Tata Power", "category": "Stock", "sector": "Energy"},
+    {"symbol": "ADANIGREEN.NS", "name": "Adani Green Energy", "category": "Stock", "sector": "Energy"},
+
+    # --- Automobile & Components ---
     {"symbol": "TATAMOTORS.NS", "name": "Tata Motors", "category": "Stock", "sector": "Automobile"},
     {"symbol": "MARUTI.NS", "name": "Maruti Suzuki", "category": "Stock", "sector": "Automobile"},
-    {"symbol": "SUNPHARMA.NS", "name": "Sun Pharmaceutical", "category": "Stock", "sector": "Pharma"},
-    {"symbol": "KOTAKBANK.NS", "name": "Kotak Mahindra Bank", "category": "Stock", "sector": "Private Banking"},
-    {"symbol": "AXISBANK.NS", "name": "Axis Bank", "category": "Stock", "sector": "Private Banking"},
+    {"symbol": "M&M.NS", "name": "Mahindra & Mahindra", "category": "Stock", "sector": "Automobile"},
+    {"symbol": "BAJAJ-AUTO.NS", "name": "Bajaj Auto", "category": "Stock", "sector": "Automobile"},
+    {"symbol": "EICHERMOT.NS", "name": "Eicher Motors", "category": "Stock", "sector": "Automobile"},
+    {"symbol": "HEROMOTOCO.NS", "name": "Hero MotoCorp", "category": "Stock", "sector": "Automobile"},
+    {"symbol": "TVSMOTOR.NS", "name": "TVS Motor Company", "category": "Stock", "sector": "Automobile"},
+
+    # --- FMCG & Retail ---
+    {"symbol": "ITC.NS", "name": "ITC Ltd", "category": "Stock", "sector": "FMCG"},
+    {"symbol": "HINDUNILVR.NS", "name": "Hindustan Unilever", "category": "Stock", "sector": "FMCG"},
+    {"symbol": "NESTLEIND.NS", "name": "Nestle India", "category": "Stock", "sector": "FMCG"},
+    {"symbol": "BRITANNIA.NS", "name": "Britannia Industries", "category": "Stock", "sector": "FMCG"},
+    {"symbol": "TATACONSUM.NS", "name": "Tata Consumer Products", "category": "Stock", "sector": "FMCG"},
+    {"symbol": "VBL.NS", "name": "Varun Beverages", "category": "Stock", "sector": "FMCG"},
+    {"symbol": "DABUR.NS", "name": "Dabur India", "category": "Stock", "sector": "FMCG"},
+    {"symbol": "MARICO.NS", "name": "Marico Ltd", "category": "Stock", "sector": "FMCG"},
+    {"symbol": "DMART.NS", "name": "Avenue Supermarts (DMart)", "category": "Stock", "sector": "Retail"},
+    {"symbol": "TRENT.NS", "name": "Trent Ltd", "category": "Stock", "sector": "Retail"},
+    {"symbol": "ZOMATO.NS", "name": "Zomato Ltd", "category": "Stock", "sector": "Consumer Tech"},
+
+    # --- Metals & Mining ---
+    {"symbol": "TATASTEEL.NS", "name": "Tata Steel", "category": "Stock", "sector": "Metals"},
+    {"symbol": "JSWSTEEL.NS", "name": "JSW Steel", "category": "Stock", "sector": "Metals"},
+    {"symbol": "HINDALCO.NS", "name": "Hindalco Industries", "category": "Stock", "sector": "Metals"},
+    {"symbol": "VEDL.NS", "name": "Vedanta Ltd", "category": "Stock", "sector": "Metals"},
+    {"symbol": "JINDALSTEL.NS", "name": "Jindal Steel & Power", "category": "Stock", "sector": "Metals"},
+    {"symbol": "NMDC.NS", "name": "NMDC Ltd", "category": "Stock", "sector": "Metals"},
     {"symbol": "ADANIENT.NS", "name": "Adani Enterprises", "category": "Stock", "sector": "Metals & Mining"},
-    {"symbol": "WIPRO.NS", "name": "Wipro Ltd", "category": "Stock", "sector": "IT Services"},
+
+    # --- Pharmaceuticals & Healthcare ---
+    {"symbol": "SUNPHARMA.NS", "name": "Sun Pharmaceutical", "category": "Stock", "sector": "Pharma"},
+    {"symbol": "CIPLA.NS", "name": "Cipla Ltd", "category": "Stock", "sector": "Pharma"},
+    {"symbol": "DRREDDY.NS", "name": "Dr Reddy's Laboratories", "category": "Stock", "sector": "Pharma"},
+    {"symbol": "APOLLOHOSP.NS", "name": "Apollo Hospitals", "category": "Stock", "sector": "Healthcare"},
+    {"symbol": "DIVISLAB.NS", "name": "Divi's Laboratories", "category": "Stock", "sector": "Pharma"},
+    {"symbol": "LUPIN.NS", "name": "Lupin Ltd", "category": "Stock", "sector": "Pharma"},
+    {"symbol": "MANKIND.NS", "name": "Mankind Pharma", "category": "Stock", "sector": "Pharma"},
+
+    # --- Infrastructure, Defense & Construction ---
+    {"symbol": "LT.NS", "name": "Larsen & Toubro", "category": "Stock", "sector": "Capital Goods"},
+    {"symbol": "BEL.NS", "name": "Bharat Electronics", "category": "Stock", "sector": "Defense"},
+    {"symbol": "HAL.NS", "name": "Hindustan Aeronautics", "category": "Stock", "sector": "Defense"},
+    {"symbol": "SIEMENS.NS", "name": "Siemens India", "category": "Stock", "sector": "Capital Goods"},
+    {"symbol": "ABB.NS", "name": "ABB India", "category": "Stock", "sector": "Capital Goods"},
+    {"symbol": "BHEL.NS", "name": "Bharat Heavy Electricals", "category": "Stock", "sector": "Capital Goods"},
+    {"symbol": "ULTRACEMCO.NS", "name": "UltraTech Cement", "category": "Stock", "sector": "Cement"},
+    {"symbol": "GRASIM.NS", "name": "Grasim Industries", "category": "Stock", "sector": "Cement"},
+    {"symbol": "DLF.NS", "name": "DLF Ltd", "category": "Stock", "sector": "Real Estate"},
+    {"symbol": "TITAN.NS", "name": "Titan Company", "category": "Stock", "sector": "Consumer Goods"},
+    {"symbol": "ADANIPORTS.NS", "name": "Adani Ports & SEZ", "category": "Stock", "sector": "Infrastructure"},
+    {"symbol": "BHARTIARTL.NS", "name": "Bharti Airtel", "category": "Stock", "sector": "Telecom"},
 ]
 
 
-def search_indian_symbols(query: str) -> List[Dict[str, str]]:
-    """Search pre-configured and common Indian equities and indices by ticker or company name."""
+def search_indian_symbols(query: str = "", category: str = "") -> List[Dict[str, str]]:
+    """Search pre-configured and common Indian equities and indices by ticker, name, or sector."""
     q = query.strip().lower()
-    if not q:
-        return POPULAR_INDIAN_SYMBOLS[:12]
+    cat = category.strip().lower()
 
     results = []
     for item in POPULAR_INDIAN_SYMBOLS:
-        if q in item["symbol"].lower() or q in item["name"].lower() or q in item.get("sector", "").lower():
+        match_query = not q or (q in item["symbol"].lower() or q in item["name"].lower() or q in item.get("sector", "").lower())
+        match_cat = not cat or (cat == item["category"].lower() or cat in item.get("sector", "").lower())
+        if match_query and match_cat:
             results.append(item)
 
-    # If the user searched for an exact NSE ticker not in directory (e.g. ZOMATO)
+    # If the user searched for an exact NSE ticker not in directory (e.g. SUZLON)
     if not results and len(q) >= 2:
         clean = q.upper().replace(".NS", "")
         results.append({

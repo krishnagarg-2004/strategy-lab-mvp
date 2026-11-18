@@ -28,8 +28,64 @@ interface WatchlistPanelProps {
 }
 
 const DEFAULT_WATCHLIST = ['^NSEI', '^NSEBANK', 'RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'INFY.NS', 'TATAMOTORS.NS', 'SBIN.NS'];
-type WatchlistSortKey = 'symbol' | 'price' | 'change';
+type WatchlistSortKey = 'symbol' | 'price' | 'change' | 'volume';
 type WatchlistSortDirection = 'asc' | 'desc';
+
+const PRESET_PACKS: { name: string; icon: string; symbols: string[] }[] = [
+    {
+        name: 'NIFTY 50 Core',
+        icon: '🏛️',
+        symbols: ['^NSEI', 'RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'INFY.NS', 'ICICIBANK.NS', 'ITC.NS', 'LT.NS', 'SBIN.NS', 'BHARTIARTL.NS'],
+    },
+    {
+        name: 'Banking Leaders',
+        icon: '🏦',
+        symbols: ['^NSEBANK', 'HDFCBANK.NS', 'ICICIBANK.NS', 'SBIN.NS', 'KOTAKBANK.NS', 'AXISBANK.NS', 'INDUSINDBK.NS', 'CANBK.NS', 'PNB.NS'],
+    },
+    {
+        name: 'IT & Tech',
+        icon: '💻',
+        symbols: ['^CNXIT', 'TCS.NS', 'INFY.NS', 'HCLTECH.NS', 'WIPRO.NS', 'TECHM.NS', 'LTIM.NS', 'PERSISTENT.NS', 'COFORGE.NS'],
+    },
+    {
+        name: 'Auto & EV',
+        icon: '🚗',
+        symbols: ['^CNXAUTO', 'TATAMOTORS.NS', 'MARUTI.NS', 'M&M.NS', 'BAJAJ-AUTO.NS', 'EICHERMOT.NS', 'HEROMOTOCO.NS', 'TVSMOTOR.NS'],
+    },
+    {
+        name: 'Energy & Power',
+        icon: '⚡',
+        symbols: ['^CNXENERGY', 'RELIANCE.NS', 'ONGC.NS', 'NTPC.NS', 'POWERGRID.NS', 'BPCL.NS', 'COALINDIA.NS', 'TATAPOWER.NS', 'GAIL.NS'],
+    },
+    {
+        name: 'FMCG & Retail',
+        icon: '🛒',
+        symbols: ['^CNXFMCG', 'ITC.NS', 'HINDUNILVR.NS', 'NESTLEIND.NS', 'BRITANNIA.NS', 'TATACONSUM.NS', 'VBL.NS', 'TRENT.NS', 'ZOMATO.NS'],
+    },
+    {
+        name: 'Pharma & Health',
+        icon: '💊',
+        symbols: ['^CNXPHARMA', 'SUNPHARMA.NS', 'CIPLA.NS', 'DRREDDY.NS', 'APOLLOHOSP.NS', 'DIVISLAB.NS', 'LUPIN.NS', 'MANKIND.NS'],
+    },
+    {
+        name: 'Metals & Mining',
+        icon: '⛏️',
+        symbols: ['^CNXMETAL', 'TATASTEEL.NS', 'JSWSTEEL.NS', 'HINDALCO.NS', 'VEDL.NS', 'JINDALSTEL.NS', 'NMDC.NS', 'ADANIENT.NS'],
+    },
+];
+
+const SECTOR_TABS = [
+    'All',
+    'Index',
+    'Banking',
+    'Technology',
+    'Energy',
+    'Automobile',
+    'FMCG',
+    'Metals',
+    'Pharma',
+    'Capital Goods',
+];
 
 export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
     apiBase,
@@ -50,9 +106,12 @@ export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
     const [lastRefreshed, setLastRefreshed] = useState<string>('');
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+    const [catalogResults, setCatalogResults] = useState<SearchResult[]>([]);
+    const [selectedSectorTab, setSelectedSectorTab] = useState('All');
     const [searchLoading, setSearchLoading] = useState(false);
     const [showSearchModal, setShowSearchModal] = useState(false);
     const [liveChartSymbol, setLiveChartSymbol] = useState<string | null>(null);
+    const [tableFilter, setTableFilter] = useState('');
     const [sort, setSort] = useState<{ key: WatchlistSortKey; direction: WatchlistSortDirection }>({ key: 'symbol', direction: 'asc' });
 
     useEffect(() => {
@@ -90,15 +149,40 @@ export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
         return () => clearInterval(interval);
     }, [watchlistSymbols]);
 
+    // Fetch catalog when opening modal or changing sector tab
+    const fetchCatalog = async (category: string = 'All') => {
+        setSearchLoading(true);
+        try {
+            const catParam = category === 'All' ? '' : `&category=${encodeURIComponent(category)}`;
+            const res = await fetch(`${apiBase}/api/market-data/search?q=${encodeURIComponent(searchQuery)}${catParam}`);
+            const data = await res.json();
+            const results = data.results || [];
+            if (!searchQuery) {
+                setCatalogResults(results);
+            }
+            setSearchResults(results);
+        } catch (e) {
+            console.error('Catalog fetch failed:', e);
+        } finally {
+            setSearchLoading(false);
+        }
+    };
+
+    const handleOpenSearchModal = () => {
+        setShowSearchModal(true);
+        fetchCatalog(selectedSectorTab);
+    };
+
     const handleSearch = async (query: string) => {
         setSearchQuery(query);
         if (!query.trim()) {
-            setSearchResults([]);
+            setSearchResults(catalogResults);
             return;
         }
         setSearchLoading(true);
         try {
-            const res = await fetch(`${apiBase}/api/market-data/search?q=${encodeURIComponent(query)}`);
+            const catParam = selectedSectorTab === 'All' ? '' : `&category=${encodeURIComponent(selectedSectorTab)}`;
+            const res = await fetch(`${apiBase}/api/market-data/search?q=${encodeURIComponent(query)}${catParam}`);
             const data = await res.json();
             setSearchResults(data.results || []);
         } catch (e) {
@@ -108,13 +192,35 @@ export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
         }
     };
 
+    const handleSelectSectorTab = (tab: string) => {
+        setSelectedSectorTab(tab);
+        fetchCatalog(tab);
+    };
+
     const addSymbol = (sym: string) => {
         if (!watchlistSymbols.includes(sym)) {
             setWatchlistSymbols((prev) => [...prev, sym]);
         }
+    };
+
+    const addCustomTicker = () => {
+        if (!searchQuery.trim()) return;
+        const clean = searchQuery.trim().toUpperCase().replace('.NS', '').replace('.BO', '');
+        const customSymbol = clean.startsWith('^') ? clean : `${clean}.NS`;
+        addSymbol(customSymbol);
         setSearchQuery('');
-        setSearchResults([]);
-        setShowSearchModal(false);
+    };
+
+    const addPresetPack = (symbols: string[]) => {
+        setWatchlistSymbols((prev) => {
+            const combined = [...prev];
+            for (const s of symbols) {
+                if (!combined.includes(s)) {
+                    combined.push(s);
+                }
+            }
+            return combined;
+        });
     };
 
     const removeSymbol = (sym: string) => {
@@ -126,6 +232,17 @@ export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
         });
     };
 
+    const handleClearAll = () => {
+        if (window.confirm('Clear all instruments from your watchlist? You can re-add them or reset anytime.')) {
+            setWatchlistSymbols([]);
+            setQuotes({});
+        }
+    };
+
+    const handleResetDefault = () => {
+        setWatchlistSymbols(DEFAULT_WATCHLIST);
+    };
+
     const toggleSort = (key: WatchlistSortKey) => {
         setSort((current) => ({
             key,
@@ -133,18 +250,31 @@ export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
         }));
     };
 
-    const sortedSymbols = [...watchlistSymbols].sort((left, right) => {
+    // Client-side filter within existing watchlist
+    const filteredSymbols = watchlistSymbols.filter((sym) => {
+        if (!tableFilter.trim()) return true;
+        const query = tableFilter.trim().toLowerCase();
+        return sym.toLowerCase().includes(query);
+    });
+
+    const sortedSymbols = [...filteredSymbols].sort((left, right) => {
         const leftQuote = quotes[left];
         const rightQuote = quotes[right];
         let comparison = 0;
         if (sort.key === 'symbol') {
             comparison = left.localeCompare(right);
-        } else {
-            const leftValue = sort.key === 'price' ? leftQuote?.last_price : leftQuote?.change_pct;
-            const rightValue = sort.key === 'price' ? rightQuote?.last_price : rightQuote?.change_pct;
-            if (leftValue == null && rightValue != null) return 1;
-            if (leftValue != null && rightValue == null) return -1;
-            comparison = (leftValue ?? 0) - (rightValue ?? 0);
+        } else if (sort.key === 'price') {
+            const lv = leftQuote?.last_price ?? 0;
+            const rv = rightQuote?.last_price ?? 0;
+            comparison = lv - rv;
+        } else if (sort.key === 'change') {
+            const lv = leftQuote?.change_pct ?? 0;
+            const rv = rightQuote?.change_pct ?? 0;
+            comparison = lv - rv;
+        } else if (sort.key === 'volume') {
+            const lv = leftQuote?.volume ?? 0;
+            const rv = rightQuote?.volume ?? 0;
+            comparison = lv - rv;
         }
         return sort.direction === 'asc' ? comparison : -comparison;
     });
@@ -161,13 +291,22 @@ export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
                         Click any stock to run an instant backtest against our deterministic quantitative engine.
                     </p>
                 </div>
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
                     <button
                         className="btn-outline"
-                        onClick={() => setShowSearchModal(true)}
-                        style={{ padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                        onClick={handleOpenSearchModal}
+                        style={{
+                            padding: '8px 16px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            background: 'rgba(99, 223, 176, 0.12)',
+                            borderColor: 'var(--accent-positive)',
+                            color: 'var(--accent-positive)',
+                            fontWeight: 600,
+                        }}
                     >
-                        <span>🔍</span> Add Stock / Index
+                        <span>🔍</span> Browse & Add Stocks
                     </button>
                     <button
                         className="btn-outline"
@@ -205,15 +344,91 @@ export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
                 })}
             </div>
 
-            {/* Watchlist Table */}
+            {/* Sector / Index Quick Packs */}
+            <div className="panel" style={{ marginBottom: '16px', padding: '14px 18px' }}>
+                <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    ⚡ One-Click Curated Sector Packs:
+                </div>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                    {PRESET_PACKS.map((pack) => (
+                        <button
+                            key={pack.name}
+                            type="button"
+                            className="chip-btn"
+                            onClick={() => addPresetPack(pack.symbols)}
+                            title={`Add ${pack.symbols.length} stocks from ${pack.name}`}
+                            style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                padding: '6px 12px',
+                                fontSize: '11px',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                            }}
+                        >
+                            <span>{pack.icon}</span>
+                            <span>+ {pack.name}</span>
+                            <span style={{ opacity: 0.6, fontSize: '10px' }}>({pack.symbols.length})</span>
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Watchlist Table Panel */}
             <div className="panel" style={{ marginTop: '16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                    <div className="section-label">MY WATCHLIST ({watchlistSymbols.length} INSTRUMENTS)</div>
-                    {lastRefreshed && (
-                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                            Last updated: {lastRefreshed}
-                        </span>
-                    )}
+                {/* Watchlist Controls Header */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div className="section-label" style={{ margin: 0 }}>
+                            MY WATCHLIST ({watchlistSymbols.length} INSTRUMENTS)
+                        </div>
+                        {lastRefreshed && (
+                            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                                Updated: {lastRefreshed}
+                            </span>
+                        )}
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        {/* Live Filter in My Watchlist */}
+                        <input
+                            type="text"
+                            placeholder="Filter my watchlist…"
+                            value={tableFilter}
+                            onChange={(e) => setTableFilter(e.target.value)}
+                            style={{
+                                padding: '5px 10px',
+                                fontSize: '11px',
+                                borderRadius: '4px',
+                                width: '160px',
+                                background: 'var(--surface-card)',
+                                border: '1px solid var(--border-subtle)',
+                                color: 'var(--text-primary)',
+                            }}
+                        />
+
+                        {/* Reset / Clear Buttons */}
+                        <button
+                            type="button"
+                            className="btn-outline"
+                            onClick={handleResetDefault}
+                            title="Reset to default benchmark watchlist"
+                            style={{ padding: '5px 10px', fontSize: '11px' }}
+                        >
+                            Reset Default
+                        </button>
+                        <button
+                            type="button"
+                            className="btn-outline"
+                            onClick={handleClearAll}
+                            disabled={watchlistSymbols.length === 0}
+                            title="Remove all stocks from watchlist"
+                            style={{ padding: '5px 10px', fontSize: '11px', color: 'var(--accent-negative)' }}
+                        >
+                            Clear All
+                        </button>
+                    </div>
                 </div>
 
                 <div className="table-wrap">
@@ -230,7 +445,9 @@ export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
                                     <button type="button" className="watchlist-sort" onClick={() => toggleSort('change')}>DAY CHANGE {sort.key === 'change' ? (sort.direction === 'asc' ? '↑' : '↓') : '↕'}</button>
                                 </th>
                                 <th>DAY HIGH / LOW</th>
-                                <th>VOLUME</th>
+                                <th aria-sort={sort.key === 'volume' ? (sort.direction === 'asc' ? 'ascending' : 'descending') : 'none'}>
+                                    <button type="button" className="watchlist-sort" onClick={() => toggleSort('volume')}>VOLUME {sort.key === 'volume' ? (sort.direction === 'asc' ? '↑' : '↓') : '↕'}</button>
+                                </th>
                                 <th>ACTIONS</th>
                             </tr>
                         </thead>
@@ -251,7 +468,7 @@ export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
                                         </td>
                                         <td>
                                             {q && q.last_price !== null ? (
-                                                <span style={{ fontWeight: 600, fontSize: '14px' }}>
+                                                <span style={{ fontWeight: 600, fontSize: '14px', fontFamily: 'var(--font-mono)' }}>
                                                     ₹{q.last_price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                                                 </span>
                                             ) : (
@@ -268,23 +485,17 @@ export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
                                             )}
                                         </td>
                                         <td>
-                                            {q && q.last_price !== null && q.day_high !== null && q.day_low !== null ? (
-                                                <div className="day-range" title={`Day low ₹${q.day_low.toLocaleString('en-IN')} · day high ₹${q.day_high.toLocaleString('en-IN')}`}>
-                                                    <div className="day-range-track" aria-label={`Price within day range: ${q.day_low} to ${q.day_high}`}>
-                                                        <span className="day-range-marker" style={{ left: `${q.day_high > q.day_low ? Math.min(100, Math.max(0, ((q.last_price! - q.day_low) / (q.day_high - q.day_low)) * 100)) : 50}%` }} />
-                                                    </div>
-                                                    <div className="day-range-labels">
-                                                        <span>L ₹{q.day_low.toLocaleString('en-IN')}</span>
-                                                        <span>H ₹{q.day_high.toLocaleString('en-IN')}</span>
-                                                    </div>
-                                                </div>
+                                            {q && q.day_high !== null && q.day_low !== null ? (
+                                                <span style={{ fontSize: '12px', fontFamily: 'var(--font-mono)' }}>
+                                                    H: ₹{q.day_high.toLocaleString('en-IN')} / L: ₹{q.day_low.toLocaleString('en-IN')}
+                                                </span>
                                             ) : (
                                                 '—'
                                             )}
                                         </td>
                                         <td>
                                             {q && q.volume ? (
-                                                <span style={{ fontSize: '12px' }}>
+                                                <span style={{ fontSize: '12px', fontFamily: 'var(--font-mono)' }}>
                                                     {q.volume.toLocaleString('en-IN')}
                                                 </span>
                                             ) : (
@@ -322,6 +533,10 @@ export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
                                                     className="btn-table-action remove-btn"
                                                     onClick={() => removeSymbol(sym)}
                                                     title="Remove from Watchlist"
+                                                    style={{
+                                                        color: 'var(--accent-negative)',
+                                                        borderColor: 'rgba(239, 68, 68, 0.3)',
+                                                    }}
                                                 >
                                                     ✕
                                                 </button>
@@ -330,20 +545,40 @@ export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
                                     </tr>
                                 );
                             })}
-                            {watchlistSymbols.length === 0 && (
-                                <tr><td colSpan={6}><div className="empty-table-state">Your watchlist is empty. Add an instrument to start tracking it here.</div></td></tr>
+                            {sortedSymbols.length === 0 && (
+                                <tr>
+                                    <td colSpan={6}>
+                                        <div className="empty-table-state" style={{ padding: '24px', textAlign: 'center' }}>
+                                            {tableFilter
+                                                ? `No instruments match "${tableFilter}". Try clearing your filter.`
+                                                : 'Your watchlist is empty. Click "+ One-Click Sector Packs" above or "Browse & Add Stocks" to add instruments.'}
+                                        </div>
+                                    </td>
+                                </tr>
                             )}
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            {/* Add Stock Search Modal */}
+            {/* Comprehensive Stock Catalog & Search Modal */}
             {showSearchModal && (
                 <div className="modal-overlay" onClick={() => setShowSearchModal(false)}>
-                    <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <h3>Add Stock or Index to Watchlist</h3>
+                    <div
+                        className="modal-card"
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ maxWidth: '720px', width: '95%', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}
+                    >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span style={{ fontSize: '20px' }}>🔍</span>
+                                <div>
+                                    <h3 style={{ margin: 0 }}>Indian Stock Directory & Catalog</h3>
+                                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                                        Browse over 80+ top liquid Indian indices and equities, or add any custom NSE ticker
+                                    </div>
+                                </div>
+                            </div>
                             <button
                                 type="button"
                                 className="close-btn"
@@ -352,26 +587,92 @@ export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
                                 ✕
                             </button>
                         </div>
-                        <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '8px 0 16px' }}>
-                            Search across NIFTY 50, BANKNIFTY, and all National Stock Exchange (NSE) equities.
-                        </p>
 
-                        <div className="search-input-box">
+                        {/* Search Input Box */}
+                        <div className="search-input-box" style={{ marginTop: '10px' }}>
                             <input
                                 autoFocus
                                 type="text"
-                                placeholder="Search by name or ticker (e.g., RELIANCE, ZOMATO, ^NSEI)…"
+                                placeholder="Search by company or ticker (e.g. Zomato, Reliance, Tata, ^NSEI)…"
                                 value={searchQuery}
                                 onChange={(e) => handleSearch(e.target.value)}
                                 style={{ width: '100%', padding: '10px 14px', borderRadius: '6px' }}
                             />
                         </div>
 
-                        <div className="search-results-list" style={{ maxHeight: '280px', overflowY: 'auto', marginTop: '12px' }}>
-                            {searchLoading && <div style={{ padding: '12px', textAlign: 'center' }}>Searching market directory…</div>}
-                            {!searchLoading && searchResults.length === 0 && searchQuery && (
-                                <div style={{ padding: '12px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                                    No direct matches. You can enter any valid NSE ticker symbol.
+                        {/* Sector Categories Bar */}
+                        <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', padding: '10px 0 6px', scrollbarWidth: 'none' }}>
+                            {SECTOR_TABS.map((tab) => (
+                                <button
+                                    key={tab}
+                                    type="button"
+                                    className={`chip-btn ${selectedSectorTab === tab ? 'active' : ''}`}
+                                    onClick={() => handleSelectSectorTab(tab)}
+                                    style={{
+                                        fontSize: '11px',
+                                        padding: '4px 10px',
+                                        whiteSpace: 'nowrap',
+                                        borderRadius: '16px',
+                                    }}
+                                >
+                                    {tab}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Custom Ticker Direct Addition */}
+                        {searchQuery.trim().length >= 2 && (
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    padding: '8px 12px',
+                                    background: 'rgba(99, 223, 176, 0.08)',
+                                    border: '1px dashed rgba(99, 223, 176, 0.4)',
+                                    borderRadius: '6px',
+                                    margin: '8px 0',
+                                }}
+                            >
+                                <span style={{ fontSize: '11px', color: 'var(--text-primary)' }}>
+                                    Add custom NSE ticker: <strong>{searchQuery.trim().toUpperCase().replace('.NS', '')}.NS</strong>
+                                </span>
+                                <button
+                                    type="button"
+                                    className="run"
+                                    onClick={addCustomTicker}
+                                    style={{ padding: '4px 10px', fontSize: '11px' }}
+                                >
+                                    + Add Custom Ticker
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Results Count & Quick Add All */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '6px 0', fontSize: '11px', color: 'var(--text-muted)' }}>
+                            <span>Showing {searchResults.length} instruments in {selectedSectorTab}</span>
+                            {searchResults.length > 0 && (
+                                <button
+                                    type="button"
+                                    className="btn-outline"
+                                    onClick={() => {
+                                        for (const item of searchResults) {
+                                            addSymbol(item.symbol);
+                                        }
+                                    }}
+                                    style={{ fontSize: '10px', padding: '2px 8px' }}
+                                >
+                                    + Add All {searchResults.length} to Watchlist
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Scrollable Results List */}
+                        <div className="search-results-list" style={{ flex: 1, overflowY: 'auto', borderTop: '1px solid var(--border-subtle)', marginTop: '4px' }}>
+                            {searchLoading && <div style={{ padding: '16px', textAlign: 'center' }}>Searching market directory…</div>}
+                            {!searchLoading && searchResults.length === 0 && (
+                                <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                                    No direct matches found. You can add any stock using "+ Add Custom Ticker" above.
                                 </div>
                             )}
                             {searchResults.map((item) => {
@@ -385,24 +686,36 @@ export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
                                             justifyContent: 'space-between',
                                             alignItems: 'center',
                                             padding: '10px 12px',
-                                            borderBottom: '1px solid var(--border-color)',
+                                            borderBottom: '1px solid var(--border-subtle)',
                                         }}
                                     >
                                         <div>
-                                            <div style={{ fontWeight: 600 }}>{item.name}</div>
+                                            <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{item.name}</div>
                                             <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
                                                 {item.symbol} · {item.sector || item.category}
                                             </div>
                                         </div>
-                                        <button
-                                            type="button"
-                                            className={`chip-btn ${isAdded ? 'active' : ''}`}
-                                            disabled={isAdded}
-                                            onClick={() => addSymbol(item.symbol)}
-                                            style={{ padding: '6px 12px' }}
-                                        >
-                                            {isAdded ? '✓ Added' : '+ Add to Watchlist'}
-                                        </button>
+                                        {isAdded ? (
+                                            <button
+                                                type="button"
+                                                className="btn-outline"
+                                                onClick={() => removeSymbol(item.symbol)}
+                                                style={{ padding: '4px 10px', fontSize: '11px', color: 'var(--accent-negative)' }}
+                                                title="Remove from your Watchlist"
+                                            >
+                                                ✕ Remove
+                                            </button>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                className="chip-btn active"
+                                                onClick={() => addSymbol(item.symbol)}
+                                                style={{ padding: '4px 10px', fontSize: '11px' }}
+                                                title="Add to your Watchlist"
+                                            >
+                                                + Add
+                                            </button>
+                                        )}
                                     </div>
                                 );
                             })}
@@ -410,6 +723,7 @@ export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
                     </div>
                 </div>
             )}
+
             {/* Real-time TradingView Live Chart Modal */}
             <TradingViewLiveChartModal
                 symbol={liveChartSymbol}
