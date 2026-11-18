@@ -39,6 +39,8 @@ Want to see how your first strategy performs in under 60 seconds?
    * Review your **Net Return %**, **Win Rate**, and **Max Drawdown**.
    * Toggle between the **Candlesticks & Signals** chart (with buy/sell markers) and the **Equity Curve**.
    * Inspect the **Trade Ledger** table and **Indian Statutory Tax Breakdown**.
+   * Click **📄 Download Fact Sheet (PDF)** to save an institutional-grade PDF fact sheet report.
+   * Click **👤 Sign In** at the top right to create your verified Supabase trader account.
 
 ---
 

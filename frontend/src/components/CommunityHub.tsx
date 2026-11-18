@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { StrategyConfig } from './StrategyPresets';
+import type { UserProfile } from '../lib/supabase';
 
 export interface VerifiedStats {
     symbol: string;
@@ -36,6 +37,8 @@ interface CommunityHubProps {
     apiBase: string;
     currentStrategy: StrategyConfig;
     latestVerifiedStats?: VerifiedStats | null;
+    currentUser?: UserProfile | null;
+    onOpenAuth?: () => void;
     onCopyStrategyToLab: (strategy: StrategyConfig, symbol?: string) => void;
 }
 
@@ -43,6 +46,8 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({
     apiBase,
     currentStrategy,
     latestVerifiedStats,
+    currentUser,
+    onOpenAuth,
     onCopyStrategyToLab,
 }) => {
     const [strategies, setStrategies] = useState<CommunityStrategyItem[]>([]);
@@ -54,7 +59,7 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({
     // Publish form state
     const [publishTitle, setPublishTitle] = useState('');
     const [publishDesc, setPublishDesc] = useState('');
-    const [publishAuthor, setPublishAuthor] = useState('');
+    const [publishAuthor, setPublishAuthor] = useState(() => currentUser?.name || currentUser?.email || '');
     const [publishCategory, setPublishCategory] = useState('Intraday');
     const [publishTags, setPublishTags] = useState('momentum,nifty');
     const [includeVerifiedStats, setIncludeVerifiedStats] = useState(true);
@@ -64,8 +69,15 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({
     const [activeCommentsStrategy, setActiveCommentsStrategy] = useState<CommunityStrategyItem | null>(null);
     const [commentsList, setCommentsList] = useState<StrategyCommentItem[]>([]);
     const [commentsLoading, setCommentsLoading] = useState(false);
-    const [newCommentAuthor, setNewCommentAuthor] = useState('');
+    const [newCommentAuthor, setNewCommentAuthor] = useState(() => currentUser?.name || currentUser?.email || '');
     const [newCommentText, setNewCommentText] = useState('');
+
+    useEffect(() => {
+        if (currentUser) {
+            setPublishAuthor(currentUser.name || currentUser.email);
+            setNewCommentAuthor(currentUser.name || currentUser.email);
+        }
+    }, [currentUser]);
 
     const fetchStrategies = async () => {
         setLoading(true);
@@ -390,6 +402,21 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({
                         </p>
 
                         <form onSubmit={handlePublish} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            {currentUser ? (
+                                <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '6px', padding: '8px 12px', fontSize: '11px', color: 'var(--accent-positive)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <span>✓</span> Publishing as Verified Trader: <strong>{currentUser.name}</strong> ({currentUser.email})
+                                </div>
+                            ) : (
+                                <div style={{ background: 'var(--surface-card)', border: '1px solid var(--border-subtle)', borderRadius: '6px', padding: '8px 12px', fontSize: '11px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ color: 'var(--text-muted)' }}>Publishing as Guest Trader</span>
+                                    {onOpenAuth && (
+                                        <button type="button" className="btn-outline" style={{ fontSize: '10px', padding: '2px 8px' }} onClick={onOpenAuth}>
+                                            Sign In for Verified Badge
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+
                             <label>
                                 Strategy Title *
                                 <input

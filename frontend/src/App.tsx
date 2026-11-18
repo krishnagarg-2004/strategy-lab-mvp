@@ -18,6 +18,9 @@ import { DemoDataNotice } from './components/DemoDataNotice';
 import { WatchlistPanel } from './components/WatchlistPanel';
 import { CommunityHub } from './components/CommunityHub';
 import { AIChatDrawer } from './components/AIChatDrawer';
+import { AuthModal } from './components/AuthModal';
+import { generateInstitutionalPDFReport } from './components/PDFReportGenerator';
+import { getStoredUserProfile, type UserProfile } from './lib/supabase';
 
 // In production on Render, direct API calls to the live backend URL
 const API_BASE = (import.meta as any).env?.VITE_BACKEND_URL || (typeof window !== 'undefined' && window.location.hostname.includes('onrender.com') ? 'https://strategy-lab-backend-dj9l.onrender.com' : '');
@@ -376,6 +379,38 @@ export default function App() {
     const [selectedPresetId, setSelectedPresetId] = useState<string>('intraday_momentum');
     const [showAIChat, setShowAIChat] = useState(false);
     const [aiLoadedNotice, setAiLoadedNotice] = useState('');
+
+    // User Authentication State (Supabase Auth)
+    const [currentUser, setCurrentUser] = useState<UserProfile | null>(getStoredUserProfile);
+    const [showAuthModal, setShowAuthModal] = useState(false);
+
+    const handleDownloadPDF = () => {
+        if (!result) return;
+        generateInstitutionalPDFReport({
+            symbol: result.symbol,
+            dataSource: result.data_source,
+            isRealMarketData: result.is_real_market_data,
+            strategy: result.strategy,
+            initialCapital: result.initial_capital,
+            finalEquity: result.final_equity,
+            netPnl: result.net_pnl,
+            returnPct: result.return_pct,
+            tradeCount: result.trade_count,
+            wins: result.wins,
+            losses: result.losses,
+            winRatePct: result.win_rate_pct,
+            profitFactor: result.profit_factor,
+            maxDrawdownPct: result.max_drawdown_pct,
+            sharpeRatio: result.sharpe_ratio,
+            sortinoRatio: result.sortino_ratio,
+            maxConsecutiveLosses: result.max_consecutive_losses,
+            totalTaxesAndCharges: result.total_taxes_and_charges,
+            taxSummary: result.tax_summary,
+            trades: result.trades,
+            userName: currentUser?.name,
+            userEmail: currentUser?.email,
+        });
+    };
 
     const handleSelectPreset = (presetId: string) => {
         setSelectedPresetId(presetId);
@@ -1110,6 +1145,46 @@ export default function App() {
                     >
                         Experiments ({experiments.length})
                     </button>
+
+                    {currentUser ? (
+                        <button
+                            type="button"
+                            className="auth-profile-btn"
+                            onClick={() => setShowAuthModal(true)}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                background: 'rgba(16, 185, 129, 0.12)',
+                                border: '1px solid rgba(16, 185, 129, 0.35)',
+                                color: 'var(--accent-positive)',
+                                padding: '6px 12px',
+                                borderRadius: '6px',
+                                fontWeight: 600,
+                                fontSize: '12px',
+                                cursor: 'pointer',
+                            }}
+                            title={`Signed in as ${currentUser.email}`}
+                        >
+                            <span>✓</span> {currentUser.name || currentUser.email.split('@')[0]}
+                        </button>
+                    ) : (
+                        <button
+                            type="button"
+                            className="btn-outline"
+                            onClick={() => setShowAuthModal(true)}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                padding: '6px 12px',
+                                fontSize: '12px',
+                                borderRadius: '6px',
+                            }}
+                        >
+                            <span>👤</span> Sign In
+                        </button>
+                    )}
                     <button
                         type="button"
                         className="theme-toggle-btn"
@@ -1813,7 +1888,24 @@ export default function App() {
                                     : 'Run a backtest to generate your report.'}
                             </p>
                         </div>
-                        <div style={{ display: 'flex', gap: '8px' }}>
+                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                            <button
+                                type="button"
+                                className="btn-outline"
+                                disabled={!result}
+                                onClick={handleDownloadPDF}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    borderColor: 'var(--brand-primary)',
+                                    color: 'var(--brand-primary)',
+                                    fontWeight: 600,
+                                }}
+                                title="Download institutional-grade PDF research fact sheet"
+                            >
+                                <span>📄</span> Download Fact Sheet (PDF)
+                            </button>
                             <button
                                 className="secondary"
                                 disabled={!result}
@@ -2260,6 +2352,8 @@ export default function App() {
                 <CommunityHub
                     apiBase={API_BASE}
                     currentStrategy={strategy}
+                    currentUser={currentUser}
+                    onOpenAuth={() => setShowAuthModal(true)}
                     latestVerifiedStats={
                         result
                             ? {
@@ -3075,6 +3169,14 @@ export default function App() {
                 onClose={() => setShowAIChat(false)}
                 apiBase={API_BASE}
                 onApplyStrategy={handleApplyAIStrategy}
+            />
+
+            {/* Supabase User Authentication Modal */}
+            <AuthModal
+                isOpen={showAuthModal}
+                onClose={() => setShowAuthModal(false)}
+                currentUser={currentUser}
+                onAuthSuccess={(profile) => setCurrentUser(profile)}
             />
 
             <footer>

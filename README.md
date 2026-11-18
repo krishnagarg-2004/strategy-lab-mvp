@@ -222,6 +222,10 @@ Unlike generic backtesters, Strategy Lab accurately calculates and deducts actua
 * **Reviewable Strategy Blueprint Card**: Users inspect the interpreted rules and click `[Confirm & Load into Lab]` before running backtests.
 * **Community Strategy Showcase**: Discover, discuss, like, and fork strategies created by fellow quants with verified performance proofs.
 
+### 6. Institutional PDF Reports & Verified User Authentication
+* **1-Click Institutional PDF Fact Sheets**: Generate publication-ready research tear-sheets detailing Key Performance Indicators (Sharpe, Sortino, Drawdown), parameter specifications, authentic Indian statutory deductions breakdown, and chronological trade execution ledgers.
+* **Supabase User Authentication**: Verified trader accounts with email/password authentication, verified badges (`✓ Verified Quant`), personalized strategy publishing, and custom Supabase project connection support.
+
 ---
 
 ## 🎨 Human-Engineered Institutional Design System
