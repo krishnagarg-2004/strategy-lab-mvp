@@ -83,6 +83,8 @@ The **Live Watchlist** workspace lets you monitor real-time / delayed price acti
 * **Real-time Price Metrics:** Displays Last Traded Price (LTP ₹), Day Change (₹ and %), Day High/Low, and Total Volume.
 * **Search & Personalize:** Search any stock or index ticker, add it to your personal watchlist, and remove with one click (saved in your browser).
 * **⚡ 1-Click Backtest in Lab:** Click the "Backtest in Lab" button next to any stock, and Strategy Lab automatically loads its real historical data into the backtesting engine and executes a test!
+* **📈 Real-Time TradingView Candlestick Chart:** Click the "📈 Live Chart" button on any stock to open a full-featured real-time TradingView terminal with multi-timeframe candles (1m, 5m, 15m, 1D), volume, and indicators.
+* **Top Market Ticker Tape:** A persistent streaming ticker bar at the top of the screen displays real-time prices for NIFTY 50, BANK NIFTY, SENSEX, and top Indian blue chips, with market hours status (`🟢 LIVE` vs `🟠 CLOSED`).
 
 ---
 

@@ -224,7 +224,13 @@ Unlike generic backtesters, Strategy Lab accurately calculates and deducts actua
 * **Reviewable Strategy Blueprint Card**: Users inspect the interpreted rules and click `[⚡ Load into Lab]` to instantly configure the engine.
 * **Community Strategy Showcase**: Discover, discuss, like, and fork strategies created by fellow quants with verified performance proofs.
 
-### 6. Institutional PDF Reports & Verified User Authentication
+### 6. Real-Time Indian Market Ticker & Live Charting Suite
+* **Native Real-Time Ticker Strip**: Pinned across the top of all workspaces, displaying continuous quotes for **NIFTY 50**, **BANK NIFTY**, **SENSEX**, **RELIANCE**, **TCS**, **HDFC BANK**, **INFY**, **ICICI**, **SBI**, and more with real percentage changes and LTP in ₹.
+* **Exchange Hours Status Pill**: Displays `[🟢 NSE/BSE LIVE]` during market hours (09:15 to 15:30 IST) or `[🟠 NSE CLOSED]` outside hours.
+* **1-Click Ticker Backtesting**: Clicking any stock in the ticker bar loads that asset immediately into the active laboratory.
+* **Interactive TradingView Live Terminal Modal**: In the Live Watchlist workspace, clicking `[📈 Live Chart]` launches an interactive real-time TradingView terminal with multi-timeframe candlestick bars, technical indicators, and drawing tools.
+
+### 7. Institutional PDF Reports & Verified User Authentication
 * **1-Click Institutional PDF Fact Sheets**: Generate publication-ready research tear-sheets detailing Key Performance Indicators (Sharpe, Sortino, Drawdown), parameter specifications, authentic Indian statutory deductions breakdown, and chronological trade execution ledgers.
 * **Supabase User Authentication**: Verified trader accounts with email/password authentication, verified badges (`✓ Verified Quant`), personalized strategy publishing, and custom Supabase project connection support.
 
