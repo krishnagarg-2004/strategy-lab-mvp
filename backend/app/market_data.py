@@ -16,6 +16,31 @@ _QUOTE_CACHE: dict[str, tuple[float, dict[str, Any]]] = {}
 QUOTE_CACHE_TTL_SECONDS = 60  # 60 seconds cache for quotes to prevent API throttling
 
 # Curated Indian Markets directory (Indices and top NSE liquid stocks)
+SYMBOL_ALIAS_MAP: dict[str, str] = {
+    "NIFTY": "^NSEI",
+    "NIFTY 50": "^NSEI",
+    "NIFTY50": "^NSEI",
+    "^NSEI": "^NSEI",
+    "BANKNIFTY": "^NSEBANK",
+    "BANK NIFTY": "^NSEBANK",
+    "NIFTY BANK": "^NSEBANK",
+    "^NSEBANK": "^NSEBANK",
+    "NIFTY IT": "^CNXIT",
+    "^CNXIT": "^CNXIT",
+    "FINNIFTY": "NIFTY_FIN_SERVICE.NS",
+}
+
+
+def normalize_indian_symbol(sym: str) -> str:
+    """Normalize common Indian symbols and user inputs to valid Yahoo Finance tickers."""
+    sym = sym.strip().upper()
+    if sym in SYMBOL_ALIAS_MAP:
+        return SYMBOL_ALIAS_MAP[sym]
+    if not sym.startswith("^") and not sym.endswith(".NS") and not sym.endswith(".BO"):
+        return f"{sym}.NS"
+    return sym
+
+
 POPULAR_INDIAN_SYMBOLS = [
     {"symbol": "^NSEI", "name": "NIFTY 50", "category": "Index", "sector": "Benchmark"},
     {"symbol": "^NSEBANK", "name": "BANK NIFTY", "category": "Index", "sector": "Banking"},
@@ -69,6 +94,7 @@ def search_indian_symbols(query: str) -> List[Dict[str, str]]:
 def fetch_symbol_quote(symbol: str, force_refresh: bool = False) -> Dict[str, Any]:
     """Fetch current/delayed market quote (LTP, Day Change, High, Low, Volume) with caching."""
     symbol = symbol.strip().upper()
+    resolved_symbol = normalize_indian_symbol(symbol)
     now = _time.time()
 
     if not force_refresh and symbol in _QUOTE_CACHE:
@@ -77,7 +103,7 @@ def fetch_symbol_quote(symbol: str, force_refresh: bool = False) -> Dict[str, An
             return cached_quote.copy()
 
     try:
-        ticker = yf.Ticker(symbol)
+        ticker = yf.Ticker(resolved_symbol)
         fi = ticker.fast_info
 
         last_price = getattr(fi, "last_price", None)
@@ -154,7 +180,8 @@ def fetch_indian_market_data(
 ) -> tuple[str, pd.DataFrame]:
     """Fetch OHLCV data using yfinance with in-memory caching and return as CSV string and DataFrame."""
     symbol = symbol.strip().upper()
-    cache_key = (symbol, period, interval)
+    resolved_symbol = normalize_indian_symbol(symbol)
+    cache_key = (resolved_symbol, period, interval)
     now = _time.time()
 
     if not force_refresh and cache_key in _DATA_CACHE:
@@ -162,7 +189,7 @@ def fetch_indian_market_data(
         if now - cached_time < CACHE_TTL_SECONDS:
             return csv_str, cached_df.copy()
 
-    ticker = yf.Ticker(symbol)
+    ticker = yf.Ticker(resolved_symbol)
     df = ticker.history(period=period, interval=interval)
 
     if df is None or df.empty:
