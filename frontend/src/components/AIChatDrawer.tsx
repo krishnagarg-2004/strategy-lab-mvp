@@ -32,8 +32,23 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [compiledResult, setCompiledResult] = useState<AICompileResponse | null>(null);
+    const [isMinimized, setIsMinimized] = useState(false);
 
     if (!isOpen) return null;
+
+    if (isMinimized) {
+        return (
+            <div
+                className="ai-minimized-pill"
+                onClick={() => setIsMinimized(false)}
+                title="Click to restore AI Strategy Assistant"
+            >
+                <span style={{ fontSize: '18px' }}>🤖</span>
+                <span>AI Strategy Assistant</span>
+                <span style={{ fontSize: '11px', opacity: 0.75 }}>▲ Expand</span>
+            </div>
+        );
+    }
 
     const handleCompile = async (textToCompile?: string) => {
         const text = (textToCompile || promptText).trim();
@@ -67,65 +82,85 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({
     const handleConfirm = () => {
         if (!compiledResult) return;
         onApplyStrategy(compiledResult.strategy, compiledResult.suggested_symbol || undefined);
-        onClose();
+        setIsMinimized(true); // minimize floating window so user sees the lab update!
     };
 
     return (
-        <div className="modal-overlay" onClick={onClose}>
-            <div
-                className="modal-card ai-drawer-card"
-                onClick={(e) => e.stopPropagation()}
-                style={{ maxWidth: '640px', width: '95%' }}
-            >
-                {/* Header */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontSize: '20px' }}>🤖</span>
-                        <div>
-                            <h3 style={{ margin: 0 }}>AI Strategy Assistant</h3>
-                            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                                Natural Language to Deterministic Engine Compiler
-                            </div>
+        <div className="ai-floating-window">
+            {/* Floating Window Header */}
+            <div className="ai-floating-header">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '18px' }}>🤖</span>
+                    <div>
+                        <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                            AI Strategy Assistant
+                        </div>
+                        <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                            Groq LPU + Gemini 2.5 Flash
                         </div>
                     </div>
-                    <button type="button" className="close-btn" onClick={onClose}>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <button
+                        type="button"
+                        className="ai-control-btn"
+                        onClick={() => setIsMinimized(true)}
+                        title="Minimize to floating pill"
+                    >
+                        ⚊
+                    </button>
+                    <button
+                        type="button"
+                        className="ai-control-btn"
+                        onClick={onClose}
+                        title="Close assistant"
+                    >
                         ✕
                     </button>
                 </div>
+            </div>
 
+            {/* Floating Window Body */}
+            <div className="ai-floating-body">
                 {/* Engine Protection Notice */}
                 <div
                     style={{
                         background: 'rgba(99, 223, 176, 0.08)',
                         border: '1px solid rgba(99, 223, 176, 0.25)',
                         borderRadius: '6px',
-                        padding: '8px 12px',
+                        padding: '6px 10px',
                         fontSize: '11px',
                         color: 'var(--accent-positive)',
-                        margin: '12px 0',
+                        lineHeight: 1.35,
                     }}
                 >
-                    🛡️ <strong>Engine Integrity Active:</strong> The AI cannot tamper with or hallucinate backtest calculations. It strictly interprets your prompt into validated parameters for your review.
+                    🛡️ <strong>Engine Locked:</strong> Natural language is compiled strictly into validated parameters without modifying backtest math.
                 </div>
 
                 {/* Example Prompts */}
-                <div style={{ margin: '8px 0 14px' }}>
-                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '6px' }}>
-                        Try an example:
+                <div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '5px' }}>
+                        Quick templates:
                     </div>
-                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
                         {EXAMPLE_PROMPTS.map((ex, i) => (
                             <button
                                 key={i}
                                 type="button"
                                 className="tag-badge"
-                                style={{ cursor: 'pointer', textAlign: 'left', fontSize: '11px', padding: '4px 8px' }}
+                                style={{
+                                    cursor: 'pointer',
+                                    textAlign: 'left',
+                                    fontSize: '10.5px',
+                                    padding: '3px 7px',
+                                    background: 'var(--surface-card)',
+                                }}
                                 onClick={() => {
                                     setPromptText(ex);
                                     handleCompile(ex);
                                 }}
                             >
-                                💡 {ex.length > 55 ? `${ex.substring(0, 55)}…` : ex}
+                                💡 {ex.length > 40 ? `${ex.substring(0, 40)}…` : ex}
                             </button>
                         ))}
                     </div>
@@ -144,25 +179,25 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({
                         placeholder="Describe your strategy in ordinary English (e.g. 'Buy Nifty when 9 EMA crosses above 21 EMA with RSI above 55. Stop loss 0.5% and target 1.2%')…"
                         value={promptText}
                         onChange={(e) => setPromptText(e.target.value)}
-                        style={{ width: '100%', resize: 'vertical' }}
+                        style={{ width: '100%', resize: 'vertical', fontSize: '12px' }}
                     />
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                            Powered by Groq LPU + Google Gemini 2.5 Flash
+                        <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                            15,900+ daily free compilations
                         </span>
                         <button
                             type="submit"
                             className="run"
                             disabled={loading || !promptText.trim()}
-                            style={{ padding: '8px 20px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                            style={{ padding: '6px 16px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
                         >
-                            {loading ? '🧠 Interpreting…' : '⚡ Compile Strategy'}
+                            {loading ? '🧠 Interpreting…' : '⚡ Compile'}
                         </button>
                     </div>
                 </form>
 
                 {error && (
-                    <div style={{ color: 'var(--accent-negative)', fontSize: '12px', marginTop: '10px' }}>
+                    <div style={{ color: 'var(--accent-negative)', fontSize: '11px' }}>
                         ⚠️ {error}
                     </div>
                 )}
@@ -172,29 +207,32 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({
                     <div
                         className="compiled-strategy-card"
                         style={{
-                            marginTop: '16px',
                             background: 'var(--surface-card)',
                             border: '1px solid var(--brand-primary)',
                             borderRadius: '8px',
-                            padding: '16px',
+                            padding: '12px',
                         }}
                     >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <span style={{ color: 'var(--accent-positive)', fontWeight: 700, fontSize: '12px' }}>
-                                    ✓ INTERPRETED STRATEGY BLUEPRINT
+                                <span style={{ color: 'var(--accent-positive)', fontWeight: 700, fontSize: '11px' }}>
+                                    ✓ INTERPRETED BLUEPRINT
                                 </span>
                                 {compiledResult.provider && (
-                                    <span style={{ fontSize: '10px', color: 'var(--text-muted)', background: 'var(--surface-panel)', padding: '2px 6px', borderRadius: '4px' }}>
+                                    <span style={{ fontSize: '9px', color: 'var(--text-muted)', background: 'var(--surface-panel)', padding: '1px 5px', borderRadius: '4px' }}>
                                         {compiledResult.provider}
                                     </span>
                                 )}
                             </div>
-                            <span className="category-pill">{compiledResult.strategy.trade_direction}</span>
+                            <span className="category-pill" style={{ fontSize: '9px' }}>
+                                {compiledResult.strategy.trade_direction}
+                            </span>
                         </div>
 
-                        <h4 style={{ margin: '4px 0 8px', fontSize: '15px' }}>{compiledResult.strategy.name}</h4>
-                        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.4, margin: '4px 0 12px' }}>
+                        <div style={{ fontWeight: 700, fontSize: '13px', margin: '2px 0 4px' }}>
+                            {compiledResult.strategy.name}
+                        </div>
+                        <p style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.35, margin: '2px 0 8px' }}>
                             {compiledResult.explanation}
                         </p>
 
@@ -202,41 +240,41 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({
                         <div
                             style={{
                                 display: 'grid',
-                                gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
-                                gap: '8px',
+                                gridTemplateColumns: 'repeat(2, 1fr)',
+                                gap: '6px',
                                 background: 'var(--surface-panel)',
-                                padding: '10px',
+                                padding: '8px',
                                 borderRadius: '6px',
-                                fontSize: '11px',
-                                marginBottom: '14px',
+                                fontSize: '10.5px',
+                                marginBottom: '10px',
                             }}
                         >
                             <div>
-                                <span style={{ color: 'var(--text-muted)' }}>Crossover:</span>{' '}
-                                <strong>{compiledResult.strategy.fast_ema} / {compiledResult.strategy.slow_ema} EMA</strong>
+                                <span style={{ color: 'var(--text-muted)' }}>EMA Crossover:</span>{' '}
+                                <strong>{compiledResult.strategy.fast_ema} / {compiledResult.strategy.slow_ema}</strong>
                             </div>
                             <div>
                                 <span style={{ color: 'var(--text-muted)' }}>RSI Filter:</span>{' '}
-                                <strong>{compiledResult.strategy.use_rsi_filter ? `> ${compiledResult.strategy.rsi_min}` : 'Disabled'}</strong>
+                                <strong>{compiledResult.strategy.use_rsi_filter ? `> ${compiledResult.strategy.rsi_min}` : 'Off'}</strong>
                             </div>
                             <div>
                                 <span style={{ color: 'var(--text-muted)' }}>Stop Loss:</span>{' '}
                                 <strong style={{ color: 'var(--accent-negative)' }}>{compiledResult.strategy.stop_loss_pct}%</strong>
                             </div>
                             <div>
-                                <span style={{ color: 'var(--text-muted)' }}>Target:</span>{' '}
+                                <span style={{ color: 'var(--text-muted)' }}>Profit Target:</span>{' '}
                                 <strong style={{ color: 'var(--accent-positive)' }}>{compiledResult.strategy.take_profit_pct}%</strong>
                             </div>
                             <div>
                                 <span style={{ color: 'var(--text-muted)' }}>Supertrend:</span>{' '}
-                                <strong>{compiledResult.strategy.use_supertrend_filter ? 'Active' : 'Off'}</strong>
+                                <strong>{compiledResult.strategy.use_supertrend_filter ? 'On' : 'Off'}</strong>
                             </div>
                             <div>
                                 <span style={{ color: 'var(--text-muted)' }}>VWAP Filter:</span>{' '}
-                                <strong>{compiledResult.strategy.use_vwap_filter ? 'Active' : 'Off'}</strong>
+                                <strong>{compiledResult.strategy.use_vwap_filter ? 'On' : 'Off'}</strong>
                             </div>
                             {compiledResult.suggested_symbol && (
-                                <div>
+                                <div style={{ gridColumn: 'span 2' }}>
                                     <span style={{ color: 'var(--text-muted)' }}>Target Stock:</span>{' '}
                                     <strong style={{ color: 'var(--brand-primary)' }}>{compiledResult.suggested_symbol}</strong>
                                 </div>
@@ -244,22 +282,22 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({
                         </div>
 
                         {/* Action Buttons */}
-                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                             <button
                                 type="button"
                                 className="btn-outline"
                                 onClick={() => setCompiledResult(null)}
-                                style={{ padding: '8px 16px' }}
+                                style={{ padding: '6px 12px', fontSize: '11px' }}
                             >
-                                Discard & Revise
+                                Discard
                             </button>
                             <button
                                 type="button"
                                 className="run"
                                 onClick={handleConfirm}
-                                style={{ padding: '8px 22px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                                style={{ padding: '6px 16px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
                             >
-                                ⚡ Confirm & Load into Lab
+                                ⚡ Load into Lab
                             </button>
                         </div>
                     </div>

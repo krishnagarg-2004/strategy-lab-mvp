@@ -1849,3 +1849,98 @@ footer {
     filter: brightness(1.1);
 }
 
+/* ==========================================================================
+   AI Assistant Floating Window & Minimized Pill
+   ========================================================================== */
+
+.ai-floating-window {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 440px;
+    max-width: calc(100vw - 32px);
+    max-height: calc(100vh - 48px);
+    background: var(--surface-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    z-index: 1200;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: slideUpFloating 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    backdrop-filter: blur(16px);
+}
+
+@keyframes slideUpFloating {
+    from {
+        opacity: 0;
+        transform: translateY(18px) scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.ai-floating-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--surface-card);
+    border-bottom: 1px solid var(--border-subtle);
+    user-select: none;
+}
+
+.ai-floating-body {
+    padding: 14px 16px;
+    overflow-y: auto;
+    max-height: calc(85vh - 60px);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.ai-minimized-pill {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--surface-panel);
+    border: 1px solid rgba(99, 223, 176, 0.4);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+    border-radius: 30px;
+    padding: 10px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    z-index: 1200;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent-positive);
+    transition: transform 0.15s ease, border-color 0.15s ease;
+    animation: slideUpFloating 0.2s ease;
+}
+.ai-minimized-pill:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent-positive);
+    background: var(--surface-card);
+}
+
+.ai-control-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 13px;
+    cursor: pointer;
+    padding: 3px 6px;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+}
+.ai-control-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+
