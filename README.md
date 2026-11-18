@@ -7,518 +7,273 @@
 [![PostgreSQL](https://img.shields.io/badge/Database-Supabase%20PostgreSQL-336791.svg?logo=postgresql&logoColor=white)](https://supabase.com)
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB.svg?logo=python&logoColor=white)](https://www.python.org)
 
-**Strategy Lab** is a professional-grade, quantitative algorithmic trading research terminal and deterministic backtesting laboratory engineered specifically for Indian equities and indices (NSE / BSE).
+**Strategy Lab** is an institutional-grade quantitative backtesting laboratory and research terminal built for Indian equities and indices (NSE / BSE). 
 
-It equips quantitative analysts, systematic retail traders, and financial engineers with institutional-grade strategy evaluation: zero look-ahead bias next-bar execution, multi-indicator filtering (EMA, VWAP, Supertrend, RSI), real Indian statutory charges modeling (STT, GST, Stamp Duty, SEBI turnover fees), parameter optimization heatmaps, multi-stock portfolio testing, Monte Carlo sequence risk stress testing, Walk-Forward out-of-sample validation, and live forward paper trading with Discord/Telegram alert webhooks.
+Features include zero look-ahead bias execution, multi-indicator filtering (EMA, VWAP, Supertrend, RSI), accurate Indian statutory charges modeling (STT, GST, Stamp Duty, SEBI turnover fees), parameter optimization heatmaps, multi-stock portfolio testing, Monte Carlo sequence risk stress testing, Walk-Forward out-of-sample validation, and live forward paper trading with Discord/Telegram alert webhooks.
 
-> 📘 **Looking for the Trader's Manual?**  
-> If you are a trader looking for step-by-step instructions on how to use every feature, configure indicators, read the performance metrics, or set up webhook alerts in plain English, check out the **[User Guide & Trader Handbook](USER_GUIDE.md)**.
+> 📘 **Looking for step-by-step trader instructions?**  
+> Check out the **[User Guide & Trader Handbook](USER_GUIDE.md)** for indicator setup, metric interpretations, and webhook guides.
 
 ---
 
 ## 📑 Table of Contents
 
-* [📘 User Guide & Trader Handbook (Plain English)](USER_GUIDE.md)
-1. [🌐 Live Cloud Access (Render)](#-live-cloud-access-render)
-2. [🎯 Target Audience](#-target-audience)
-3. [🔄 Architecture & Data Flow Diagram](#-architecture--data-flow-diagram)
-   * [Visual Pipeline Flowchart](#visual-pipeline-flowchart)
-   * [Mermaid Architecture Diagram](#mermaid-architecture-diagram)
-4. [⚡ Key Features](#-key-features)
-5. [🎨 Human-Engineered Institutional Design System](#-human-engineered-institutional-design-system)
-6. [📂 Project Directory Structure](#-project-directory-structure)
-7. [🚀 Quick Start Guide](#-quick-start-guide)
-   * [Option 1: Run with Docker Compose](#option-1-run-with-docker-compose-recommended)
-   * [Option 2: Run Locally (Without Docker)](#option-2-run-locally-without-docker)
-8. [⚙️ Environment Variables Configuration](#️-environment-variables-configuration)
-9. [📖 The 8 Quantitative Workspaces](#-the-8-quantitative-workspaces)
-10. [📐 Quantitative Methodology & Risk Metrics](#-quantitative-methodology--risk-metrics)
-11. [🛠️ API Reference](#️-api-reference)
-12. [📊 CSV Upload Specification](#-csv-upload-specification)
-13. [❓ Troubleshooting & FAQ](#-troubleshooting--faq)
-14. [🗺️ Roadmap & Future Enhancements](#️-roadmap--future-enhancements)
-15. [🧪 Testing](#-testing)
-16. [⚠️ Important Assumptions & Disclaimers](#️-important-assumptions--disclaimers)
-17. [📄 License](#-license)
+1. [Live Cloud Access](#-live-cloud-access)
+2. [Architecture](#-architecture)
+3. [Key Capabilities](#-key-capabilities)
+4. [Project Structure](#-project-structure)
+5. [Quick Start Guide](#-quick-start-guide)
+   * [Docker Compose (Recommended)](#docker-compose-recommended)
+   * [Local Development](#local-development)
+6. [Environment Variables](#-environment-variables)
+7. [Quantitative Methodology & Risk Metrics](#-quantitative-methodology--risk-metrics)
+8. [API Reference](#-api-reference)
+9. [CSV Upload Specification](#-csv-upload-specification)
+10. [Testing](#-testing)
+11. [Disclaimers & License](#-disclaimers--license)
 
 ---
 
-## 🌐 Live Cloud Access (Render)
-
-Strategy Lab is configured and deployed live on Render with connected Supabase cloud PostgreSQL.
+## 🌐 Live Cloud Access
 
 | Service | Component | Access Link | Description |
 | :--- | :--- | :--- | :--- |
-| **Frontend Web App** | React + Vite UI | [https://strategy-lab-frontend.onrender.com](https://strategy-lab-frontend.onrender.com) | Institutional trading terminal with TradingView charts, custom toggle switches, and soft-slate light / dark obsidian modes |
-| **Backend API** | FastAPI Service | [https://strategy-lab-backend-dj9l.onrender.com](https://strategy-lab-backend-dj9l.onrender.com) | Deterministic event-driven simulation engine, mathematical risk analytics, and REST API |
-| **API Documentation** | OpenAPI / Swagger | [https://strategy-lab-backend-dj9l.onrender.com/docs](https://strategy-lab-backend-dj9l.onrender.com/docs) | Interactive API exploration and JSON payload schema documentation |
-| **Database** | Managed PostgreSQL | Supabase Cloud Pooler (`aws-1-ap-northeast-1.pooler.supabase.com:6543`) | High-concurrency persistent store for backtest experiments with local SQLite fallback |
-
-> **1-Click Cloud Deployment**: You can deploy your own private instance on Render in under 3 minutes by clicking the **Deploy to Render** button above or visiting [https://render.com/deploy?repo=https://github.com/krishnagarg-2004/strategy-lab-mvp](https://render.com/deploy?repo=https://github.com/krishnagarg-2004/strategy-lab-mvp).
+| **Frontend Web App** | React 19 + TypeScript | [https://strategy-lab-frontend.onrender.com](https://strategy-lab-frontend.onrender.com) | Web workstation with TradingView charts, light/dark themes, and real-time ticker tape |
+| **Backend API** | FastAPI Service | [https://strategy-lab-backend-dj9l.onrender.com](https://strategy-lab-backend-dj9l.onrender.com) | Event-driven backtesting engine, quantitative analytics, and REST API |
+| **API Documentation** | Swagger UI | [https://strategy-lab-backend-dj9l.onrender.com/docs](https://strategy-lab-backend-dj9l.onrender.com/docs) | Interactive API exploration and JSON schemas |
+| **Database** | Managed PostgreSQL | Supabase Cloud Pooler | Persistent store for experiments with automatic local SQLite fallback |
 
 ---
 
-## 🎯 Target Audience
-
-1. **Systematic & Quantitative Traders**:
-   * Algorithmic traders designing rule-based intraday or swing strategies who need to verify edge before committing real capital.
-   * Traders who need bi-directional backtesting (Long, Short, or Both) with dynamic Trailing Stops.
-2. **Indian Equities & Derivatives Market Participants**:
-   * Traders trading NIFTY 50, BANK NIFTY, FINNIFTY, and large-cap NSE/BSE equities who require accurate Indian statutory transaction costs (STT, GST, Stamp Duty, and exchange turnover charges) factored into net P&L.
-3. **Risk Managers & Researchers**:
-   * Analysts looking to quantify catastrophic tail risks, sequence risk, and maximum drawdown probability through 1,000+ path Monte Carlo bootstrap resampling.
-   * Researchers seeking to detect curve-fitting through Walk-Forward (Train/Test Out-of-Sample) efficiency validation.
-4. **Trading System Developers**:
-   * Developers prototyping signal engines, webhook alert dispatchers (Discord/Telegram), and quantitative analytics backends.
-
----
-
-## 🔄 Architecture & Data Flow Diagram
-
-The diagram below illustrates the end-to-end architecture and execution pipeline across both visual ASCII and interactive Mermaid formats:
-
-### Visual Pipeline Flowchart
-
-```text
-+-----------------------------------------------------------------------------------------+
-|                              1. MARKET DATA INGESTION                                   |
-|   [ Yahoo Finance API (NSE/BSE) ]   [ Custom CSV (6-col OHLCV) ]   [ Synthetic Demo ]   |
-+-----------------------------------------------------------------------------------------+
-                                             │
-                                             ▼
-+-----------------------------------------------------------------------------------------+
-|                     2. QUANTITATIVE SIMULATION ENGINE (FastAPI)                         |
-|   • Candle Normalization & IST Timezone Validation (Asia/Kolkata)                       |
-|   • Technical Indicators: Fast/Slow EMA, RSI Momentum, Intraday VWAP, Supertrend       |
-|   • Execution Simulator: Zero Look-Ahead Next-Bar Open Fill, Trailing Stop, Slippage   |
-+-----------------------------------------------------------------------------------------+
-                                             │
-                                             ▼
-+-----------------------------------------------------------------------------------------+
-|                     3. ACCOUNTING & INDIAN STATUTORY CHARGES                            |
-|   • STT (0.025% on Intraday Sell)  • GST (18%)  • Stamp Duty & SEBI/Exchange Levies     |
-|   • Flat Brokerage per Order Leg   • Mark-to-Market Equity Ledger & Drawdown Tracking   |
-+-----------------------------------------------------------------------------------------+
-                                             │
-                                             ▼
-+-----------------------------------------------------------------------------------------+
-|                         4. ADVANCED ROBUSTNESS ENGINES                                  |
-|   [ Grid Search Optimizer ]  [ Portfolio Watchlist ]  [ Monte Carlo Bootstrap (1000+) ] |
-|   [ Walk-Forward OOS Test ]  [ Live Paper Trading ]   [ Discord / Telegram Alert Hub ]  |
-+-----------------------------------------------------------------------------------------+
-                                     │                 │
-                    ┌────────────────┘                 └────────────────┐
-                    │                                                   │
-                    ▼                                                   ▼
-+------------------------------------+               +------------------------------------+
-|         5. STORAGE LAYER           | ◄───────────► |    6. INSTITUTIONAL WORKSPACE      |
-|   Supabase PostgreSQL / SQLite     |               |   React 19 + TypeScript + Inter    |
-|   • Persist & Restore Experiments  |               |   • TradingView Lightweight-Charts |
-|   • Historical Comparison & Audit  |               |   • Recharts Equity & Fan Charts   |
-+------------------------------------+               +------------------------------------+
-```
-
-### Mermaid Architecture Diagram
+## 🔄 Architecture
 
 ```mermaid
 flowchart TD
     subgraph DataIngestion["1. Market Data Ingestion"]
-        YF["Yahoo Finance API<br/>(Live NSE / BSE Tickers)"]
-        CSV["Custom CSV Upload<br/>(6-Column OHLCV)"]
-        SYN["Synthetic IST Engine<br/>(5-min Demo Candles)"]
+        YF["Yahoo Finance API (NSE / BSE)"]
+        CSV["Custom CSV Upload (OHLCV)"]
+        SYN["Synthetic IST Candles (Demo)"]
     end
 
     subgraph CoreEngine["2. Quantitative Simulation Engine (FastAPI)"]
-        NORM["Candle Normalization & Validation<br/>(Asia/Kolkata IST Timezone)"]
-        IND["Technical Indicator Engine<br/>• Fast/Slow EMA<br/>• RSI Momentum Filter<br/>• Intraday Session VWAP (09:15 Reset)<br/>• Supertrend (ATR Bands)"]
-        EXEC["Execution & Fill Simulator<br/>• Zero Look-Ahead Next-Bar Open Fill<br/>• Conservative High/Low Stop Check<br/>• Trailing Stop-Loss Ratchet<br/>• Slippage & Basis Point Model"]
+        NORM["Candle Normalization & IST Validation"]
+        IND["Indicator Suite (EMA, RSI, VWAP, Supertrend)"]
+        EXEC["Next-Bar Fill Execution Simulator + Trailing Stops"]
     end
 
-    subgraph Accounting["3. Accounting & Indian Statutory Charges"]
-        TAX["Statutory Charges Calculator<br/>• STT (0.025% on Intraday Sell)<br/>• GST (18% on Brokerage & Charges)<br/>• Stamp Duty & SEBI Turnover Fees<br/>• Flat Brokerage per Order Leg"]
-        LEDGER["Ledger & Equity Curve Reconciliation<br/>(Cash + Realized Mark-to-Market)"]
+    subgraph Accounting["3. Accounting & Statutory Charges"]
+        TAX["Indian Charges (STT, GST, Stamp Duty, SEBI fees)"]
+        LEDGER["Mark-to-Market Equity Ledger"]
     end
 
-    subgraph AdvancedAnalytics["4. Advanced Robustness Engines"]
-        GRID["Grid Search Optimizer<br/>(EMA Matrix × Sharpe/PnL Heatmap)"]
-        PORT["Portfolio Watchlist Runner<br/>(Multi-Stock Simultaneous Batch Test)"]
-        MC["Monte Carlo Engine<br/>(1000+ Bootstrap Sequences & Fan Charts)"]
-        WF["Walk-Forward Out-of-Sample<br/>(Train/Test In-Sample vs OOS Ratio)"]
-        PAPER["Live Paper Trading Hub<br/>(Real-Time Ticks & Webhook Dispatcher)"]
+    subgraph Analytics["4. Robustness Workspaces"]
+        GRID["Grid Search Heatmap"]
+        PORT["Portfolio Batch Runner"]
+        MC["Monte Carlo Resampling (1,000+ paths)"]
+        WF["Walk-Forward Out-of-Sample (WFE)"]
+        PAPER["Paper Trading & Webhook Dispatcher"]
     end
 
-    subgraph Persistence["5. Storage Layer"]
-        DB[("Supabase PostgreSQL / SQLite<br/>Saved Experiments Database")]
+    subgraph Storage["5. Persistence"]
+        DB[("Supabase PostgreSQL / SQLite")]
     end
 
-    subgraph Presentation["6. Institutional Trading Terminal (React 19 + TS)"]
-        UI["High-Density Trading Terminal<br/>• Calibrated Soft-Slate Light / Dark Obsidian<br/>• Right-Pinned iOS/Linear Toggle Switches<br/>• TradingView Candlestick & Marker Chart<br/>• Performance Metrics & Interactive Tables"]
-        WEBHOOK["External Alerts<br/>(Discord / Telegram Channels)"]
+    subgraph UI["6. Frontend Terminal (React 19 + Vite)"]
+        CLIENT["High-Density Trading Terminal (TradingView Charts, Themes, SVG Icons)"]
+        ALERTS["Discord / Telegram Webhooks"]
     end
 
-    DataIngestion --> NORM
-    NORM --> IND
-    IND --> EXEC
-    EXEC --> TAX
-    TAX --> LEDGER
-    LEDGER --> AdvancedAnalytics
-    AdvancedAnalytics --> DB
-    AdvancedAnalytics --> UI
-    PAPER --> WEBHOOK
-    DB <--> UI
+    DataIngestion --> NORM --> IND --> EXEC --> TAX --> LEDGER --> Analytics
+    Analytics --> DB
+    Analytics --> UI
+    PAPER --> ALERTS
+    DB <--> CLIENT
 ```
 
 ---
 
-## ⚡ Key Features
+## ⚡ Key Capabilities
 
-### 1. Robust Indicator & Signal Suite
-* **Dual Exponential Moving Average (EMA)**: Configurable Fast and Slow EMA crossover trigger with mathematical precision.
-* **Intraday VWAP (Volume-Weighted Average Price)**: Automatically resets every morning at 09:15 IST. Enforces Long above VWAP and Short below VWAP to maintain institutional trend alignment.
-* **Supertrend Filter**: Volatility-based trend direction filter utilizing Average True Range (ATR) with custom periods and multipliers.
-* **RSI Momentum Filter**: Relative Strength Index threshold gate to filter out low-momentum false breakouts.
+### 1. Strategy Engine & Realistic Execution
+- **Multi-Indicator Rules**: Configurable Fast/Slow EMA crossovers, Intraday VWAP (09:15 IST daily reset), Supertrend (ATR bands), and RSI momentum filters.
+- **Bi-Directional Execution**: Long Only, Short Only, or Both directions.
+- **Strict Execution Realism**: Zero look-ahead bias (signals generated on bar close, filled on subsequent bar open), conservative intrabar stop/target checks, and configurable basis-point slippage.
+- **Dynamic Risk Management**: Percentage-based stop-loss, take-profit, and peak-trailing stop ratchets.
 
-### 2. Execution Realism & Risk Safeguards
-* **Bi-Directional Trading**: Execute Long Only, Short Only, or Both directions seamlessly.
-* **Dynamic Trailing Stop-Loss**: Dynamically trails peak favorable market prices by a configurable percentage, locking in gains during sustained trends.
-* **Fixed Stop Loss & Take Profit**: Strict percentage-based exits evaluated on intraday high and low bars.
-* **Zero Look-Ahead Bias**: Signals are evaluated only after candle close; execution is modeled strictly at the subsequent candle's open price.
-* **Conservative Intrabar Resolution**: If both stop-loss and take-profit thresholds are breached within the same candle, the engine assumes the stop-loss was hit first.
-* **Execution Slippage**: Configurable basis-point slippage adjustment subtracted from trade execution prices.
+### 2. Indian Statutory Taxation & Brokerage
+Accurately models net trading returns by deducting:
+- **Securities Transaction Tax (STT)**: 0.025% on intraday equity sell turnover.
+- **Brokerage**: Flat per-order fee (e.g., ₹20 standard).
+- **Goods and Services Tax (GST)**: 18% on brokerage and turnover fees.
+- **Exchange & SEBI Charges**: Regulatory turnover fees.
+- **Stamp Duty**: State stamp duties on buy turnover.
 
-### 3. Indian Statutory Charges & Tax Engine
-Unlike generic backtesters, Strategy Lab accurately calculates and deducts actual Indian trading expenses:
-* **Securities Transaction Tax (STT)**: 0.025% on intraday equity sell turnover.
-* **Brokerage**: Configurable flat brokerage per executed leg (e.g., ₹20 for Zerodha, Groww, AngelOne).
-* **Goods and Services Tax (GST)**: 18% applied to brokerage and exchange transaction turnover fees.
-* **Exchange Turnover Charges & SEBI Charges**: Regulatory transaction fees accurately deducted per crore of turnover.
-* **Stamp Duty**: State-level stamp charges deducted on buy orders.
-
-### 4. Advanced Quantitative Workspaces
-* **Parameter Grid Search & 2D Heatmap**:
-  * Sweeps Fast EMA $\times$ Slow EMA parameter spaces with in-memory candle caching.
-  * Interactive 2D color-coded matrix highlighting parameter stability clusters by Sharpe Ratio or Net P&L.
-  * One-click loading of any grid parameter cell back into the single-run workspace.
-* **Multi-Stock Portfolio Watchlist**:
-  * Execute your strategy simultaneously across multiple Indian blue chips (RELIANCE, TCS, INFY, HDFCBANK, ICICIBANK, SBIN, etc.) and indices (NIFTY 50, BANK NIFTY).
-  * Consolidates total equity curves, aggregate drawdowns, and portfolio-wide win rates.
-* **Monte Carlo Sequence Risk Analysis**:
-  * Reshuffles trade returns across 1,000 to 5,000 bootstrap simulations.
-  * Calculates Risk of Ruin probability, maximum drawdown confidence intervals (95th, 75th, 50th median, 25th, and 5th percentiles), and interactive equity fan charts.
-* **Walk-Forward (Out-of-Sample) Validation**:
-  * Chronologically segments data into In-Sample (Train) and Out-of-Sample (Test) intervals (e.g., 70% / 30%).
-  * Compares In-Sample vs. Out-of-Sample Sharpe, Annualized Return, and Win Rate to calculate Walk-Forward Efficiency (WFE %) and flag curve-fitting.
-* **Live Paper Trading Simulation & Webhook Hub**:
-  * Forward simulate trade signals in real-time without risking real funds.
-  * Trigger real-time evaluation ticks and dispatch instant formatted trade notifications to **Discord** and **Telegram** webhooks.
-* **Saved Experiments Database**:
-  * Persist backtest runs in Supabase PostgreSQL (or SQLite local fallback).
-  * Review, restore, compare, and delete historical configurations and performance reports.
-
-### 5. Floating AI Strategy Assistant & Community Strategy Exchange
-* **Non-Blocking Floating Copilot**: Features a modern, hardware-accelerated floating window pinned to the bottom-right corner with smooth backdrop-filter blur. Users can view and interact with background charts, order ledgers, and controls while chatting with the AI.
-* **Minimizable & Expandable Pill**: Collapses into a neat floating badge (`[🤖 AI Strategy Assistant ▲ Expand]`) or expands on demand (`⚊`), preventing UI clutter.
-* **Natural Language Strategy Compiler**: Describe strategies in ordinary language (e.g., *"Buy Nifty when 9 EMA crosses 21 EMA with RSI above 55 and 0.5% stop loss"*).
-* **Deterministic Engine Protection (RULES LOCKED TO INPUT)**: The AI does not generate arbitrary Python code. It maps plain English directly to our strict, validated Pydantic schema with zero hallucinated indicators.
-* **Cascading Zero-Cost AI Architecture**: Powered by Groq Cloud (Qwen 27B / GPT-OSS 120B) and Google Gemini 2.5 Flash with an offline regex NLP parser fallback, offering 15,900+ daily free compilations.
-* **Reviewable Strategy Blueprint Card**: Users inspect the interpreted rules and click `[⚡ Load into Lab]` to instantly configure the engine.
-* **Community Strategy Showcase**: Discover, discuss, like, and fork strategies created by fellow quants with verified performance proofs.
-
-### 6. Real-Time Indian Market Ticker & Live Charting Suite
-* **Native Real-Time Ticker Strip**: Pinned across the top of all workspaces, displaying continuous quotes for **NIFTY 50**, **BANK NIFTY**, **SENSEX**, **RELIANCE**, **TCS**, **HDFC BANK**, **INFY**, **ICICI**, **SBI**, and more with real percentage changes and LTP in ₹.
-* **Exchange Hours Status Pill**: Displays `[🟢 NSE/BSE LIVE]` during market hours (09:15 to 15:30 IST) or `[🟠 NSE CLOSED]` outside hours.
-* **1-Click Ticker Backtesting**: Clicking any stock in the ticker bar loads that asset immediately into the active laboratory.
-* **Interactive TradingView Live Terminal Modal**: In the Live Watchlist workspace, clicking `[📈 Live Chart]` launches an interactive real-time TradingView terminal with multi-timeframe candlestick bars, technical indicators, and drawing tools.
-
-### 7. Institutional PDF Reports & Verified User Authentication
-* **1-Click Institutional PDF Fact Sheets**: Generate publication-ready research tear-sheets detailing Key Performance Indicators (Sharpe, Sortino, Drawdown), parameter specifications, authentic Indian statutory deductions breakdown, and chronological trade execution ledgers.
-* **Supabase User Authentication**: Verified trader accounts with email/password authentication, verified badges (`✓ Verified Quant`), personalized strategy publishing, and custom Supabase project connection support.
+### 3. Quantitative Analysis Modules
+- **Parameter Grid Search**: 2D heatmaps across Fast $\times$ Slow EMA combinations to identify stable parameter plateaus and avoid curve-fitting.
+- **Multi-Stock Portfolio Batch**: Run batch backtests across NIFTY 50, BANK NIFTY, and custom stock baskets simultaneously.
+- **Monte Carlo Sequence Risk**: Reshuffles trade returns across 1,000+ iterations to compute drawdown confidence intervals (95th, 75th, 50th, 25th, 5th percentiles) and Risk of Ruin.
+- **Walk-Forward Validation (OOS)**: Chronologically partitions data into In-Sample and Out-of-Sample windows to calculate Walk-Forward Efficiency (WFE %).
+- **Live Paper Trading & Webhook Alerts**: Forward simulated execution with live tick evaluation and formatted Discord/Telegram webhook dispatches.
+- **Watchlist & Live Ticker Strip**: 80+ curated Indian equities and indices with sector presets, live LTP quotes, day changes, and integrated TradingView chart modals.
 
 ---
 
-## 🎨 Human-Engineered Institutional Design System
-
-Strategy Lab was redesigned from scratch to eliminate generic AI-template cliches and deliver a calm, high-density financial workstation:
-
-* **Calibrated Soft-Slate Light Mode**: Replaced blinding pure-white screens with a soothing neutral canvas (`#f0f2f5`), crisp solid `#ffffff` cards, distinct 1px dividers (`#cbd5e1`), and rich high-contrast Slate-900 typography (`#0f172a`).
-* **Dark Obsidian Mode**: Matte obsidian backdrop (`#090d16`) with solid surfaces (`#0f1523`), clean 1px borders, and restrained emerald/ruby accents (zero radioactive neon glows).
-* **Right-Pinned iOS/Linear Toggle Switches**: Setting cards feature modern hardware-accelerated switch toggles pinned permanently to the far-right edge with fluid state animations.
-* **Financial Typography**: Strict pairing of **Inter** (headings, labels, and metrics with tabular numbers `tnum`) and **DM Mono** (prices, quantities, timestamps, and parameters).
-* **Purposeful Status Strip**: Replaced marketing slogans and decorative CSS bars with a functional workspace summary strip displaying active instrument, timeframe, starting capital, and engine execution mode.
-* **Zero Cartoon Navigation Emojis**: Clean, professional segmented controls and dedicated stock chips (`.chip-btn`).
-
----
-
-## 📂 Project Directory Structure
+## 📂 Project Structure
 
 ```text
 strategy-lab-mvp/
 ├── backend/
 │   ├── app/
-│   │   ├── __init__.py
-│   │   ├── db.py                 # SQLAlchemy engine & PostgreSQL/SQLite auto-fallback
-│   │   ├── engine.py             # Backtest core, Grid Search, Monte Carlo & Walk-Forward
-│   │   ├── main.py               # FastAPI routers, lifespan setup, and REST controllers
-│   │   ├── market_data.py        # Yahoo Finance loader & NSE/BSE popular symbols
-│   │   ├── models.py             # PostgreSQL experiment database schema
-│   │   ├── paper_trading.py      # Live forward paper trading session & alert webhooks
-│   │   ├── schemas.py            # Pydantic v2 request/response validation contracts
-│   │   └── taxes.py              # Indian statutory charges calculator (STT, GST, SEBI)
-│   ├── tests/                    # Pytest backend test suite (30/30 passing)
+│   │   ├── db.py                 # PostgreSQL / SQLite auto-fallback database connection
+│   │   ├── engine.py             # Quantitative backtest engine, grid search, MC, and WFO
+│   │   ├── main.py               # FastAPI routers and lifespan setup
+│   │   ├── market_data.py        # Market data fetcher and stock catalog
+│   │   ├── models.py             # SQLAlchemy models for saved experiments
+│   │   ├── paper_trading.py      # Paper trading runner and webhook dispatchers
+│   │   ├── schemas.py            # Pydantic v2 validation schemas
+│   │   └── taxes.py              # Indian statutory charges engine (STT, GST, SEBI)
+│   ├── tests/                    # Pytest test suite (37 passing tests)
 │   ├── Dockerfile                # Production backend container build
-│   └── requirements.txt          # Python dependencies (FastAPI, Pandas, NumPy, etc.)
+│   └── requirements.txt          # Backend dependencies
 ├── frontend/
 │   ├── src/
-│   │   ├── App.tsx               # Main research workspace & 6 quantitative modules
-│   │   ├── CandlestickChart.tsx  # TradingView Lightweight-Charts with theme adaptation
-│   │   ├── main.tsx              # React DOM initialization
-│   │   ├── styles.css            # Bespoke institutional design system
-│   │   └── vite-env.d.ts         # TypeScript environment declarations
-│   ├── dist/                     # Optimized production bundle assets
-│   ├── Dockerfile                # Production multi-stage build (serve -s dist -l 5173)
-│   ├── package.json              # Frontend dependencies (React 19, Recharts, Vite)
-│   └── vite.config.ts            # Vite build & proxy settings
-├── docker-compose.yml            # Multi-container orchestration (DB, API, Web)
-├── render.yaml                   # 1-Click Render Cloud Blueprint configuration
-└── README.md                     # Comprehensive project documentation
+│   │   ├── components/           # UI components (Watchlist, AIChatDrawer, AuthModal, etc.)
+│   │   ├── App.tsx               # Main terminal workspace and router
+│   │   ├── CandlestickChart.tsx  # TradingView Lightweight-Charts integration
+│   │   └── styles.css            # Institutional design tokens & styles
+│   ├── Dockerfile                # Production frontend container build
+│   └── package.json              # Frontend dependencies (React 19, Lucide, Recharts)
+├── docker-compose.yml            # Multi-container local orchestration
+├── render.yaml                   # 1-Click Render deployment configuration
+├── USER_GUIDE.md                 # Practical user guide for traders
+└── README.md
 ```
 
 ---
 
 ## 🚀 Quick Start Guide
 
-### Option 1: Run with Docker Compose (Recommended)
-
-Make sure [Docker Desktop](https://www.docker.com/products/docker-desktop/) is installed and running.
+### Docker Compose (Recommended)
 
 ```bash
-# 1. Clone the repository
+# Clone the repository
 git clone https://github.com/krishnagarg-2004/strategy-lab-mvp.git
 cd strategy-lab-mvp
 
-# 2. Build and run containers (Frontend, Backend, and PostgreSQL)
+# Build and start all services
 docker compose up --build
 ```
 
-Access the services:
-* **Frontend UI**: [http://localhost:5173](http://localhost:5173)
-* **Backend API Docs**: [http://localhost:8001/docs](http://localhost:8001/docs)
-* **PostgreSQL Database**: `localhost:5433` (maps internally to `5432`)
+- **Frontend UI**: [http://localhost:5173](http://localhost:5173)
+- **Backend API Docs**: [http://localhost:8001/docs](http://localhost:8001/docs)
+- **PostgreSQL**: `localhost:5433` (maps to internal `5432`)
 
-To stop the containers:
-```bash
-docker compose down
-```
+To shut down: `docker compose down`
 
 ---
 
-### Option 2: Run Locally (Without Docker)
-
-#### Prerequisites
-* **Python 3.11+**
-* **Node.js 20+** and `npm`
+### Local Development
 
 #### 1. Backend Setup
 ```bash
 cd backend
-
-# Create and activate virtual environment
 python -m venv .venv
 
-# Windows PowerShell:
+# Windows:
 .venv\Scripts\Activate.ps1
 # macOS/Linux:
 source .venv/bin/activate
 
-# Install dependencies
 pip install -r requirements.txt
-
-# Start the FastAPI server
 uvicorn app.main:app --reload --port 8000
 ```
-The backend will run on `http://localhost:8000` (auto-falling back to SQLite if PostgreSQL is not active).
+*Backend runs on `http://localhost:8000` (auto-falls back to SQLite if PostgreSQL is not active).*
 
 #### 2. Frontend Setup
-In a separate terminal:
 ```bash
 cd frontend
-
-# Install npm packages
 npm install
-
-# Start Vite development server
 npm run dev
 ```
-Open [http://localhost:5173](http://localhost:5173) in your browser.
+*Frontend runs on `http://localhost:5173`.*
 
 ---
 
-## ⚙️ Environment Variables Configuration
+## ⚙️ Environment Variables
 
-| Variable | Scope | Default Value | Description |
+| Variable | Scope | Default | Description |
 | :--- | :--- | :--- | :--- |
-| `DATABASE_URL` | Backend | `sqlite:///./strategy_lab.db` | PostgreSQL connection string (`postgresql://user:pass@host:5432/dbname`). Automatically falls back to local SQLite if unset or unreachable. |
-| `PYTHONUNBUFFERED` | Backend | `1` | Forces Python stdout/stderr streams to be unbuffered for real-time Docker logging. |
-| `VITE_BACKEND_URL` | Frontend | `''` (auto-detects Render backend URL in cloud) | Explicit backend API URL for cross-origin production hosting. |
-| `PORT` | Cloud / Render | `8000` / `5173` | Port assigned dynamically by Render or local container runner. |
-
----
-
-## 📖 The 8 Quantitative Workspaces
-
-Strategy Lab provides eight dedicated modules for complete lifecycle strategy engineering. For step-by-step instructions and practical examples, see the **[User Guide & Trader Handbook](USER_GUIDE.md)**.
-
-1. **Single Run Backtest**: Candle-by-candle simulation with bi-directional execution (Long/Short), zero look-ahead next-bar fill, curated Strategy Presets (Intraday Scalp, Supertrend, Golden Cross), clear Synthetic Demo vs. Real Data provenance banners, trailing stop-losses, and realistic Indian statutory fees (STT, GST, SEBI).
-2. **Live Indian Market Watchlist**: Real-time / delayed price tracking across NIFTY 50, BANK NIFTY, and top NSE stocks with LTP, Day Change (%), Day High/Low, and one-click "Backtest in Lab" integration.
-3. **Community Strategy Showcase & Exchange**: Public gallery of verified quantitative strategies. Filter by tags or categories, like, comment, and copy any community strategy directly into your workspace with 1-click forking.
-4. **Parameter Optimization (Grid Search)**: Exhaustive 2D parameter sweep across Fast $\times$ Slow EMA combinations to detect stable parameter plateaus.
-5. **Multi-Stock Portfolio Batch**: Run batch backtests across a basket of equities and indices simultaneously to evaluate diversification benefits.
-6. **Monte Carlo Stress Test**: Reshuffles trade sequences over 1,000+ bootstrap iterations to uncover sequence risk and risk of ruin probabilities.
-7. **Walk-Forward Out-of-Sample (OOS)**: Chronologically segments data into In-Sample (Train) vs Out-of-Sample (Test) periods to verify Walk-Forward Efficiency (WFE %) and flag curve-fitting.
-8. **Live Paper Trading & Alert Hub**: Practice real-time forward execution with simulated ticks, automated trailing stop updates, and instant alert dispatching to Discord and Telegram webhooks.
-
-> 📖 **Read the complete guide:** For detailed instructions on how to use every setting, read [USER_GUIDE.md](USER_GUIDE.md).
+| `DATABASE_URL` | Backend | `sqlite:///./strategy_lab.db` | PostgreSQL connection string. Falls back to SQLite if unreachable. |
+| `VITE_BACKEND_URL` | Frontend | `''` | Explicit backend URL for remote deployment. In local dev, Vite proxies `/api` to backend. |
+| `GROQ_API_KEY` | Backend | `None` | (Optional) Enables Groq-accelerated AI strategy natural language compilation. |
+| `GEMINI_API_KEY` | Backend | `None` | (Optional) Fallback AI model provider for natural language strategy translation. |
 
 ---
 
 ## 📐 Quantitative Methodology & Risk Metrics
 
-Strategy Lab computes quantitative risk statistics formulated specifically for trading system evaluation:
+Strategy Lab computes standard institutional risk statistics:
 
 ### 1. Annualized Sharpe Ratio
-Measures risk-adjusted excess return per unit of total portfolio volatility.
 $$\text{Sharpe Ratio} = \frac{\bar{R}_p - R_f}{\sigma_p} \times \sqrt{252}$$
-* $\bar{R}_p$: Mean trade return.
-* $R_f$: Benchmark Indian risk-free rate (defaults to 6.5% RBI repo rate).
-* $\sigma_p$: Sample standard deviation of returns.
+- $\bar{R}_p$: Mean trade return.
+- $R_f$: Benchmark risk-free rate (defaults to 6.5% RBI repo rate).
+- $\sigma_p$: Sample return standard deviation.
 
 ### 2. Annualized Sortino Ratio
-Measures risk-adjusted return penalizing **only downside volatility** (losses), ignoring upside volatility.
-$$\text{Sortino Ratio} = \frac{\bar{R}_p - R_f}{\sigma_{\text{downside}}} \times \sqrt{252}$$
-$$\sigma_{\text{downside}} = \sqrt{\frac{1}{N} \sum_{i=1}^{N} \min(0, R_i - \text{MAR})^2}$$
+Penalizes downside volatility only:
+$$\text{Sortino Ratio} = \frac{\bar{R}_p - R_f}{\sigma_{\text{downside}}} \times \sqrt{252}, \quad \sigma_{\text{downside}} = \sqrt{\frac{1}{N} \sum_{i=1}^{N} \min(0, R_i - \text{MAR})^2}$$
 
-### 3. Profit Factor
-Ratio of gross profits to gross absolute losses.
-$$\text{Profit Factor} = \frac{\sum \text{Profits}}{\sum |\text{Losses}|}$$
+### 3. Profit Factor & Maximum Drawdown (MDD)
+$$\text{Profit Factor} = \frac{\sum \text{Profits}}{\sum |\text{Losses}|}, \qquad \text{MDD} = \max_{t} \left( \frac{\text{Peak}_t - \text{Equity}_t}{\text{Peak}_t} \right) \times 100\%$$
 
-### 4. Maximum Drawdown (MDD)
-The maximum observed peak-to-trough decline of the portfolio equity curve:
-$$\text{MDD} = \max_{t} \left( \frac{\text{Peak}_t - \text{Equity}_t}{\text{Peak}_t} \right) \times 100\%$$
-
-### 5. Walk-Forward Efficiency (WFE %)
-Evaluates whether in-sample optimization holds up out-of-sample:
+### 4. Walk-Forward Efficiency (WFE %)
 $$\text{WFE} = \left( \frac{\text{Annualized Return}_{\text{Out-of-Sample}}}{\text{Annualized Return}_{\text{In-Sample}}} \right) \times 100\%$$
-* $\text{WFE} \ge 60\%$: Strategy demonstrates robust predictive edge.
-* $\text{WFE} < 40\%$: Strategy exhibits severe parameter over-optimization (curve-fitting).
+- $\text{WFE} \ge 60\%$: Strategy demonstrates robust out-of-sample edge.
+- $\text{WFE} < 40\%$: Strategy indicates potential curve-fitting.
 
 ---
 
 ## 🛠️ API Reference
 
-FastAPI automatically generates interactive documentation at `/docs` (Swagger UI) and `/redoc`.
-
-### Key Endpoints
+Interactive Swagger documentation is available at `/docs`.
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `POST` | `/api/backtest` | Executes a deterministic single strategy backtest |
-| `POST` | `/api/market-data/fetch` | Fetches historical intraday/daily OHLCV candles from Yahoo Finance |
-| `POST` | `/api/grid-search` | Performs multi-parameter grid sweep with in-memory caching |
-| `POST` | `/api/portfolio-backtest` | Runs batch backtesting across a watchlist of multiple symbols |
-| `POST` | `/api/monte-carlo` | Performs bootstrap resampled Monte Carlo sequence simulation |
-| `POST` | `/api/walk-forward` | Performs chronological In-Sample vs Out-of-Sample Walk-Forward validation |
+| `POST` | `/api/backtest` | Executes a single strategy backtest with trade ledger and metrics |
+| `POST` | `/api/market-data/fetch` | Fetches historical OHLCV candles from Yahoo Finance |
+| `POST` | `/api/market-data/quotes` | Fetches latest quotes & day change for live ticker tape |
+| `POST` | `/api/grid-search` | Performs 2D parameter sweep with in-memory candle caching |
+| `POST` | `/api/portfolio-backtest` | Runs batch backtest across a multi-stock watchlist |
+| `POST` | `/api/monte-carlo` | Resamples trade returns across 1,000+ paths for sequence risk |
+| `POST` | `/api/walk-forward` | Evaluates In-Sample vs Out-of-Sample Walk-Forward Efficiency |
 | `POST` | `/api/paper-trading/start` | Initializes a live simulated paper trading session |
-| `POST` | `/api/paper-trading/tick` | Evaluates a simulated tick against strategy rules and trailing stops |
-| `POST` | `/api/paper-trading/stop` | Terminates an active paper trading session |
-| `POST` | `/api/paper-trading/webhook-test` | Sends a formatted test alert to Discord or Telegram webhooks |
-| `GET` | `/api/experiments` | Lists all saved backtest experiments from the database |
-| `POST` | `/api/experiments` | Saves a backtest result to the database |
-| `GET` | `/api/experiments/{id}` | Loads full experiment details and chart candles by ID |
-| `DELETE` | `/api/experiments/{id}` | Deletes an experiment from the database |
-
-#### Sample Single Backtest Payload (`POST /api/backtest`)
-```json
-{
-  "strategy": {
-    "name": "Intraday EMA + Supertrend + VWAP",
-    "fast_ema": 9,
-    "slow_ema": 21,
-    "trade_direction": "BOTH",
-    "use_rsi_filter": true,
-    "rsi_period": 14,
-    "rsi_min": 50,
-    "use_vwap_filter": true,
-    "use_supertrend_filter": true,
-    "supertrend_period": 10,
-    "supertrend_multiplier": 3.0,
-    "stop_loss_pct": 0.5,
-    "take_profit_pct": 1.5,
-    "use_trailing_stop": true,
-    "trailing_stop_pct": 0.4,
-    "trading_start": "09:30",
-    "trading_end": "15:00",
-    "use_regulatory_charges": true,
-    "brokerage_per_order": 20
-  },
-  "initial_capital": 100000,
-  "quantity": 10,
-  "fee_per_order": 20,
-  "slippage_bps": 2,
-  "symbol": "RELIANCE.NS"
-}
-```
+| `POST` | `/api/paper-trading/tick` | Evaluates simulated ticks against strategy rules & trailing stops |
+| `POST` | `/api/paper-trading/webhook-test` | Sends formatted test alert to Discord or Telegram webhooks |
+| `GET` | `/api/experiments` | Lists saved backtest runs from database |
+| `POST` | `/api/experiments` | Saves a backtest experiment |
+| `DELETE` | `/api/experiments/{id}` | Deletes a saved backtest experiment |
 
 ---
 
 ## 📊 CSV Upload Specification
 
-You can upload custom historical market data in CSV format. The CSV must include a header row with the following column names (case-insensitive):
+Custom historical market data can be uploaded in CSV format with the following columns:
 
 | Column | Type | Description | Example |
 | :--- | :--- | :--- | :--- |
-| `timestamp` | String / ISO 8601 | Date and time (Asia/Kolkata timezone supported) | `2026-03-01T09:15:00` |
-| `open` | Float | Candle open price | `2450.50` |
-| `high` | Float | Candle highest price | `2465.00` |
-| `low` | Float | Candle lowest price | `2448.20` |
-| `close` | Float | Candle close price | `2460.10` |
+| `timestamp` | String / ISO 8601 | Candle date-time (IST supported) | `2026-03-01T09:15:00` |
+| `open` | Float | Opening price | `2450.50` |
+| `high` | Float | Session high | `2465.00` |
+| `low` | Float | Session low | `2448.20` |
+| `close` | Float | Closing price | `2460.10` |
 | `volume` | Float / Int | Traded volume | `125400` |
-
----
-
-## ❓ Troubleshooting & FAQ
-
-### Q1: I get a connection error connecting to PostgreSQL.
-* **Answer**: Strategy Lab features **automatic database fallback**. If PostgreSQL is offline or unreachable, the backend automatically boots a local SQLite database (`strategy_lab.db`) with zero manual configuration. In production on Render, Strategy Lab connects directly to Supabase cloud PostgreSQL.
-
-### Q2: What ticker format should I use for Indian stocks?
-* **NSE Stocks**: Append `.NS` (e.g., `RELIANCE.NS`, `TCS.NS`, `INFY.NS`, `HDFCBANK.NS`).
-* **BSE Stocks**: Append `.BO` (e.g., `RELIANCE.BO`).
-* **Indices**: Use `^NSEI` for NIFTY 50 and `^NSEBANK` for BANK NIFTY.
-
-### Q3: How do Discord and Telegram Webhooks work?
-* **Discord**: Create a Webhook URL in your Discord Channel Settings (`Integrations -> Webhooks`), paste it into the webhook input, and click **Send Test Ping**.
-* **Telegram**: Use standard Telegram Bot API webhook endpoints (`https://api.telegram.org/bot<TOKEN>/sendMessage?chat_id=<CHAT_ID>`).
-
-### Q4: Port conflict on localhost (e.g., port 5432 or 8000 already in use).
-* In `docker-compose.yml`, the host ports are mapped to avoid standard conflicts:
-  * PostgreSQL: `5433:5432` (Host port 5433)
-  * Backend API: `8001:8000` (Host port 8001)
-  * Frontend: `5173:5173` (Host port 5173)
-
----
-
-## 🗺️ Roadmap & Future Enhancements
-
-- [ ] **Options Greeks & Multi-Leg Payoffs**: Straddle / Strangle intraday backtesting with Black-Scholes implied volatility modeling.
-- [ ] **Broker WebSocket Live Feeds**: Direct real-time streaming integration with Zerodha Kite Connect, DhanHQ, and Upstox APIs.
-- [ ] **Multi-Timeframe Confirmation (MTF)**: Filter 5-minute entries against 1-hour higher timeframe trend structure.
-- [ ] **Automated Strategy Synthesis**: Genetic algorithms to evolve indicator parameter combinations automatically based on Sharpe ratio optimization.
 
 ---
 
 ## 🧪 Testing
 
-Strategy Lab includes unit and integration tests covering the simulation engine, indicator calculations, tax logic, and API endpoints (30/30 passing):
+The backend test suite covers backtest simulation, indicator logic, statutory taxation calculations, AI parsing, and community API endpoints:
 
 ```bash
 cd backend
@@ -527,17 +282,9 @@ pytest -v tests
 
 ---
 
-## ⚠️ Important Assumptions & Disclaimers
+## ⚠️ Disclaimers & License
 
-1. **Virtual & Deterministic Simulation Only**: Strategy Lab is a quantitative research and educational platform. It does not connect to live broker execution APIs and places **no real financial orders**.
-2. **Execution Modeling Assumptions**:
-   * Fills are simulated at the open price of the bar following a signal.
-   * Liquidity is assumed sufficient to fill specified order quantities.
-   * Actual live market fills may experience wider slippage, partial fills, exchange latency, and order rejection.
-3. **Past Performance vs Future Results**: Historical backtests, Walk-Forward efficiency scores, and Monte Carlo probabilities are theoretical models. They do not guarantee future profitability in live market conditions.
+1. **Simulation Only**: Strategy Lab is an educational and research platform. It does not place real orders or execute real financial trades.
+2. **Backtesting vs Reality**: Historical backtesting results and simulations do not guarantee future profitability in live market conditions.
 
----
-
-## 📄 License
-
-Distributed under the MIT License. See `LICENSE` for more information.
+Distributed under the MIT License. See [LICENSE](LICENSE) for details.
