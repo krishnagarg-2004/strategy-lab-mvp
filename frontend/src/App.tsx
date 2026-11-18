@@ -1095,74 +1095,6 @@ export default function App() {
                     </div>
                 </div>
                 <div className="top-actions" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div className="tab-group workspace-tabs" style={{ margin: 0 }} role="group" aria-label="Workspaces">
-                        <button
-                            type="button"
-                            className={`tab-btn ${workspaceTab === 'single' ? 'active' : ''}`}
-                            aria-pressed={workspaceTab === 'single'}
-                            onClick={() => setWorkspaceTab('single')}
-                        >
-                            Single Run
-                        </button>
-                        <button
-                            type="button"
-                            className={`tab-btn ${workspaceTab === 'watchlist' ? 'active' : ''}`}
-                            aria-pressed={workspaceTab === 'watchlist'}
-                            onClick={() => setWorkspaceTab('watchlist')}
-                        >
-                            Live Watchlist
-                        </button>
-                        <button
-                            type="button"
-                            className={`tab-btn ${workspaceTab === 'community' ? 'active' : ''}`}
-                            aria-pressed={workspaceTab === 'community'}
-                            onClick={() => setWorkspaceTab('community')}
-                        >
-                            Community Hub
-                        </button>
-                        <button
-                            type="button"
-                            className={`tab-btn ${workspaceTab === 'grid_search' ? 'active' : ''}`}
-                            aria-pressed={workspaceTab === 'grid_search'}
-                            onClick={() => setWorkspaceTab('grid_search')}
-                        >
-                            Grid Search
-                        </button>
-                        <button
-                            type="button"
-                            className={`tab-btn ${workspaceTab === 'portfolio' ? 'active' : ''}`}
-                            aria-pressed={workspaceTab === 'portfolio'}
-                            onClick={() => setWorkspaceTab('portfolio')}
-                        >
-                            Multi-Asset Batch
-                        </button>
-                        <button
-                            type="button"
-                            className={`tab-btn ${workspaceTab === 'monte_carlo' ? 'active' : ''}`}
-                            aria-pressed={workspaceTab === 'monte_carlo'}
-                            onClick={() => setWorkspaceTab('monte_carlo')}
-                        >
-                            Monte Carlo
-                        </button>
-                        <button
-                            type="button"
-                            className={`tab-btn ${workspaceTab === 'walk_forward' ? 'active' : ''}`}
-                            aria-pressed={workspaceTab === 'walk_forward'}
-                            onClick={() => setWorkspaceTab('walk_forward')}
-                        >
-                            Walk-Forward (OOS)
-                        </button>
-                        <button
-                            type="button"
-                            className={`tab-btn ${workspaceTab === 'paper_trading' ? 'active' : ''}`}
-                            aria-pressed={workspaceTab === 'paper_trading'}
-                            onClick={() => setWorkspaceTab('paper_trading')}
-                            style={{ borderColor: paperStatus?.is_active ? 'var(--emerald-primary)' : undefined }}
-                        >
-                            {paperStatus?.is_active ? '● Live Paper' : 'Paper Trading'}
-                        </button>
-                    </div>
-
                     <button
                         type="button"
                         className="ai-assistant-btn"
@@ -1179,6 +1111,7 @@ export default function App() {
                             fontWeight: 600,
                             fontSize: '12px',
                             cursor: 'pointer',
+                            whiteSpace: 'nowrap',
                         }}
                     >
                         <span>🤖</span> AI Strategy Assistant
@@ -1209,6 +1142,7 @@ export default function App() {
                                 fontWeight: 600,
                                 fontSize: '12px',
                                 cursor: 'pointer',
+                                whiteSpace: 'nowrap',
                             }}
                             title={`Signed in as ${currentUser.email}`}
                         >
@@ -1226,6 +1160,7 @@ export default function App() {
                                 padding: '6px 12px',
                                 fontSize: '12px',
                                 borderRadius: '6px',
+                                whiteSpace: 'nowrap',
                             }}
                         >
                             <span>👤</span> Sign In
@@ -1245,6 +1180,69 @@ export default function App() {
                     </div>
                 </div>
             </header>
+
+            {/* Dedicated Workspace Navigation Sub-Bar */}
+            <nav className="workspace-nav-bar">
+                <div className="tab-group" style={{ margin: 0 }}>
+                    <button
+                        type="button"
+                        className={`tab-btn ${workspaceTab === 'single' ? 'active' : ''}`}
+                        onClick={() => setWorkspaceTab('single')}
+                    >
+                        Single Run
+                    </button>
+                    <button
+                        type="button"
+                        className={`tab-btn ${workspaceTab === 'watchlist' ? 'active' : ''}`}
+                        onClick={() => setWorkspaceTab('watchlist')}
+                    >
+                        Live Watchlist
+                    </button>
+                    <button
+                        type="button"
+                        className={`tab-btn ${workspaceTab === 'community' ? 'active' : ''}`}
+                        onClick={() => setWorkspaceTab('community')}
+                    >
+                        Community Hub
+                    </button>
+                    <button
+                        type="button"
+                        className={`tab-btn ${workspaceTab === 'grid_search' ? 'active' : ''}`}
+                        onClick={() => setWorkspaceTab('grid_search')}
+                    >
+                        Grid Search
+                    </button>
+                    <button
+                        type="button"
+                        className={`tab-btn ${workspaceTab === 'portfolio' ? 'active' : ''}`}
+                        onClick={() => setWorkspaceTab('portfolio')}
+                    >
+                        Multi-Asset Batch
+                    </button>
+                    <button
+                        type="button"
+                        className={`tab-btn ${workspaceTab === 'monte_carlo' ? 'active' : ''}`}
+                        onClick={() => setWorkspaceTab('monte_carlo')}
+                    >
+                        Monte Carlo
+                    </button>
+                    <button
+                        type="button"
+                        className={`tab-btn ${workspaceTab === 'walk_forward' ? 'active' : ''}`}
+                        onClick={() => setWorkspaceTab('walk_forward')}
+                    >
+                        Walk-Forward (OOS)
+                    </button>
+                    <button
+                        type="button"
+                        className={`tab-btn ${workspaceTab === 'paper_trading' ? 'active' : ''}`}
+                        onClick={() => setWorkspaceTab('paper_trading')}
+                        style={{ borderColor: paperStatus?.is_active ? 'var(--emerald-primary)' : undefined }}
+                    >
+                        {paperStatus?.is_active ? '● Live Paper' : 'Paper Trading'}
+                    </button>
+                </div>
+            </nav>
 
             <section className="workspace-strip">
                 <div className="strip-title-group">

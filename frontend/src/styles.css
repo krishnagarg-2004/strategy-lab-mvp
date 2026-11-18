@@ -228,9 +228,31 @@ body {
     max-width: 100%;
 }
 
-.workspace-tabs {
-    min-width: 0;
-    max-width: 100%;
+.workspace-nav-bar {
+    display: flex;
+    align-items: center;
+    background: var(--surface-card);
+    border-bottom: 1px solid var(--border-subtle);
+    padding: 8px 28px;
+    margin: 0 -28px 16px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    white-space: nowrap;
+}
+
+.workspace-nav-bar::-webkit-scrollbar {
+    display: none;
+}
+
+.workspace-nav-bar .tab-group {
+    display: flex;
+    gap: 4px;
+    background: var(--tab-track-bg);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 3px;
+    margin: 0;
 }
 
 .brand {
@@ -1706,6 +1728,10 @@ footer {
     .workspace-tabs .tab-btn {
         flex: 0 0 auto;
     }
+    .workspace-nav-bar {
+        padding: 8px 16px;
+        margin: 0 -16px 14px;
+    }
     .layout {
         grid-template-columns: 300px minmax(0, 1fr);
     }
@@ -1737,6 +1763,10 @@ footer {
     .top-actions > .theme-toggle-btn,
     .top-actions > .ai-assistant-btn {
         min-height: 34px;
+    }
+    .workspace-nav-bar {
+        padding: 6px 14px;
+        margin: 0 -14px 12px;
     }
     .workspace-strip {
         padding: 14px;
