@@ -1,4 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import {
+    Share2,
+    Heart,
+    MessageSquare,
+    GitFork,
+    Zap,
+    X,
+    CheckCircle2,
+    FlaskConical,
+    SlidersHorizontal,
+    Search,
+} from 'lucide-react';
 import type { StrategyConfig } from './StrategyPresets';
 import type { UserProfile } from '../lib/supabase';
 
@@ -201,7 +213,7 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({
                 throw new Error(err.detail || 'Failed to publish');
             }
 
-            setPublishStatus('✓ Published successfully to community gallery!');
+            setPublishStatus('Published successfully to community gallery!');
             setTimeout(() => {
                 setShowPublishModal(false);
                 setPublishStatus('');
@@ -233,7 +245,7 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({
                     onClick={() => setShowPublishModal(true)}
                     style={{ padding: '10px 24px', display: 'flex', alignItems: 'center', gap: '8px' }}
                 >
-                    <span>🚀</span> Share My Strategy
+                    <Share2 size={15} /> Share My Strategy
                 </button>
             </div>
 
@@ -260,8 +272,8 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({
                         onChange={(e) => setSearchQuery(e.target.value)}
                         style={{ padding: '6px 12px', minWidth: '240px' }}
                     />
-                    <button type="submit" className="btn-outline" style={{ padding: '6px 14px' }}>
-                        Search
+                    <button type="submit" className="btn-outline" style={{ padding: '6px 14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Search size={13} /> Search
                     </button>
                 </form>
             </div>
@@ -271,7 +283,9 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({
 
             {!loading && strategies.length === 0 && (
                 <div className="panel" style={{ textAlign: 'center', padding: '48px 24px' }}>
-                    <div style={{ fontSize: '36px', marginBottom: '12px' }}>🧪</div>
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
+                        <FlaskConical size={36} color="var(--brand-primary)" />
+                    </div>
                     <h3>No strategies found</h3>
                     <p style={{ color: 'var(--text-muted)', maxWidth: '420px', margin: '8px auto' }}>
                         Be the first to publish your trading strategy! Run a backtest in the Single Run tab and share it with the community.
@@ -279,9 +293,9 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({
                     <button
                         className="run"
                         onClick={() => setShowPublishModal(true)}
-                        style={{ marginTop: '16px', padding: '8px 20px' }}
+                        style={{ marginTop: '16px', padding: '8px 20px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                     >
-                        Share Your Active Strategy
+                        <Share2 size={14} /> Share Your Active Strategy
                     </button>
                 </div>
             )}
@@ -311,7 +325,9 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({
                             {/* Verified Performance Banner */}
                             {stats && (
                                 <div className="verified-performance-box">
-                                    <div className="verified-badge">✓ Verified Engine Backtest</div>
+                                    <div className="verified-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                        <CheckCircle2 size={12} /> Verified Engine Backtest
+                                    </div>
                                     <div className="verified-stats-row">
                                         <div>
                                             <div className="stat-label">Return</div>
@@ -339,10 +355,11 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({
                             )}
 
                             {/* Rules Summary Card */}
-                            <div className="strategy-rules-pill">
-                                ⚙ {strat.strategy.trade_direction} · Fast EMA {strat.strategy.fast_ema} / Slow {strat.strategy.slow_ema} · SL {strat.strategy.stop_loss_pct}% / TP {strat.strategy.take_profit_pct}%
+                            <div className="strategy-rules-pill" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <SlidersHorizontal size={12} style={{ flexShrink: 0 }} />
+                                <span>{strat.strategy.trade_direction} · Fast EMA {strat.strategy.fast_ema} / Slow {strat.strategy.slow_ema} · SL {strat.strategy.stop_loss_pct}% / TP {strat.strategy.take_profit_pct}
                                 {strat.strategy.use_rsi_filter ? ` · RSI > ${strat.strategy.rsi_min}` : ''}
-                                {strat.strategy.use_supertrend_filter ? ' · Supertrend' : ''}
+                                {strat.strategy.use_supertrend_filter ? ' · Supertrend' : ''}</span>
                             </div>
 
                             {/* Actions Footer */}
@@ -353,19 +370,21 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({
                                         className="btn-icon-count"
                                         onClick={() => handleLike(strat.id)}
                                         title="Like this strategy"
+                                        style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                                     >
-                                        ♥ {strat.likes_count}
+                                        <Heart size={13} color="var(--accent-negative)" /> {strat.likes_count}
                                     </button>
                                     <button
                                         type="button"
                                         className="btn-icon-count"
                                         onClick={() => openComments(strat)}
                                         title="View discussion & comments"
+                                        style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                                     >
-                                        💬 {strat.comment_count}
+                                        <MessageSquare size={13} /> {strat.comment_count}
                                     </button>
-                                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                                        📥 {strat.copies_count} forks
+                                    <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                        <GitFork size={13} /> {strat.copies_count} forks
                                     </span>
                                 </div>
 
@@ -374,8 +393,9 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({
                                     className="btn-fork-strategy"
                                     onClick={() => handleFork(strat)}
                                     title="Copy this strategy into your workspace to test"
+                                    style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                                 >
-                                    ⚡ Copy to My Lab
+                                    <Zap size={13} /> Copy to My Lab
                                 </button>
                             </div>
                         </div>
@@ -393,8 +413,9 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({
                                 type="button"
                                 className="close-btn"
                                 onClick={() => setShowPublishModal(false)}
+                                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                             >
-                                ✕
+                                <X size={16} />
                             </button>
                         </div>
                         <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '8px 0 16px' }}>
@@ -404,7 +425,7 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({
                         <form onSubmit={handlePublish} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                             {currentUser ? (
                                 <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '6px', padding: '8px 12px', fontSize: '11px', color: 'var(--accent-positive)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                    <span>✓</span> Publishing as Verified Trader: <strong>{currentUser.name}</strong> ({currentUser.email})
+                                    <CheckCircle2 size={13} /> Publishing as Verified Trader: <strong>{currentUser.name}</strong> ({currentUser.email})
                                 </div>
                             ) : (
                                 <div style={{ background: 'var(--surface-card)', border: '1px solid var(--border-subtle)', borderRadius: '6px', padding: '8px 12px', fontSize: '11px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -489,8 +510,8 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({
                             )}
 
                             {publishStatus && (
-                                <div style={{ fontSize: '13px', color: publishStatus.startsWith('✓') ? '#10B981' : '#F59E0B' }}>
-                                    {publishStatus}
+                                <div style={{ fontSize: '13px', color: publishStatus.toLowerCase().includes('success') ? '#10B981' : '#F59E0B', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <CheckCircle2 size={13} /> {publishStatus}
                                 </div>
                             )}
 
@@ -522,8 +543,9 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({
                                 type="button"
                                 className="close-btn"
                                 onClick={() => setActiveCommentsStrategy(null)}
+                                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                             >
-                                ✕
+                                <X size={16} />
                             </button>
                         </div>
 

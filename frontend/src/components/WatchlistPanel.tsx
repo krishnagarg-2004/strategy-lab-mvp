@@ -1,4 +1,22 @@
 import React, { useState, useEffect } from 'react';
+import {
+    Search,
+    RefreshCw,
+    TrendingUp,
+    TrendingDown,
+    Zap,
+    X,
+    Plus,
+    Check,
+    Landmark,
+    Building2,
+    Laptop,
+    Car,
+    Flame,
+    ShoppingBag,
+    Pill,
+    Pickaxe,
+} from 'lucide-react';
 import { TradingViewLiveChartModal } from './TradingViewLiveChartModal';
 
 export interface WatchlistQuote {
@@ -31,45 +49,45 @@ const DEFAULT_WATCHLIST = ['^NSEI', '^NSEBANK', 'RELIANCE.NS', 'TCS.NS', 'HDFCBA
 type WatchlistSortKey = 'symbol' | 'price' | 'change' | 'volume';
 type WatchlistSortDirection = 'asc' | 'desc';
 
-const PRESET_PACKS: { name: string; icon: string; symbols: string[] }[] = [
+const PRESET_PACKS: { name: string; icon: React.ReactNode; symbols: string[] }[] = [
     {
         name: 'NIFTY 50 Core',
-        icon: '🏛️',
+        icon: <Landmark size={14} />,
         symbols: ['^NSEI', 'RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'INFY.NS', 'ICICIBANK.NS', 'ITC.NS', 'LT.NS', 'SBIN.NS', 'BHARTIARTL.NS'],
     },
     {
         name: 'Banking Leaders',
-        icon: '🏦',
+        icon: <Building2 size={14} />,
         symbols: ['^NSEBANK', 'HDFCBANK.NS', 'ICICIBANK.NS', 'SBIN.NS', 'KOTAKBANK.NS', 'AXISBANK.NS', 'INDUSINDBK.NS', 'CANBK.NS', 'PNB.NS'],
     },
     {
         name: 'IT & Tech',
-        icon: '💻',
+        icon: <Laptop size={14} />,
         symbols: ['^CNXIT', 'TCS.NS', 'INFY.NS', 'HCLTECH.NS', 'WIPRO.NS', 'TECHM.NS', 'LTIM.NS', 'PERSISTENT.NS', 'COFORGE.NS'],
     },
     {
         name: 'Auto & EV',
-        icon: '🚗',
+        icon: <Car size={14} />,
         symbols: ['^CNXAUTO', 'TATAMOTORS.NS', 'MARUTI.NS', 'M&M.NS', 'BAJAJ-AUTO.NS', 'EICHERMOT.NS', 'HEROMOTOCO.NS', 'TVSMOTOR.NS'],
     },
     {
         name: 'Energy & Power',
-        icon: '⚡',
+        icon: <Flame size={14} />,
         symbols: ['^CNXENERGY', 'RELIANCE.NS', 'ONGC.NS', 'NTPC.NS', 'POWERGRID.NS', 'BPCL.NS', 'COALINDIA.NS', 'TATAPOWER.NS', 'GAIL.NS'],
     },
     {
         name: 'FMCG & Retail',
-        icon: '🛒',
+        icon: <ShoppingBag size={14} />,
         symbols: ['^CNXFMCG', 'ITC.NS', 'HINDUNILVR.NS', 'NESTLEIND.NS', 'BRITANNIA.NS', 'TATACONSUM.NS', 'VBL.NS', 'TRENT.NS', 'ZOMATO.NS'],
     },
     {
         name: 'Pharma & Health',
-        icon: '💊',
+        icon: <Pill size={14} />,
         symbols: ['^CNXPHARMA', 'SUNPHARMA.NS', 'CIPLA.NS', 'DRREDDY.NS', 'APOLLOHOSP.NS', 'DIVISLAB.NS', 'LUPIN.NS', 'MANKIND.NS'],
     },
     {
         name: 'Metals & Mining',
-        icon: '⛏️',
+        icon: <Pickaxe size={14} />,
         symbols: ['^CNXMETAL', 'TATASTEEL.NS', 'JSWSTEEL.NS', 'HINDALCO.NS', 'VEDL.NS', 'JINDALSTEL.NS', 'NMDC.NS', 'ADANIENT.NS'],
     },
 ];
@@ -306,15 +324,15 @@ export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
                             fontWeight: 600,
                         }}
                     >
-                        <span>🔍</span> Browse & Add Stocks
+                        <Search size={14} /> Browse & Add Stocks
                     </button>
                     <button
                         className="btn-outline"
                         onClick={refreshQuotes}
                         disabled={loading}
-                        style={{ padding: '8px 16px' }}
+                        style={{ padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}
                     >
-                        {loading ? 'Refreshing…' : '↻ Refresh Quotes'}
+                        <RefreshCw size={13} className={loading ? 'spin' : ''} /> {loading ? 'Refreshing…' : 'Refresh Quotes'}
                     </button>
                 </div>
             </div>
@@ -336,8 +354,8 @@ export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
                                 </span>
                             </div>
                             <div className="index-price">₹{q.last_price.toLocaleString('en-IN')}</div>
-                            <div className="index-sub">
-                                {isPos ? '▲' : '▼'} ₹{Math.abs(q.change).toFixed(2)} vs Prev Close
+                            <div className="index-sub" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                {isPos ? <TrendingUp size={12} color="var(--accent-positive)" /> : <TrendingDown size={12} color="var(--accent-negative)" />} ₹{Math.abs(q.change).toFixed(2)} vs Prev Close
                             </div>
                         </div>
                     );
@@ -346,8 +364,8 @@ export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
 
             {/* Sector / Index Quick Packs */}
             <div className="panel" style={{ marginBottom: '16px', padding: '14px 18px' }}>
-                <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                    ⚡ One-Click Curated Sector Packs:
+                <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Zap size={14} color="#f59e0b" /> One-Click Curated Sector Packs:
                 </div>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
                     {PRESET_PACKS.map((pack) => (
@@ -518,15 +536,20 @@ export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
                                                         gap: '4px',
                                                     }}
                                                 >
-                                                    📈 Live Chart
+                                                    <TrendingUp size={13} /> Live Chart
                                                 </button>
                                                 <button
                                                     type="button"
                                                     className="btn-table-action run-backtest-btn"
                                                     onClick={() => onSelectSymbolForBacktest(sym)}
                                                     title={`Load ${sym} into Strategy Lab and run backtest`}
+                                                    style={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '4px',
+                                                    }}
                                                 >
-                                                    ⚡ Backtest in Lab
+                                                    <Zap size={13} /> Backtest in Lab
                                                 </button>
                                                 <button
                                                     type="button"
@@ -536,9 +559,13 @@ export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
                                                     style={{
                                                         color: 'var(--accent-negative)',
                                                         borderColor: 'rgba(239, 68, 68, 0.3)',
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        padding: '4px 8px',
                                                     }}
                                                 >
-                                                    ✕
+                                                    <X size={13} />
                                                 </button>
                                             </div>
                                         </td>
@@ -571,7 +598,7 @@ export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
                     >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <span style={{ fontSize: '20px' }}>🔍</span>
+                                <Search size={20} color="var(--brand-primary)" />
                                 <div>
                                     <h3 style={{ margin: 0 }}>Indian Stock Directory & Catalog</h3>
                                     <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
@@ -583,8 +610,9 @@ export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
                                 type="button"
                                 className="close-btn"
                                 onClick={() => setShowSearchModal(false)}
+                                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                             >
-                                ✕
+                                <X size={16} />
                             </button>
                         </div>
 
@@ -641,9 +669,9 @@ export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
                                     type="button"
                                     className="run"
                                     onClick={addCustomTicker}
-                                    style={{ padding: '4px 10px', fontSize: '11px' }}
+                                    style={{ padding: '4px 10px', fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                                 >
-                                    + Add Custom Ticker
+                                    <Plus size={12} /> Add Custom Ticker
                                 </button>
                             </div>
                         )}
@@ -660,9 +688,9 @@ export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
                                             addSymbol(item.symbol);
                                         }
                                     }}
-                                    style={{ fontSize: '10px', padding: '2px 8px' }}
+                                    style={{ fontSize: '10px', padding: '2px 8px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                                 >
-                                    + Add All {searchResults.length} to Watchlist
+                                    <Plus size={11} /> Add All {searchResults.length} to Watchlist
                                 </button>
                             )}
                         </div>
@@ -700,20 +728,20 @@ export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
                                                 type="button"
                                                 className="btn-outline"
                                                 onClick={() => removeSymbol(item.symbol)}
-                                                style={{ padding: '4px 10px', fontSize: '11px', color: 'var(--accent-negative)' }}
+                                                style={{ padding: '4px 10px', fontSize: '11px', color: 'var(--accent-negative)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                                                 title="Remove from your Watchlist"
                                             >
-                                                ✕ Remove
+                                                <X size={12} /> Remove
                                             </button>
                                         ) : (
                                             <button
                                                 type="button"
                                                 className="chip-btn active"
                                                 onClick={() => addSymbol(item.symbol)}
-                                                style={{ padding: '4px 10px', fontSize: '11px' }}
+                                                style={{ padding: '4px 10px', fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                                                 title="Add to your Watchlist"
                                             >
-                                                + Add
+                                                <Plus size={12} /> Add
                                             </button>
                                         )}
                                     </div>

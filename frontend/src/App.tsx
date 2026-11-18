@@ -23,6 +23,25 @@ import { AuthModal } from './components/AuthModal';
 import { LiveMarketTickerTape } from './components/LiveMarketTickerTape';
 import { generateInstitutionalPDFReport } from './components/PDFReportGenerator';
 import { getStoredUserProfile, type UserProfile } from './lib/supabase';
+import {
+    Bot,
+    User,
+    Check,
+    CheckCircle2,
+    FileText,
+    Zap,
+    Play,
+    Share2,
+    ChevronDown,
+    Sliders,
+    AlertTriangle,
+    X,
+    Plus,
+    Radio,
+    Circle,
+    Download,
+    Sparkles,
+} from 'lucide-react';
 
 // In production on Render, direct API calls to the live backend URL
 const API_BASE = (import.meta as any).env?.VITE_BACKEND_URL || (typeof window !== 'undefined' && window.location.hostname.includes('onrender.com') ? 'https://strategy-lab-backend-dj9l.onrender.com' : '');
@@ -461,7 +480,7 @@ export default function App() {
             setDataSourceMode('indian_market');
         }
         setWorkspaceTab('single');
-        setAiLoadedNotice(`✓ AI Strategy "${compiledStrat.name}" loaded into Lab! Review settings and click Run Backtest.`);
+        setAiLoadedNotice(`AI Strategy "${compiledStrat.name}" loaded into Lab! Review settings and click Run Backtest.`);
         setTimeout(() => setAiLoadedNotice(''), 8000);
     };
 
@@ -481,7 +500,7 @@ export default function App() {
             const data = await parseJsonResponse(res);
             setCsvData(data.csv_data);
             setSymbol(data.symbol);
-            setMarketFetchSuccess(`✓ Loaded ${data.candle_count} candles for ${data.symbol}`);
+            setMarketFetchSuccess(`Loaded ${data.candle_count} candles for ${data.symbol}`);
 
             const backtestRes = await fetch(`${API_BASE}/api/backtest`, {
                 method: 'POST',
@@ -651,7 +670,7 @@ export default function App() {
             setCsvData(data.csv_data);
             setSymbol(data.symbol);
             setMarketFetchSuccess(
-                `✓ Loaded ${data.candle_count} candles for ${data.symbol} (${data.period}, ${data.interval})`,
+                `Loaded ${data.candle_count} candles for ${data.symbol} (${data.period}, ${data.interval})`,
             );
         } catch (e) {
             setError(e instanceof Error ? e.message : 'Error fetching market data.');
@@ -918,9 +937,9 @@ export default function App() {
                 }),
             });
             if (!res.ok) throw new Error('Webhook test ping failed.');
-            setWebhookTestStatus('✓ Webhook ping delivered successfully!');
+            setWebhookTestStatus('Webhook ping delivered successfully!');
         } catch (e) {
-            setWebhookTestStatus(`❌ Error: ${e instanceof Error ? e.message : 'Failed'}`);
+            setWebhookTestStatus(`Error: ${e instanceof Error ? e.message : 'Failed'}`);
         }
     }
 
@@ -960,7 +979,7 @@ export default function App() {
             });
 
             if (!res.ok) throw new Error('Could not save experiment.');
-            setSaveStatus('✓ Saved to database!');
+            setSaveStatus('Saved to database!');
             setExperimentName('');
             loadExperimentsList();
             setTimeout(() => setSaveStatus(''), 3000);
@@ -1114,7 +1133,7 @@ export default function App() {
                             whiteSpace: 'nowrap',
                         }}
                     >
-                        <span>🤖</span> AI Strategy Assistant
+                        <Bot size={14} /> AI Strategy Assistant
                     </button>
 
                     <button
@@ -1146,7 +1165,7 @@ export default function App() {
                             }}
                             title={`Signed in as ${currentUser.email}`}
                         >
-                            <span>✓</span> {currentUser.name || currentUser.email.split('@')[0]}
+                            <CheckCircle2 size={13} /> {currentUser.name || currentUser.email.split('@')[0]}
                         </button>
                     ) : (
                         <button
@@ -1163,7 +1182,7 @@ export default function App() {
                                 whiteSpace: 'nowrap',
                             }}
                         >
-                            <span>👤</span> Sign In
+                            <User size={13} /> Sign In
                         </button>
                     )}
                     <button
@@ -1237,9 +1256,20 @@ export default function App() {
                         type="button"
                         className={`tab-btn ${workspaceTab === 'paper_trading' ? 'active' : ''}`}
                         onClick={() => setWorkspaceTab('paper_trading')}
-                        style={{ borderColor: paperStatus?.is_active ? 'var(--emerald-primary)' : undefined }}
+                        style={{
+                            borderColor: paperStatus?.is_active ? 'var(--emerald-primary)' : undefined,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                        }}
                     >
-                        {paperStatus?.is_active ? '● Live Paper' : 'Paper Trading'}
+                        {paperStatus?.is_active ? (
+                            <>
+                                <Radio size={12} color="var(--accent-positive)" /> Live Paper
+                            </>
+                        ) : (
+                            'Paper Trading'
+                        )}
                     </button>
                 </div>
             </nav>
@@ -1293,7 +1323,7 @@ export default function App() {
                             onChange={(e) => handleSelectPreset(e.target.value)}
                             style={{ width: '100%', marginTop: '4px', padding: '8px 10px', borderRadius: '6px' }}
                         >
-                            <option value="custom">⚙ Custom Parameters</option>
+                            <option value="custom">Custom Parameters</option>
                             {STRATEGY_PRESETS.map((p) => (
                                 <option key={p.id} value={p.id}>
                                     {p.title}
@@ -1323,7 +1353,7 @@ export default function App() {
                             }}
                             onClick={() => setShowAIChat(true)}
                         >
-                            <span>🤖</span> Describe in Natural Language
+                            <Sparkles size={13} /> Describe in Natural Language
                         </button>
                     </div>
 
@@ -1338,9 +1368,13 @@ export default function App() {
                                 fontSize: '12px',
                                 marginBottom: '14px',
                                 lineHeight: 1.4,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
                             }}
                         >
-                            {aiLoadedNotice}
+                            <CheckCircle2 size={15} style={{ flexShrink: 0 }} />
+                            <span>{aiLoadedNotice}</span>
                         </div>
                     )}
 
@@ -1361,7 +1395,7 @@ export default function App() {
                             aria-expanded={openSections.direction}
                         >
                             <span>Trade Direction</span>
-                            <span className={`chevron ${openSections.direction ? 'open' : ''}`}>▾</span>
+                            <ChevronDown size={14} className={`chevron ${openSections.direction ? 'open' : ''}`} />
                         </button>
                     </div>
                     {openSections.direction && (
@@ -1400,7 +1434,7 @@ export default function App() {
                             aria-expanded={openSections.dataSource}
                         >
                             <span>Data Source</span>
-                            <span className={`chevron ${openSections.dataSource ? 'open' : ''}`}>▾</span>
+                            <ChevronDown size={14} className={`chevron ${openSections.dataSource ? 'open' : ''}`} />
                         </button>
                     </div>
 
@@ -1509,15 +1543,20 @@ export default function App() {
                                         className="fetch-btn"
                                         onClick={handleFetchMarketData}
                                         disabled={marketFetching}
+                                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                                     >
                                         {marketFetching
                                             ? 'Fetching from Yahoo Finance…'
-                                            : '⚡ Fetch & Load Candles'}
+                                            : (
+                                                <>
+                                                    <Zap size={13} /> Fetch & Load Candles
+                                                </>
+                                            )}
                                     </button>
 
                                     {marketFetchSuccess && (
                                         <div className="rule-note" style={{ marginTop: '10px' }}>
-                                            <span>✓</span>
+                                            <CheckCircle2 size={14} color="var(--accent-positive)" />
                                             <p>{marketFetchSuccess}</p>
                                         </div>
                                     )}
@@ -1538,7 +1577,7 @@ export default function App() {
 
                                     {csvFileName && (
                                         <div className="rule-note">
-                                            <span>✓</span>
+                                            <CheckCircle2 size={14} color="var(--accent-positive)" />
                                             <div>
                                                 <p>
                                                     Selected: <b>{csvFileName}</b>
@@ -1580,7 +1619,7 @@ export default function App() {
                             aria-expanded={openSections.indicators}
                         >
                             <span>Technical Indicators</span>
-                            <span className={`chevron ${openSections.indicators ? 'open' : ''}`}>▾</span>
+                            <ChevronDown size={14} className={`chevron ${openSections.indicators ? 'open' : ''}`} />
                         </button>
                     </div>
 
@@ -1719,7 +1758,7 @@ export default function App() {
                             aria-expanded={openSections.risk}
                         >
                             <span>Risk & Execution</span>
-                            <span className={`chevron ${openSections.risk ? 'open' : ''}`}>▾</span>
+                            <ChevronDown size={14} className={`chevron ${openSections.risk ? 'open' : ''}`} />
                         </button>
                     </div>
 
@@ -1814,7 +1853,7 @@ export default function App() {
                             aria-expanded={openSections.taxes}
                         >
                             <span>Indian Taxes & Charges</span>
-                            <span className={`chevron ${openSections.taxes ? 'open' : ''}`}>▾</span>
+                            <ChevronDown size={14} className={`chevron ${openSections.taxes ? 'open' : ''}`} />
                         </button>
                     </div>
 
@@ -1857,7 +1896,7 @@ export default function App() {
                             aria-expanded={openSections.account}
                         >
                             <span>Virtual Account Capital</span>
-                            <span className={`chevron ${openSections.account ? 'open' : ''}`}>▾</span>
+                            <ChevronDown size={14} className={`chevron ${openSections.account ? 'open' : ''}`} />
                         </button>
                     </div>
 
@@ -1914,8 +1953,12 @@ export default function App() {
                         </p>
                     </div>
 
-                    <button className="run" onClick={run} disabled={busy}>
-                        {busy ? 'Running simulation…' : '▶  Run backtest'}
+                    <button className="run" onClick={run} disabled={busy} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                        {busy ? 'Running simulation…' : (
+                            <>
+                                <Play size={13} fill="currentColor" /> Run backtest
+                            </>
+                        )}
                     </button>
 
                     {error && <div className="error">{error}</div>}
@@ -1948,14 +1991,15 @@ export default function App() {
                                 }}
                                 title="Download institutional-grade PDF research fact sheet"
                             >
-                                <span>📄</span> Download Fact Sheet (PDF)
+                                <FileText size={14} /> Download Fact Sheet (PDF)
                             </button>
                             <button
                                 className="secondary"
                                 disabled={!result}
                                 onClick={exportTrades}
+                                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                             >
-                                ↓ Export trades CSV
+                                <Download size={13} /> Export trades CSV
                             </button>
                         </div>
                     </div>
@@ -1983,11 +2027,11 @@ export default function App() {
                             <button
                                 type="button"
                                 className="btn-outline"
-                                style={{ borderColor: 'var(--brand-primary)', color: 'var(--brand-primary)', fontWeight: 600 }}
+                                style={{ borderColor: 'var(--brand-primary)', color: 'var(--brand-primary)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                                 onClick={() => setWorkspaceTab('community')}
                                 title="Share this verified backtest with the community"
                             >
-                                🚀 Share to Community
+                                <Share2 size={13} /> Share to Community
                             </button>
                             {saveStatus && (
                                 <span
@@ -1995,9 +2039,12 @@ export default function App() {
                                         color: 'var(--emerald-primary)',
                                         fontSize: '11px',
                                         alignSelf: 'center',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '4px',
                                     }}
                                 >
-                                    {saveStatus}
+                                    <CheckCircle2 size={12} /> {saveStatus}
                                 </span>
                             )}
                         </div>
@@ -2023,7 +2070,7 @@ export default function App() {
                             value={result ? money(result.net_pnl) : '—'}
                             sub={result ? `${result.return_pct}% return` : 'Waiting for run'}
                             positive={!!result && result.net_pnl >= 0}
-                            ratingBadge={result ? { text: result.net_pnl >= 0 ? '🟢 Profit' : '🔴 Net Loss', tone: result.net_pnl >= 0 ? 'good' : 'bad' } : undefined}
+                            ratingBadge={result ? { text: result.net_pnl >= 0 ? 'Profit' : 'Net Loss', tone: result.net_pnl >= 0 ? 'good' : 'bad' } : undefined}
                         />
                         <MetricCard
                             label="Win rate"
@@ -2415,7 +2462,9 @@ export default function App() {
                     </div>
 
                     <div className="integrity">
-                        <span className="integrity-icon">✓</span>
+                        <span className="integrity-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <CheckCircle2 size={16} />
+                        </span>
                         <div>
                             <b>Strategy integrity enabled</b>
                             <p>
@@ -2468,8 +2517,12 @@ export default function App() {
                             <h2>Fast EMA × Slow EMA Optimization Grid</h2>
                             <p>Sweep parameter combinations on {dataSourceMode === 'indian_market' ? marketSymbol : (symbol || 'Demo Data')} to identify robust parameter clusters.</p>
                         </div>
-                        <button className="run" onClick={runGridSearch} disabled={gridBusy} style={{ padding: '10px 24px' }}>
-                            {gridBusy ? 'Sweeping parameter grid…' : '⚡ Run Grid Search'}
+                        <button className="run" onClick={runGridSearch} disabled={gridBusy} style={{ padding: '10px 24px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                            {gridBusy ? 'Sweeping parameter grid…' : (
+                                <>
+                                    <Zap size={14} /> Run Grid Search
+                                </>
+                            )}
                         </button>
                     </div>
 
@@ -2637,8 +2690,12 @@ export default function App() {
                             <h2>Indian Market Watchlist Batch Backtest</h2>
                             <p>Run your strategy simultaneously across multiple Indian equities to evaluate overall portfolio diversification and returns.</p>
                         </div>
-                        <button className="run" onClick={runPortfolioBacktest} disabled={portfolioBusy} style={{ padding: '10px 24px' }}>
-                            {portfolioBusy ? 'Simulating portfolio…' : '⚡ Run Portfolio Test'}
+                        <button className="run" onClick={runPortfolioBacktest} disabled={portfolioBusy} style={{ padding: '10px 24px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                            {portfolioBusy ? 'Simulating portfolio…' : (
+                                <>
+                                    <Zap size={14} /> Run Portfolio Test
+                                </>
+                            )}
                         </button>
                     </div>
 
@@ -2652,7 +2709,7 @@ export default function App() {
                                         key={item.symbol}
                                         type="button"
                                         className={`chip-btn ${selected ? 'active' : ''}`}
-                                        style={{ padding: '6px 14px' }}
+                                        style={{ padding: '6px 14px', display: 'inline-flex', alignItems: 'center' }}
                                         onClick={() => {
                                             if (selected) {
                                                 setPortfolioSelectedSymbols((prev) =>
@@ -2663,7 +2720,7 @@ export default function App() {
                                             }
                                         }}
                                     >
-                                        {selected ? '✓ ' : '+ '}
+                                        {selected ? <Check size={12} style={{ marginRight: '4px' }} /> : <Plus size={12} style={{ marginRight: '4px' }} />}
                                         {item.name} ({item.symbol})
                                     </button>
                                 );
@@ -2894,7 +2951,7 @@ export default function App() {
                             <div className="metrics" style={{ marginTop: '16px' }}>
                                 <Metric
                                     label="Overfitting Diagnosis"
-                                    value={wfResults.is_overfitted ? '⚠️ OVERFITTED' : '✓ ROBUST'}
+                                    value={wfResults.is_overfitted ? 'OVERFITTED' : 'ROBUST'}
                                     sub={wfResults.is_overfitted ? 'Degrades severely on unseen data' : 'Positive performance sustained'}
                                     positive={!wfResults.is_overfitted}
                                 />
@@ -2966,16 +3023,24 @@ export default function App() {
                         <div style={{ display: 'flex', gap: '8px' }}>
                             {paperStatus?.is_active ? (
                                 <>
-                                    <button className="run" onClick={() => handlePaperTradingTick()} disabled={paperBusy} style={{ padding: '9px 18px', background: 'var(--surface-card)' }}>
-                                        {paperBusy ? 'Evaluating…' : '⚡ Trigger Live Tick'}
+                                    <button className="run" onClick={() => handlePaperTradingTick()} disabled={paperBusy} style={{ padding: '9px 18px', background: 'var(--surface-card)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                                        {paperBusy ? 'Evaluating…' : (
+                                            <>
+                                                <Zap size={13} /> Trigger Live Tick
+                                            </>
+                                        )}
                                     </button>
                                     <button className="run" onClick={handleStopPaperTrading} disabled={paperBusy} style={{ padding: '9px 18px', background: 'var(--rose-primary)', color: '#fff' }}>
                                         Stop Session
                                     </button>
                                 </>
                             ) : (
-                                <button className="run" onClick={handleStartPaperTrading} disabled={paperBusy} style={{ padding: '9px 24px' }}>
-                                    {paperBusy ? 'Starting…' : '▶ Start Live Paper Session'}
+                                <button className="run" onClick={handleStartPaperTrading} disabled={paperBusy} style={{ padding: '9px 24px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                                    {paperBusy ? 'Starting…' : (
+                                        <>
+                                            <Play size={13} fill="currentColor" /> Start Live Paper Session
+                                        </>
+                                    )}
                                 </button>
                             )}
                         </div>
@@ -2991,8 +3056,16 @@ export default function App() {
                         <div style={{ flex: '1 1 200px' }}>
                             <label>
                                 Current Status
-                                <div style={{ padding: '8px', fontWeight: 700, color: paperStatus?.is_active ? 'var(--emerald-primary)' : 'var(--text-muted)' }}>
-                                    {paperStatus?.is_active ? '● LIVE PAPER ACTIVE' : '○ SESSION STOPPED'}
+                                <div style={{ padding: '8px', fontWeight: 700, color: paperStatus?.is_active ? 'var(--emerald-primary)' : 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                                    {paperStatus?.is_active ? (
+                                        <>
+                                            <Radio size={12} color="var(--accent-positive)" /> LIVE PAPER ACTIVE
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Circle size={10} color="var(--text-muted)" /> SESSION STOPPED
+                                        </>
+                                    )}
                                 </div>
                             </label>
                         </div>
@@ -3168,8 +3241,9 @@ export default function App() {
                             <button
                                 className="close-btn"
                                 onClick={() => setShowExperiments(false)}
+                                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                             >
-                                ✕
+                                <X size={16} />
                             </button>
                         </div>
 

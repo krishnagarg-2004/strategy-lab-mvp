@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Bot, Shield, Minus, X, Lightbulb, Zap, CheckCircle2, AlertTriangle, ChevronUp, Cpu } from 'lucide-react';
 import type { StrategyConfig } from './StrategyPresets';
 
 export interface AICompileResponse {
@@ -42,10 +43,13 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({
                 className="ai-minimized-pill"
                 onClick={() => setIsMinimized(false)}
                 title="Click to restore AI Strategy Assistant"
+                style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
             >
-                <span style={{ fontSize: '18px' }}>🤖</span>
+                <Bot size={16} />
                 <span>AI Strategy Assistant</span>
-                <span style={{ fontSize: '11px', opacity: 0.75 }}>▲ Expand</span>
+                <span style={{ fontSize: '11px', opacity: 0.75, display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                    <ChevronUp size={12} /> Expand
+                </span>
             </div>
         );
     }
@@ -90,7 +94,7 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({
             {/* Floating Window Header */}
             <div className="ai-floating-header">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '18px' }}>🤖</span>
+                    <Bot size={18} color="var(--brand-primary)" />
                     <div>
                         <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
                             AI Strategy Assistant
@@ -106,16 +110,18 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({
                         className="ai-control-btn"
                         onClick={() => setIsMinimized(true)}
                         title="Minimize to floating pill"
+                        style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                     >
-                        ⚊
+                        <Minus size={13} />
                     </button>
                     <button
                         type="button"
                         className="ai-control-btn"
                         onClick={onClose}
                         title="Close assistant"
+                        style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                     >
-                        ✕
+                        <X size={13} />
                     </button>
                 </div>
             </div>
@@ -132,9 +138,13 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({
                         fontSize: '11px',
                         color: 'var(--accent-positive)',
                         lineHeight: 1.35,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
                     }}
                 >
-                    🛡️ <strong>Engine Locked:</strong> Natural language is compiled strictly into validated parameters without modifying backtest math.
+                    <Shield size={14} style={{ flexShrink: 0 }} />
+                    <span><strong>Engine Locked:</strong> Natural language is compiled strictly into validated parameters without modifying backtest math.</span>
                 </div>
 
                 {/* Example Prompts */}
@@ -154,13 +164,16 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({
                                     fontSize: '10.5px',
                                     padding: '3px 7px',
                                     background: 'var(--surface-card)',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
                                 }}
                                 onClick={() => {
                                     setPromptText(ex);
                                     handleCompile(ex);
                                 }}
                             >
-                                💡 {ex.length > 40 ? `${ex.substring(0, 40)}…` : ex}
+                                <Lightbulb size={11} color="var(--brand-primary)" /> {ex.length > 40 ? `${ex.substring(0, 40)}…` : ex}
                             </button>
                         ))}
                     </div>
@@ -191,14 +204,22 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({
                             disabled={loading || !promptText.trim()}
                             style={{ padding: '6px 16px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
                         >
-                            {loading ? '🧠 Interpreting…' : '⚡ Compile'}
+                            {loading ? (
+                                <>
+                                    <Cpu size={13} className="spin" /> Interpreting…
+                                </>
+                            ) : (
+                                <>
+                                    <Zap size={13} /> Compile
+                                </>
+                            )}
                         </button>
                     </div>
                 </form>
 
                 {error && (
-                    <div style={{ color: 'var(--accent-negative)', fontSize: '11px' }}>
-                        ⚠️ {error}
+                    <div style={{ color: 'var(--accent-negative)', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <AlertTriangle size={13} /> {error}
                     </div>
                 )}
 
@@ -215,8 +236,8 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({
                     >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <span style={{ color: 'var(--accent-positive)', fontWeight: 700, fontSize: '11px' }}>
-                                    ✓ INTERPRETED BLUEPRINT
+                                <span style={{ color: 'var(--accent-positive)', fontWeight: 700, fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <CheckCircle2 size={13} /> INTERPRETED BLUEPRINT
                                 </span>
                                 {compiledResult.provider && (
                                     <span style={{ fontSize: '9px', color: 'var(--text-muted)', background: 'var(--surface-panel)', padding: '1px 5px', borderRadius: '4px' }}>
@@ -297,7 +318,7 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({
                                 onClick={handleConfirm}
                                 style={{ padding: '6px 16px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
                             >
-                                ⚡ Load into Lab
+                                <Zap size={13} /> Load into Lab
                             </button>
                         </div>
                     </div>

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { TrendingUp, X } from 'lucide-react';
 
 interface TradingViewLiveChartModalProps {
     symbol: string | null;
@@ -91,7 +92,7 @@ export const TradingViewLiveChartModal: React.FC<TradingViewLiveChartModalProps>
                     }}
                 >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontSize: '18px' }}>📈</span>
+                        <TrendingUp size={20} color="var(--accent-positive)" />
                         <div>
                             <h3 style={{ margin: 0, fontSize: '16px' }}>
                                 Real-Time TradingView Terminal &mdash; {symbol}
@@ -101,8 +102,8 @@ export const TradingViewLiveChartModal: React.FC<TradingViewLiveChartModalProps>
                             </div>
                         </div>
                     </div>
-                    <button type="button" className="close-btn" onClick={onClose}>
-                        ✕
+                    <button type="button" className="close-btn" onClick={onClose} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <X size={16} />
                     </button>
                 </div>
 

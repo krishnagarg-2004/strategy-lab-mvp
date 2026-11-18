@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Shield, X, CheckCircle2, AlertTriangle, Settings } from 'lucide-react';
 import {
     loginWithEmail,
     registerWithEmail,
@@ -44,14 +45,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         try {
             if (mode === 'signup') {
                 const profile = await registerWithEmail(email, password, name);
-                setSuccessMsg('✓ Account created successfully! Logged in as verified trader.');
+                setSuccessMsg('Account created successfully! Logged in as verified trader.');
                 setTimeout(() => {
                     onAuthSuccess(profile);
                     onClose();
                 }, 1000);
             } else {
                 const profile = await loginWithEmail(email, password);
-                setSuccessMsg('✓ Signed in successfully!');
+                setSuccessMsg('Signed in successfully!');
                 setTimeout(() => {
                     onAuthSuccess(profile);
                     onClose();
@@ -76,7 +77,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             return;
         }
         saveSupabaseConfig(customUrl, customKey);
-        setSuccessMsg('✓ Supabase config updated!');
+        setSuccessMsg('Supabase config updated!');
         setTimeout(() => setSuccessMsg(''), 2000);
     };
 
@@ -90,7 +91,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 {/* Header */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontSize: '20px' }}>🛡️</span>
+                        <Shield size={20} color="var(--brand-primary)" />
                         <div>
                             <h3 style={{ margin: 0 }}>
                                 {currentUser ? 'Verified Trader Profile' : 'Trader Authentication'}
@@ -100,8 +101,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                             </div>
                         </div>
                     </div>
-                    <button type="button" className="close-btn" onClick={onClose}>
-                        ✕
+                    <button type="button" className="close-btn" onClick={onClose} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <X size={16} />
                     </button>
                 </div>
 
@@ -146,9 +147,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                                             padding: '2px 6px',
                                             borderRadius: '4px',
                                             fontWeight: 700,
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '3px',
                                         }}
                                     >
-                                        ✓ Verified Quant
+                                        <CheckCircle2 size={11} /> Verified Quant
                                     </span>
                                 </div>
                                 <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
@@ -233,14 +237,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                             </label>
 
                             {error && (
-                                <div style={{ color: 'var(--accent-negative)', fontSize: '12px' }}>
-                                    ⚠️ {error}
+                                <div style={{ color: 'var(--accent-negative)', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <AlertTriangle size={13} /> {error}
                                 </div>
                             )}
 
                             {successMsg && (
-                                <div style={{ color: 'var(--accent-positive)', fontSize: '12px' }}>
-                                    {successMsg}
+                                <div style={{ color: 'var(--accent-positive)', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <CheckCircle2 size={13} /> {successMsg}
                                 </div>
                             )}
 
@@ -258,10 +262,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         <div style={{ marginTop: '14px', textAlign: 'center' }}>
                             <button
                                 type="button"
-                                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '11px', cursor: 'pointer', textDecoration: 'underline' }}
+                                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '11px', cursor: 'pointer', textDecoration: 'underline', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                                 onClick={() => setShowConfig(!showConfig)}
                             >
-                                {showConfig ? 'Hide Supabase Project Credentials' : '⚙ Connect Custom Supabase Project'}
+                                <Settings size={12} />
+                                {showConfig ? 'Hide Supabase Project Credentials' : 'Connect Custom Supabase Project'}
                             </button>
                         </div>
 
