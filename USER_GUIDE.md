@@ -65,13 +65,14 @@ Don't want to adjust 18 inputs manually? Select any proven preset from the **Cur
 * **Classic 50/200 Swing Trend:** The institutional golden cross benchmark for multi-day swings.
 * **Bi-Directional Long & Short Scalper:** Exploits both bullish expansions and sharp bearish breakdowns.
 
-#### 🤖 Designing Strategies with the AI Assistant:
+#### 🤖 Designing Strategies with the Floating AI Assistant:
 Prefer to describe your strategy in ordinary words?
 1. Click the **🤖 AI Strategy Assistant** button in the header (or click **"Describe in Natural Language"** in the sidebar).
-2. Type or paste your idea in plain English (e.g., *"Buy Nifty when 9 EMA crosses 21 EMA with RSI above 55. Set a 0.5% stop loss and 1.2% target"*).
-3. Click **⚡ Compile Strategy**. The AI translates your prompt in under 2 seconds.
-4. Review the interpreted **Strategy Blueprint Card** and explanation.
-5. Click **⚡ Confirm & Load into Lab** to automatically populate the parameters into the backtesting engine!
+2. A sleek, non-blocking **Floating Window** opens in the bottom-right corner of your screen, letting you view your charts and laboratory while chatting.
+3. Type or paste your idea in plain English (e.g., *"Buy Nifty when 9 EMA crosses 21 EMA with RSI above 55. Set a 0.5% stop loss and 1.2% target"*).
+4. Click **⚡ Compile Strategy**. The AI translates your prompt in under 2 seconds.
+5. Review the interpreted **Strategy Blueprint Card** and explanation.
+6. Click **⚡ Load into Lab** to automatically populate the parameters into the backtesting engine. The window smoothly collapses into an active floating pill (`[🤖 AI Strategy Assistant ▲ Expand]`), keeping your screen clutter-free while you run your backtests! You can minimize (`⚊`) or expand (`▲`) it anytime.
 
 ---
 

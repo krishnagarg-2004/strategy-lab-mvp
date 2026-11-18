@@ -215,11 +215,13 @@ Unlike generic backtesters, Strategy Lab accurately calculates and deducts actua
   * Persist backtest runs in Supabase PostgreSQL (or SQLite local fallback).
   * Review, restore, compare, and delete historical configurations and performance reports.
 
-### 5. AI Strategy Assistant & Community Strategy Exchange
+### 5. Floating AI Strategy Assistant & Community Strategy Exchange
+* **Non-Blocking Floating Copilot**: Features a modern, hardware-accelerated floating window pinned to the bottom-right corner with smooth backdrop-filter blur. Users can view and interact with background charts, order ledgers, and controls while chatting with the AI.
+* **Minimizable & Expandable Pill**: Collapses into a neat floating badge (`[🤖 AI Strategy Assistant ▲ Expand]`) or expands on demand (`⚊`), preventing UI clutter.
 * **Natural Language Strategy Compiler**: Describe strategies in ordinary language (e.g., *"Buy Nifty when 9 EMA crosses 21 EMA with RSI above 55 and 0.5% stop loss"*).
 * **Deterministic Engine Protection (RULES LOCKED TO INPUT)**: The AI does not generate arbitrary Python code. It maps plain English directly to our strict, validated Pydantic schema with zero hallucinated indicators.
 * **Cascading Zero-Cost AI Architecture**: Powered by Groq Cloud (Qwen 27B / GPT-OSS 120B) and Google Gemini 2.5 Flash with an offline regex NLP parser fallback, offering 15,900+ daily free compilations.
-* **Reviewable Strategy Blueprint Card**: Users inspect the interpreted rules and click `[Confirm & Load into Lab]` before running backtests.
+* **Reviewable Strategy Blueprint Card**: Users inspect the interpreted rules and click `[⚡ Load into Lab]` to instantly configure the engine.
 * **Community Strategy Showcase**: Discover, discuss, like, and fork strategies created by fellow quants with verified performance proofs.
 
 ### 6. Institutional PDF Reports & Verified User Authentication
