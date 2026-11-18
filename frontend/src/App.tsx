@@ -19,6 +19,7 @@ import { WatchlistPanel } from './components/WatchlistPanel';
 import { CommunityHub } from './components/CommunityHub';
 import { AIChatDrawer } from './components/AIChatDrawer';
 import { AuthModal } from './components/AuthModal';
+import { TradingViewTickerTape } from './components/TradingViewTickerTape';
 import { generateInstitutionalPDFReport } from './components/PDFReportGenerator';
 import { getStoredUserProfile, type UserProfile } from './lib/supabase';
 
@@ -1048,6 +1049,7 @@ export default function App() {
 
     return (
         <main className="shell">
+            <TradingViewTickerTape theme={theme} />
             <header className="top">
                 <div className="brand">
                     <div className="logo">SL</div>
@@ -2344,6 +2346,7 @@ export default function App() {
                 <WatchlistPanel
                     apiBase={API_BASE}
                     onSelectSymbolForBacktest={handleWatchlistSelectForBacktest}
+                    theme={theme}
                 />
             )}
 

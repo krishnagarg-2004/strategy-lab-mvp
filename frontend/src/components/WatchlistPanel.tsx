@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { TradingViewLiveChartModal } from './TradingViewLiveChartModal';
 
 export interface WatchlistQuote {
     symbol: string;
@@ -23,6 +24,7 @@ export interface SearchResult {
 interface WatchlistPanelProps {
     apiBase: string;
     onSelectSymbolForBacktest: (symbol: string) => void;
+    theme?: 'dark' | 'light';
 }
 
 const DEFAULT_WATCHLIST = ['^NSEI', '^NSEBANK', 'RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'INFY.NS', 'TATAMOTORS.NS', 'SBIN.NS'];
@@ -30,6 +32,7 @@ const DEFAULT_WATCHLIST = ['^NSEI', '^NSEBANK', 'RELIANCE.NS', 'TCS.NS', 'HDFCBA
 export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
     apiBase,
     onSelectSymbolForBacktest,
+    theme = 'dark',
 }) => {
     const [watchlistSymbols, setWatchlistSymbols] = useState<string[]>(() => {
         try {
@@ -47,6 +50,7 @@ export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
     const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
     const [searchLoading, setSearchLoading] = useState(false);
     const [showSearchModal, setShowSearchModal] = useState(false);
+    const [liveChartSymbol, setLiveChartSymbol] = useState<string | null>(null);
 
     useEffect(() => {
         localStorage.setItem('strategy_lab_user_watchlist', JSON.stringify(watchlistSymbols));
@@ -253,6 +257,22 @@ export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
                                             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                                                 <button
                                                     type="button"
+                                                    className="btn-table-action"
+                                                    onClick={() => setLiveChartSymbol(sym)}
+                                                    title={`Open live TradingView candlestick chart for ${sym}`}
+                                                    style={{
+                                                        borderColor: 'rgba(99, 223, 176, 0.4)',
+                                                        color: 'var(--accent-positive)',
+                                                        fontWeight: 600,
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '4px',
+                                                    }}
+                                                >
+                                                    📈 Live Chart
+                                                </button>
+                                                <button
+                                                    type="button"
                                                     className="btn-table-action run-backtest-btn"
                                                     onClick={() => onSelectSymbolForBacktest(sym)}
                                                     title={`Load ${sym} into Strategy Lab and run backtest`}
@@ -349,6 +369,12 @@ export const WatchlistPanel: React.FC<WatchlistPanelProps> = ({
                     </div>
                 </div>
             )}
+            {/* Real-time TradingView Live Chart Modal */}
+            <TradingViewLiveChartModal
+                symbol={liveChartSymbol}
+                onClose={() => setLiveChartSymbol(null)}
+                theme={theme}
+            />
         </div>
     );
 };
